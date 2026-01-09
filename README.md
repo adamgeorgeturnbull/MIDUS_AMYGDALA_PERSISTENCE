@@ -152,6 +152,31 @@ Output:
 - Processed participant-level dataset: data/processed/daily_diary_processed.csv  
 - Descriptive statistics for the paper: data/processed/daily_diary_descriptives.csv  
 
+### 03_construct_demographics.py
+
+This script creates a clean demographics file by merging MIDUS Project 2 (daily diary) and Project 5 (neuroscience) participant data.
+
+Inputs:
+- data/processed/m3p2_ids.csv – P2 participant-level daily diary identifiers and demographics
+- data/processed/m3p5_ids.csv – P5 participant-level neuroscience identifiers and demographics
+
+Outputs:
+- data/processed/demographics_processed.csv – unified demographics for all participants, with:
+  - educ – highest education level
+  - ethnicity – Hispanic/Latino status
+  - race – primary racial origin
+  - sex – participant sex
+  - C2PAGE – estimated age at daily diary collection
+  - All original P2 and P5 variables preserved, with overlapping variables suffixed _p2 or _p5
+
+Key steps performed:
+1. Read processed P2 and P5 datasets.
+2. Rename overlapping columns (_p2 and _p5).
+3. Merge datasets on M2ID.
+4. Create unified variables for education, ethnicity, race, and sex.
+5. Compute age at daily diary (C2PAGE) using baseline age and interview date.
+6. Preserve all other variables for later analyses.
+
 ## Citation and Acknowledgment
 
 Data are provided by the Midlife in the United States (MIDUS) study. Users must comply with all MIDUS data use agreements and citation requirements.
