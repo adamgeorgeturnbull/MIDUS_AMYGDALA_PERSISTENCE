@@ -28,7 +28,7 @@ Preregistration (updated Oct 15, 2025): OSF
 
 ## Project Structure
 
-MIDUS_AMYGDALA_PERSISTANCE/
+MIDUS_AMYGDALA_PERSISTENCE/
 ├─ data/
 │  ├─ raw/
 │  │  ├─ M3P2_variables.csv

@@ -3,11 +3,11 @@ Processing dataset: daily_diary
 Dataset shape: 9301 rows, 41 columns
 M2ID dtype before conversion: int64
 Missing M2ID: 0
-Duplicated M2ID: 8065
+Duplicate check skipped for this dataset (expected long format).
 Saved harmonized dataset to data/processed/m3p2_ids.csv
 
 Processing dataset: neuroscience
-Dataset shape: 3355 rows, 20 columns
+Dataset shape: 3683 rows, 26 columns
 M2ID dtype before conversion: int64
 Missing M2ID: 0
 Duplicated M2ID: 0
