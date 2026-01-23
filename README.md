@@ -2,7 +2,37 @@
 
 This repository contains analysis code for a preregistered study using the MIDUS 3 Neuroscience dataset examining age-related differences in affect, amygdala persistence to emotional stimuli, and model-free emotion regulation mechanisms.
 
-The study combines behavioral, daily diary, and neuroimaging data to test confirmatory hypotheses derived from prior work (e.g., Puccetti et al., 2021), alongside preregistered exploratory analyses of task-based functional connectivity.
+The study combines daily diary data, survey-based demographics, and neuroimaging measures to test confirmatory hypotheses derived from prior work (e.g., Puccetti et al., 2021), alongside preregistered exploratory analyses of task-based functional connectivity.
+
+Preregistration (updated Oct 15, 2025): OSF
+
+---
+
+## Study Goals
+
+### Replication (confirmatory)
+1. Replicate age-related decreases in daily life negative affect and increases in positive affect.
+2. Replicate associations between amygdala persistence to negative images and daily life affect.
+
+### Extensions (confirmatory)
+1. Test whether amygdala persistence to negative images decreases with age.
+2. Test whether age-related differences in affect are mediated by amygdala persistence.
+
+### Novel analyses (exploratory)
+1. Examine model-free emotion regulation indexed by task-based amygdala–vmPFC/sgACC connectivity using beta-series modeling.
+2. Test whether model-free emotion regulation relates to amygdala persistence and daily life affect.
+3. Examine moderation by emotion regulation strategy use (reappraisal, suppression).
+4. Test age-related differences in these effects, including analyses restricted to older adults.
+
+---
+
+## Project Structure
+
+# MIDUS Amygdala Persistence
+
+This repository contains analysis code for a preregistered study using the MIDUS 3 Neuroscience dataset examining age-related differences in affect, amygdala persistence to emotional stimuli, and model-free emotion regulation mechanisms.
+
+The study combines daily diary data, survey-based demographics, and neuroimaging measures to test confirmatory hypotheses derived from prior work (e.g., Puccetti et al., 2021), alongside preregistered exploratory analyses of task-based functional connectivity.
 
 Preregistration (updated Oct 15, 2025): OSF
 
@@ -30,35 +60,34 @@ Preregistration (updated Oct 15, 2025): OSF
 
 MIDUS_AMYGDALA_PERSISTENCE/
 ├─ data/
-│  ├─ raw/
-│  │  ├─ M3P2_variables.csv
-│  │  ├─ M3P5_variables_and_demos.csv
-│  │  └─ README.md  # detailed variable coding
-│  ├─ processed/
-│  │  ├─ m3p2_ids.csv
-│  │  ├─ m3p5_ids.csv
-│  │  ├─ demos_ids.csv
-│  │  ├─ daily_diary_processed.csv
-│  │  ├─ demographics_processed.csv
-│  │  ├─ covariates_processed.csv
-│  │  ├─ combined_data.csv
-│  │  └─ combined_data_filtered.csv
+│ ├─ raw/
+│ │ ├─ M2P5_variables.csv
+│ │ ├─ M2P2_variables.csv
+│ │ ├─ MKE2_variables.csv
+│ │ └─ README.md
+│ ├─ processed/
+│ │ ├─ daily_diary_processed.csv
+│ │ ├─ demographics_processed.csv
+│ │ ├─ covariates_processed.csv
+│ │ ├─ combined_data.csv
+│ │ └─ combined_data_filtered.csv
 ├─ results/
-│  ├─ tables/
-│  └─ figures/
+│ ├─ tables/
+│ └─ figures/
 ├─ scripts/
-│  ├─ preprocessing/  # contains Steps 01–06
-│  │  ├─ 01_harmonize_ids.py
-│  │  ├─ 02_construct_daily_diary_affect.py
-│  │  ├─ 03_construct_demographics.py
-│  │  ├─ 04_construct_covariates.py
-│  │  ├─ 05_merge_master_dataset.py
-│  │  └─ 06_sample_descriptives.py
-│  └─ fMRI/
-│     ├─ preprocessing/  # all fMRI preprocessing scripts you run on cluster
-│     └─ analysis/       # all fMRI analysis scripts you run on cluster
-├─ README.md  # high-level project overview
+│ ├─ preprocessing/
+│ │ ├─ 01_harmonize_ids.py
+│ │ ├─ 02_construct_daily_diary_affect.py
+│ │ ├─ 03_construct_demographics.py
+│ │ ├─ 04_construct_covariates.py
+│ │ ├─ 05_merge_master_dataset.py
+│ │ └─ 06_sample_descriptives.py
+│ └─ fMRI/
+│ ├─ preprocessing/
+│ └─ analysis/
+├─ README.md
 ├─ requirements.txt
+
 
 Raw and processed data are not tracked by git and must be obtained through authorized MIDUS access.
 
@@ -73,109 +102,187 @@ https://midus.colectica.org
 
 Neuroimaging data require a Data Usage Agreement and are accessed separately via ICPSR (Study 38862).
 
-### Behavioral and Survey Data Downloads
+---
 
-The first preprocessing step involves downloading and collating behavioral, affective, and demographic variables from multiple MIDUS 3 projects using Colectica baskets.
+## Raw Data Structure
 
-#### Basket 1: MIDUS 3 Project 2 (Daily Diary Affect)
+The preprocessing pipeline begins from three non-overlapping raw datasets, each corresponding to a distinct MIDUS 2 project. Each dataset is treated as authoritative for its domain, eliminating redundancy across files.
 
-File: `M3P2_variables.csv`
+---
 
-This basket includes daily diary affect items assessed over an 8-day period, along with demographic identifiers. Variables include:
+## Raw Dataset 1: MIDUS 2 Project 5 (Neuroscience and Survey Demographics)
 
-- Daily negative affect items (e.g., restless, nervous, sad, hopeless, angry)
-- Daily positive affect items (e.g., cheerful, calm, satisfied, enthusiastic, confident)
-- Interview date variables (day, month, year)
-- Respondent identifiers (MIDUS 2 ID, family number)
-- Demographics (age at MIDUS 3, sex, major sample ID)
-- Repetitive thought / rumination frequency items (C2DY1–C2DY6)
+File: M2P5_variables.csv
 
-These variables are used to compute mean daily positive and negative affect scores and exploratory measures of repetitive negative thinking.
+This dataset contains all neuroscience project variables as well as demographic and survey variables drawn from MIDUS Project 1.
 
-#### Basket 2: MIDUS 3 Neuroscience (Project 5) and Survey Data
+Participant identifiers:
+- MIDUSID
+- M2ID
+- SAMPLMAJ
+- M2FAMNUM
 
-File: `M3P5_variables_and_demos.csv`
+Demographics:
+- Sex (C1PRSEX)
+- Education (C1PB1)
+- Race (C1PF7A)
+- Ethnicity (C1PF1)
+- Birth year (C1PBYEAR)
+- Age at MIDUS 3 baseline (C1PRAGE)
 
-This basket includes demographic, affect, emotion regulation, and neuroscience participation variables drawn from:
-- MIDUS 3 Project 1 (Survey)
-- MIDUS 3 Project 5 (Neuroscience)
-- MIDUS 3 Milwaukee (MKE2)
+Interview timing:
+- Baseline interview month/year (C1PIDATE_MO, C1PIDATE_YR)
+- Neuroscience visit month/year (C5PDATE_MO, C5PDATE_YR)
 
-Key variables include:
-- Age at neuroscience visit
-- Sex, education, race, ethnicity
-- Handedness
-- MRI completion status
-- General positive and negative affect (PANAS-style)
-- Emotion regulation strategy use (ERQ reappraisal and suppression)
-- Interview timing variables
+Neuroscience-related variables:
+- MRI completion indicator (C5IC)
+- Age at neuroscience visit (C5PAGE)
+- Handedness (C5HAND)
+- Socioeconomic indicators (C5SER, C5SES)
+- PANAS affect variables (C5SPGP, C5SPGN)
 
-## Behavioral Preprocessing Scripts (scripts/preprocessing)
+This dataset serves as the primary source of demographics and neuroscience participation variables.
+
+---
+
+## Raw Dataset 2: MIDUS 2 Project 2 (Daily Diary Affect)
+
+File: M2P2_variables.csv
+
+This dataset contains daily diary affect data collected over an 8-day period.
+
+Variables include:
+- Daily affect items C2DC1 through C2DC27
+- Diary day number (C2DDAY)
+- Diary interview month/year (C2DIMON, C2DIYEAR)
+- Participant identifier (M2ID)
+
+This dataset is used to compute daily diary-based affect measures, including mean positive affect, mean negative affect, and persistence-related summaries.
+
+---
+
+## Raw Dataset 3: MIDUS 2 Milwaukee Sample Demographics
+
+File: MKE2_variables.csv
+
+This dataset contains demographic information for participants in the Milwaukee oversample.
+
+Participant identifiers:
+- M2ID
+- SAMPLMAJ
+
+Demographics:
+- Education (CACB1)
+- Race (CACF7A)
+- Ethnicity (CACF1)
+- Sex (CACRSEX)
+- Age at interview (CACRAGE)
+
+Interview timing:
+- Interview month/year (CACIDATE_MO, CACIDATE_YR)
+
+These variables are used to supplement demographic information when not available from Project 5.
+
+---
+
+## Behavioral Preprocessing Scripts
 
 ### 01_harmonize_ids.py
-This script ensures that participant IDs are consistent across datasets.  
 
-Main tasks:
-- Checks and standardizes ID formats (e.g., numeric vs. string).  
-- Validates that all expected participants are present in each dataset.  
-- Logs data types and any issues with duplicate or missing IDs.  
+Ensures participant IDs are consistent across all three raw datasets.
 
-Input:  
-- Raw neuroscience dataset (data/raw/neuroscience_raw.csv)  
-- Raw daily diary dataset (data/raw/M3P2_variables.csv)  
+Tasks performed:
+- Standardizes ID formats.
+- Verifies uniqueness of M2ID within each dataset.
+- Logs missing or mismatched IDs across projects.
 
-Output:  
-- Harmonized datasets saved in the data/processed/ folder (for downstream merging).  
-- Log file summarizing any warnings or ID inconsistencies.  
+Inputs:
+- data/raw/M2P5_variables.csv
+- data/raw/M2P2_variables.csv
+- data/raw/MKE2_variables.csv
+
+Outputs:
+- ID-consistent datasets saved to data/processed
 
 ---
 
 ### 02_construct_daily_diary_affect.py
-This script processes the MIDUS daily diary data to generate participant-level and summary scores.  
 
-Main tasks:
-- Recodes invalid responses to missing values.  
-- Calculates participant-level mean Positive Affect (PA), Negative Affect (NA), and Persistent Thought (PT) scores.  
-- Computes log-transformed NA and PT scores to reduce skew/kurtosis.  
-- Saves participant-level averages for all raw items and computed summary scores.  
-- Counts number of days completed per participant (both any response and fully complete days).  
-- Generates descriptive statistics for the dataset, including:  
-  - Number of participants before and after filtering  
-  - Cronbach’s alpha for PA and NA scales  
-  - Skewness and kurtosis for all summary variables  
-  - Mean and standard deviation for daily diary items and summary scores  
+Processes daily diary affect data to generate participant-level summary measures.
 
-Input:  
-- Raw daily diary dataset (data/raw/M3P2_variables.csv)  
+Tasks performed:
+- Recodes invalid responses to missing values.
+- Computes participant-level mean positive affect and negative affect.
+- Computes persistence-related affect measures.
+- Counts number of diary days completed per participant.
+- Generates descriptive statistics for scale reliability and distributions.
 
-Output:  
-- Processed participant-level dataset: data/processed/daily_diary_processed.csv  
-- Descriptive statistics for the paper: data/processed/daily_diary_descriptives.csv  
+Input:
+- data/raw/M2P2_variables.csv
+
+Outputs:
+- data/processed/daily_diary_processed.csv
+- data/processed/daily_diary_descriptives.csv
+
+---
 
 ### 03_construct_demographics.py
 
-This script creates a clean demographics file by merging MIDUS Project 2 (daily diary) and Project 5 (neuroscience) participant data.
+Constructs cleaned, harmonized demographics for the MIDUS neuroscience (M3P5) and Milwaukee (MKE2) datasets independently.
+
+Key points:
+
+- Preserves all original variables from each dataset.
+- Adds harmonized demographic columns:
+  - sex
+  - educ (highest education)
+  - ethnicity
+  - race
+- Converts MIDUS missing codes to NA.
+- Keeps one row per participant.
+- Does not merge the datasets—demographics are cleaned separately for M3P5 and MKE2.
 
 Inputs:
-- data/processed/m3p2_ids.csv – P2 participant-level daily diary identifiers and demographics
-- data/processed/m3p5_ids.csv – P5 participant-level neuroscience identifiers and demographics
+- data/processed/m3p5_ids.csv
+- data/processed/mke2_ids.csv
 
 Outputs:
-- data/processed/demographics_processed.csv – unified demographics for all participants, with:
-  - educ – highest education level
-  - ethnicity – Hispanic/Latino status
-  - race – primary racial origin
-  - sex – participant sex
-  - C2PAGE – estimated age at daily diary collection
-  - All original P2 and P5 variables preserved, with overlapping variables suffixed _p2 or _p5
+- data/processed/m3p5_demos.csv
+- data/processed/mke2_demos.csv
 
-Key steps performed:
-1. Read processed P2 and P5 datasets.
-2. Rename overlapping columns (_p2 and _p5).
-3. Merge datasets on M2ID.
-4. Create unified variables for education, ethnicity, race, and sex.
-5. Compute age at daily diary (C2PAGE) using baseline age and interview date.
-6. Preserve all other variables for later analyses.
+---
+
+### 04_construct_covariates.py
+
+Generates analysis-ready covariates for each dataset from the cleaned demographics files.
+
+Tasks performed:
+
+- Race dummy coding: Creates dummy variables for each non-reference race category (reference = White) while keeping coding consistent across datasets.
+- Twin pair dummy coding (M3P5 only): Creates a dummy variable for each twin pair using M2FAMNUM (applies only to participants in the twin sample, SAMPLMAJ = 3).  
+  - MKE2 participants do not have twin pairs; all twin dummies are 0.
+
+Inputs:
+- data/processed/m3p5_demos.csv
+- data/processed/mke2_demos.csv
+
+Outputs:
+- data/processed/m3p5_covariates.csv
+- data/processed/mke2_covariates.csv
+
+---
+
+### 05_merge_master_dataset.py
+
+Merges daily diary summaries, demographics, covariates, and neuroscience variables into a master analysis dataset keyed on M2ID.
+
+---
+
+### 06_sample_descriptives.py
+
+Generates final sample descriptives for the manuscript, including demographic distributions, affect means, and completion rates.
+
+---
 
 ## Citation and Acknowledgment
 
