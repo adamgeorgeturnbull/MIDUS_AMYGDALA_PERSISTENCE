@@ -7,9 +7,11 @@ Construct covariate dummies for MIDUS datasets:
 - Race dummies (consistent across datasets, reference=White)
 - Twin pair dummies (only for P5 twin sample)
 
+Ensures all variable names are valid Python identifiers for analysis.
+
 Input: processed demographics files:
-- MKE2: mke2_demos_id.csv
-- M3P5: m3p5_demos_id.csv
+- MKE2: mke2_demos.csv
+- M3P5: m3p5_demos.csv
 
 Output: processed covariates files:
 - mke2_covariates.csv
@@ -33,15 +35,14 @@ P5_OUT = os.path.join(PROCESSED_DIR, "m3p5_covariates.csv")
 # =========================
 # Race coding
 # =========================
-# Adjust to match the actual MIDUS race coding
-RACE_CODES = [1, 2, 3, 4, 5, 6]  # 1 = White (reference), 2 = Black, 3 = Asian, 4 = Native American, 5 = Pacific Islander, 6 = Other
+RACE_CODES = [1, 2, 3, 4, 5, 6]  # 1 = White (reference)
 RACE_REF = 1
 
 def construct_race_dummies(df):
     df = df.copy()
     for code in RACE_CODES:
         if code == RACE_REF:
-            continue  # skip reference category
+            continue
         col_name = f"race_{code}"
         df[col_name] = (df["race"] == code).astype(int)
     return df
@@ -51,14 +52,26 @@ def construct_race_dummies(df):
 # =========================
 def construct_twin_dummies(df):
     df = df.copy()
-    # Only assign twins where SAMPLMAJ == 3 (twin sample)
+
+    # Only consider participants in the twin sample
     twins = df[df["SAMPLMAJ"] == 3].copy()
-    twin_pairs = twins["M2FAMNUM"].unique()
-    
-    for fam in twin_pairs:
-        col_name = f"twin_pair_{fam}"
+
+    # Count how many participants per family
+    fam_counts = twins["M2FAMNUM"].value_counts()
+
+    # Keep only families with more than 1 participant
+    twin_fams = fam_counts[fam_counts > 1].index
+
+    for fam in twin_fams:
+        # make safe Python identifier for family number
+        fam_str = str(fam).replace(".", "_")
+        if fam_str[0].isdigit():
+            fam_str = f"fam_{fam_str}"
+        col_name = f"twin_pair_{fam_str}"
+        
+        # Only assign 1 if participant is in this family AND SAMPLMAJ == 3
         df[col_name] = ((df["SAMPLMAJ"] == 3) & (df["M2FAMNUM"] == fam)).astype(int)
-    
+
     return df
 
 # =========================
@@ -66,7 +79,6 @@ def construct_twin_dummies(df):
 # =========================
 df_mke2 = pd.read_csv(MKE2_FILE)
 df_mke2 = construct_race_dummies(df_mke2)
-# No twins in MKE2, so skip twin dummies
 df_mke2.to_csv(MKE2_OUT, index=False)
 print(f"MKE2 covariates saved to {MKE2_OUT}")
 
@@ -76,5 +88,6 @@ print(f"MKE2 covariates saved to {MKE2_OUT}")
 df_p5 = pd.read_csv(P5_FILE)
 df_p5 = construct_race_dummies(df_p5)
 df_p5 = construct_twin_dummies(df_p5)
+
 df_p5.to_csv(P5_OUT, index=False)
 print(f"M3P5 covariates saved to {P5_OUT}")

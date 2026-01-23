@@ -7,15 +7,19 @@ Clean merged MIDUS dataset:
 1) Add 0s for all twin_pair variables for participants from MKE2.
 2) Create age at P2 (C2PAGE).
 3) Create time between P2 and P5 in months (time_P2_P5).
+4) Compute skewness and kurtosis for neuroscience PANAS variables and create log-transformed C5SPGN.
 """
 
 import pandas as pd
 import os
 import numpy as np
+from scipy.stats import skew, kurtosis
 
 PROCESSED_DIR = "data/processed"
+TABLE_DIR = "results/tables"
 MERGED_FILE = os.path.join(PROCESSED_DIR, "midus_merged.csv")
 OUTPUT_FILE = os.path.join(PROCESSED_DIR, "midus_merged_clean.csv")
+STATS_OUTPUT = os.path.join(TABLE_DIR, "panas_skew_kurtosis.csv")
 
 # =========================
 # Load merged dataset
@@ -40,11 +44,9 @@ df.loc[is_mke2, twin_cols] = 0
 # =========================
 # Compute age at P2 (C2PAGE)
 # =========================
-# Ensure StartYear and StartMonth exist
 if "StartYear" not in df.columns or "StartMonth" not in df.columns:
     raise ValueError("StartYear and StartMonth columns required from daily diary data")
 
-# Initialize C2PAGE
 df["C2PAGE"] = np.nan
 
 # --- M3 participants ---
@@ -68,6 +70,25 @@ for col in time_cols_required:
 
 df["time_P2_P5"] = (df["C5PDATE_YR"] - df["StartYear"]) * 12 + (df["C5PDATE_MO"] - df["StartMonth"])
 df["time_P2_P5"] = df["time_P2_P5"].abs()  # ensure positive
+
+# =========================
+# Compute skewness and kurtosis for neuroscience PANAS and log-transform C5SPGN
+# =========================
+panas_vars = ["C5SPGP", "C5SPGN"]
+stats_list = []
+
+for var in panas_vars:
+    series = df[var].dropna()
+    var_skew = skew(series)
+    var_kurt = kurtosis(series)
+    stats_list.append({"variable": var, "skewness": var_skew, "kurtosis": var_kurt})
+
+# Save stats to CSV
+pd.DataFrame(stats_list).to_csv(STATS_OUTPUT, index=False)
+print(f"Skewness and kurtosis saved to {STATS_OUTPUT}")
+
+# Create log-transformed negative affect
+df["C5SPGN_log"] = np.log(df["C5SPGN"] + 0.001)
 
 # =========================
 # Save cleaned dataset

@@ -310,9 +310,11 @@ Performs additional cleaning of the master dataset to prepare for analysis.
 Processing steps:
 1. Ensures twin_pair_ variables are set to 0 for participants from MKE2 who do not have twins.
 2. Harmonizes demographic variables and ensures missing codes are set to NA.
-3. Computes any remaining derived variables needed for analysis:
-   - Age at P2 (C2PAGE) and age at P5 (C5PAGE)
+3. Computes derived variables needed for analysis:
+   - Age at P2 (C2PAGE)
    - Time between P2 and P5 (time_P2_P5) in months
+   - Kurtosis and skewness for affect variables (C5SPGP, C5SPGN)
+   - Log-transformed negative affect (C5SPGN_log)
 4. Verifies consistency of variable types and removes any redundant columns if present.
 
 Input:
@@ -320,8 +322,6 @@ Input:
 
 Output:
 - midus_merged_clean.csv
-
----
 
 ### 07_sample_descriptives.py
 
@@ -347,6 +347,67 @@ Output:
 - results/tables/sample_descriptives.csv: publication-ready table with all sample characteristics
 
 ---
+
+### 08_merge_fmri_data.py
+
+Merge fMRI-derived participant-level measures into the cleaned MIDUS master dataset.
+
+Processing steps:
+1. Load cleaned master dataset from 06_clean_merged_data.py.
+2. Load fMRI-derived CSV files:
+   - betaSeries_neg_vs_neu.csv
+   - positive_persistence_cross_run.csv
+   - negative_persistence_cross_run.csv
+   - negative_persistence_concat.csv
+   - fd_summary.csv
+3. Pivot multi-row fMRI data (by hemisphere) to wide format so each participant has a single row.
+4. Merge all fMRI data with the master dataset using left joins on M2ID.
+5. Create availability flags for each modality:
+   - has_beta_series
+   - has_neg_persistence
+   - has_pos_persistence
+   - has_fd_data
+   - has_imaging_data
+6. No participant exclusions are applied.
+
+Input:
+- midus_merged_clean.csv
+- fMRI-derived CSV files in data/fMRI/
+
+Output:
+- data/processed/midus_with_fmri.csv
+
+
+## Behavioral Analysis Scripts
+
+### 01_affect_age_replication.py
+
+Replication of age-related differences in affect in MIDUS 3.
+
+Processing steps:
+1. Load processed master dataset with fMRI data (midus_with_fmri.csv).
+2. Define affect outcomes:
+   - Daily diary: PA_score, NA_score, NA_score_log
+   - PANAS (neuro sample only): C5SPGP (positive), C5SPGN (negative), C5SPGN_log
+3. Define two analysis samples:
+   - Daily diary sample: participants with daily diary data
+       - Outcome: daily diary affect (PA_score, NA_score, NA_score_log)
+       - Predictor: age at P2 (C2PAGE)
+   - Neuro sample: participants with fMRI and/or PANAS data
+       - Outcomes: daily diary affect (PA_score, NA_score, NA_score_log) and PANAS scores (C5SPGP, C5SPGN, C5SPGN_log)
+       - Predictors:
+           - Daily diary affect: age at P2 (C2PAGE) and age at P5 (C5PAGE)
+           - PANAS scores: age at P5 (C5PAGE)
+4. Covariates included in regressions: sex, educ, race dummies, twin dummies.
+5. Compute zero-order correlations and linear regressions for each outcome × age variable combination.
+6. Save output tables:
+   - results/tables/01_affect_age_correlations.csv
+   - results/tables/01_affect_age_regressions.csv
+
+Notes:
+- All analyses use complete cases for the specific outcome and covariates.
+- Log-transformed negative affect variables are included to normalize distributions.
+
 
 ## Citation and Acknowledgment
 
