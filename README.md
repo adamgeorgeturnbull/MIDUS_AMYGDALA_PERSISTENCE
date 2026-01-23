@@ -57,34 +57,41 @@ Preregistration (updated Oct 15, 2025): OSF
 ---
 
 ## Project Structure
-
 MIDUS_AMYGDALA_PERSISTENCE/
 ├─ data/
-│ ├─ raw/
-│ │ ├─ M2P5_variables.csv
-│ │ ├─ M2P2_variables.csv
-│ │ ├─ MKE2_variables.csv
-│ │ └─ README.md
-│ ├─ processed/
-│ │ ├─ daily_diary_processed.csv
-│ │ ├─ demographics_processed.csv
-│ │ ├─ covariates_processed.csv
-│ │ ├─ combined_data.csv
-│ │ └─ combined_data_filtered.csv
+│  ├─ raw/
+│  │  ├─ M3P5_variables.csv
+│  │  ├─ M3P2_variables.csv
+│  │  ├─ MKE2_variables.csv
+│  │  └─ README.md
+│  ├─ processed/
+│  │  ├─ daily_diary_processed.csv
+│  │  ├─ m3p5_ids.csv
+│  │  ├─ mke2_ids.csv
+│  │  ├─ m3p5_demos.csv
+│  │  ├─ mke2_demos.csv
+│  │  ├─ m3p5_covariates.csv
+│  │  ├─ mke2_covariates.csv
+│  │  ├─ midus_merged.csv
+│  │  ├─ midus_merged_clean.csv
+│  │  ├─ daily_diary_descriptives.csv
+│  │  └─ README.md
 ├─ results/
-│ ├─ tables/
-│ └─ figures/
+│  ├─ tables/
+│  │  └─ sample_descriptives.csv
+│  └─ figures/
 ├─ scripts/
-│ ├─ preprocessing/
-│ │ ├─ 01_harmonize_ids.py
-│ │ ├─ 02_construct_daily_diary_affect.py
-│ │ ├─ 03_construct_demographics.py
-│ │ ├─ 04_construct_covariates.py
-│ │ ├─ 05_merge_master_dataset.py
-│ │ └─ 06_sample_descriptives.py
-│ └─ fMRI/
-│ ├─ preprocessing/
-│ └─ analysis/
+│  ├─ preprocessing/
+│  │  ├─ 01_harmonize_ids.py
+│  │  ├─ 02_construct_daily_diary_affect.py
+│  │  ├─ 03_construct_demographics.py
+│  │  ├─ 04_construct_covariates.py
+│  │  ├─ 05_merge_master_dataset.py
+│  │  ├─ 06_clean_merged_data.py
+│  │  └─ 07_sample_descriptives.py
+│  └─ fMRI/
+│     ├─ preprocessing/
+│     └─ analysis/
 ├─ README.md
 ├─ requirements.txt
 
@@ -274,13 +281,70 @@ Outputs:
 
 ### 05_merge_master_dataset.py
 
-Merges daily diary summaries, demographics, covariates, and neuroscience variables into a master analysis dataset keyed on M2ID.
+Merges multiple processed MIDUS datasets into a single master analysis file keyed on M2ID.
+
+Inputs:
+- daily_diary_processed.csv: participant-level daily diary affect summaries
+- m3p5_covariates.csv: P5 neuroscience demographics and covariates
+- mke2_covariates.csv: MKE2 demographics and covariates
+
+Processing steps:
+1. Merge all datasets on M2ID, keeping all variables.
+2. For duplicate variables across datasets, combine into a single harmonized column.
+3. Add 0s for all twin_pair_ variables for participants from MKE2.
+4. Compute new variables:
+   - Age at P2 (C2PAGE):
+     - M3 participants: C2PAGE = StartYear (from diary) - C1PBYEAR
+     - MKE2 participants: estimated from CACRAGE and baseline interview date (CACIDATE_MO, CACIDATE_YR) relative to diary start (StartMonth, StartYear)
+   - Time between P2 and P5 (time_P2_P5): in months, calculated from diary start (StartMonth, StartYear) and P5 visit date (C5PDATE_MO, C5PDATE_YR)
+
+Output:
+- midus_merged.csv: cleaned master dataset with harmonized variables, age calculations, twin-pair indicators, and P2–P5 intervals ready for analysis
 
 ---
 
-### 06_sample_descriptives.py
+### 06_clean_merged_data.py
 
-Generates final sample descriptives for the manuscript, including demographic distributions, affect means, and completion rates.
+Performs additional cleaning of the master dataset to prepare for analysis.
+
+Processing steps:
+1. Ensures twin_pair_ variables are set to 0 for participants from MKE2 who do not have twins.
+2. Harmonizes demographic variables and ensures missing codes are set to NA.
+3. Computes any remaining derived variables needed for analysis:
+   - Age at P2 (C2PAGE) and age at P5 (C5PAGE)
+   - Time between P2 and P5 (time_P2_P5) in months
+4. Verifies consistency of variable types and removes any redundant columns if present.
+
+Input:
+- midus_merged.csv
+
+Output:
+- midus_merged_clean.csv
+
+---
+
+### 07_sample_descriptives.py
+
+Generates publication-ready sample descriptives for 5 MIDUS samples.
+
+Samples included:
+1. daily diary full: all participants with diary data (StartYear present)
+2. neuroscience full: all participants with P5 neuroscience data (C5PDATE_YR present)
+3. daily diary + neuroscience overlap: participants with both diary and neuroscience data
+4. neuroimaging sample: participants who completed neuroimaging (C5IC = 1)
+5. imaging + diary overlap: participants with both completed imaging and diary data
+
+Descriptives computed for each sample:
+- Age: mean ± SD, range
+  - C2PAGE used for diary-only sample
+  - C5PAGE used for all other samples
+- Sex: % Female
+- Education: mean ± SD (harmonized 1–12 coding)
+- Ethnicity: % Hispanic
+- Race: % White / Black / Native American / Asian / Pacific Islander / Other
+
+Output:
+- results/tables/sample_descriptives.csv: publication-ready table with all sample characteristics
 
 ---
 
