@@ -42,9 +42,6 @@ MISSING_CODES_AFFECT = [7, 8, 9]  # Don't know, Refused, Not applicable
 MISSING_CODE_MONTH = 98
 MISSING_CODE_YEAR = 9998
 
-# Log transformation offset (to handle zero values)
-LOG_OFFSET = 0.001
-
 # ============================================================================
 # Helper Functions
 # ============================================================================
@@ -108,8 +105,12 @@ def construct_daily_diary_affect(raw_file, output_file, descriptives_file):
         .reset_index()
     )
 
-    # Log-transform negative affect (add small offset to handle zeros)
-    summary_scores["NA_score_log"] = np.log(summary_scores["NA_score"] + LOG_OFFSET)
+    # Log-transform negative affect
+    # Use half the minimum non-zero value as offset (preserves distribution better)
+    min_nonzero = summary_scores.loc[summary_scores["NA_score"] > 0, "NA_score"].min()
+    log_offset = min_nonzero / 2 if not pd.isna(min_nonzero) else 0.01
+    summary_scores["NA_score_log"] = np.log(summary_scores["NA_score"] + log_offset)
+    print(f"Log transform offset for NA_score: {log_offset:.4f} (half of min non-zero value)")
 
     # Participant-level raw affect item means
     raw_means = (

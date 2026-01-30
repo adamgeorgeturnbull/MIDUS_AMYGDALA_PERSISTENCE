@@ -96,7 +96,11 @@ def main():
     print(f"Skewness and kurtosis saved to {STATS_OUTPUT}")
 
     # Create log-transformed negative affect
-    df["C5SPGN_log"] = np.log(df["C5SPGN"] + 0.001)
+    # Use half the minimum non-zero value as offset (preserves distribution better)
+    min_nonzero = df.loc[df["C5SPGN"] > 0, "C5SPGN"].min()
+    log_offset = min_nonzero / 2 if not pd.isna(min_nonzero) else 0.01
+    df["C5SPGN_log"] = np.log(df["C5SPGN"] + log_offset)
+    print(f"Log transform offset for C5SPGN: {log_offset:.4f} (half of min non-zero value)")
 
     # =========================
     # Save cleaned dataset

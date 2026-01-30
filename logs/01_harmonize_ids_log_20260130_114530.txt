@@ -1,0 +1,23 @@
+
+Processing dataset: project2_daily_diary
+Dataset shape: 9301 rows, 31 columns
+M2ID dtype before conversion: int64
+Missing M2ID: 0
+Duplicate check skipped (expected long format)
+Saved harmonized dataset to data/processed/m3p2_ids.csv
+
+Processing dataset: project5_neuroscience
+Dataset shape: 3355 rows, 21 columns
+M2ID dtype before conversion: int64
+Missing M2ID: 0
+Duplicated M2ID: 0
+Saved harmonized dataset to data/processed/m3p5_ids.csv
+
+Processing dataset: milwaukee_sample
+Dataset shape: 3683 rows, 9 columns
+M2ID dtype before conversion: int64
+Missing M2ID: 0
+Duplicated M2ID: 0
+Saved harmonized dataset to data/processed/mke2_ids.csv
+
+All datasets harmonized successfully.

@@ -57,9 +57,17 @@ MIDUS_AMYGDALA_PERSISTENCE/
 ├── results/
 │   ├── tables/
 │   │   ├── sample_descriptives.csv
+│   │   ├── panas_skew_kurtosis.csv
 │   │   ├── 01_affect_age_correlations.csv
-│   │   └── 01_affect_age_regressions.csv
+│   │   ├── 01_affect_age_regressions.csv
+│   │   ├── 02_persistence_affect_correlations_full.csv
+│   │   ├── 02_persistence_affect_correlations_conservative.csv
+│   │   ├── 02_persistence_affect_regressions_full.csv
+│   │   ├── 02_persistence_affect_regressions_conservative.csv
+│   │   └── 02_persistence_affect_summary.txt
 │   └── figures/
+│       ├── analysis_01/
+│       └── analysis_02/
 ├── scripts/
 │   ├── preprocessing/
 │   │   ├── 01_harmonize_ids.py
@@ -69,9 +77,15 @@ MIDUS_AMYGDALA_PERSISTENCE/
 │   │   ├── 05_merge_master_dataset.py
 │   │   ├── 06_clean_merged_data.py
 │   │   ├── 07_sample_descriptives.py
-│   │   └── 08_merge_fmri_data.py
+│   │   ├── 08_process_fmri_qc.py
+│   │   └── 09_merge_fmri_data.py
 │   ├── analysis/
-│   │   └── 01_affect_age_replication.py
+│   │   ├── 01_affect_age_replication.py
+│   │   ├── 02_persistence_affect.py
+│   │   └── 02_persistence_affect_summary.py
+│   ├── visualization/
+│   │   ├── 01_affect_age_figures.py
+│   │   └── 02_persistence_affect_figures.py
 │   ├── generate_dummy_data.py
 │   ├── generate_dummy_fmri_data.py
 │   └── compare_outputs.py
@@ -354,9 +368,37 @@ Generates publication-ready sample descriptives for 5 MIDUS analytic samples.
 
 ---
 
-### Script 08: Merge fMRI Data
+### Script 08: Process fMRI QC
 
-**File:** `scripts/preprocessing/08_merge_fmri_data.py`
+**File:** `scripts/preprocessing/08_process_fmri_qc.py`
+
+Processes fMRI quality control data from manual inspection.
+
+**Input:**
+- `data/fMRI/task_fMRI_QC.xlsx` (manual QC ratings from visual inspection)
+
+**Processing Steps:**
+1. Load QC Excel file with run-level pass/fail ratings and framewise displacement
+2. Convert subject IDs to M2ID format
+3. Create binary QC flags:
+   - `run1_pass`, `run2_pass`, `run3_pass` - Individual run QC (1 = Pass, 0 = Fail/NaN)
+   - `all_runs_pass` - All 3 runs pass QC (1 = yes, 0 = no)
+   - `fd_pass` - Mean FD < 0.5 mm (1 = yes, 0 = no)
+   - `qc_conservative` - Both all_runs_pass AND fd_pass (conservative sample criterion)
+4. Generate summary statistics and exclusion breakdown
+
+**Output:**
+- `data/fMRI/fmri_qc_processed.csv` (processed QC flags, 1 row per participant)
+
+**Conservative Sample Criteria:**
+- All 3 functional runs pass visual QC
+- Mean framewise displacement < 0.5 mm across all runs
+
+---
+
+### Script 09: Merge fMRI Data
+
+**File:** `scripts/preprocessing/09_merge_fmri_data.py`
 
 Merges fMRI-derived participant-level measures into the cleaned MIDUS master dataset.
 
@@ -368,6 +410,7 @@ Merges fMRI-derived participant-level measures into the cleaned MIDUS master dat
   - `data/fMRI/negative_persistence_cross_run.csv` - Negative persistence cross-run (3 rows/participant)
   - `data/fMRI/positive_persistence_cross_run.csv` - Positive persistence cross-run (3 rows/participant)
   - `data/fMRI/fd_summary.csv` - Framewise displacement (multiple rows/participant)
+  - `data/fMRI/fmri_qc_processed.csv` - Quality control flags (1 row/participant)
 
 **Processing Steps:**
 1. Load cleaned master dataset
@@ -376,13 +419,14 @@ Merges fMRI-derived participant-level measures into the cleaned MIDUS master dat
    - Pivot hemisphere-wise persistence data from long to wide format
    - Aggregate framewise displacement across runs
 3. Merge all fMRI data with master dataset using left joins on M2ID
-4. Create availability flags:
+4. Merge QC flags from processed QC file
+5. Create availability flags:
    - `has_beta_series` - Has beta-series connectivity data
    - `has_neg_persistence` - Has negative persistence data
    - `has_pos_persistence` - Has positive persistence data
    - `has_fd_data` - Has framewise displacement data
    - `has_imaging_data` - Has any imaging data
-5. No participant exclusions applied
+6. No participant exclusions applied (QC flags used for sample definition in analyses)
 
 **Output:**
 - `data/processed/midus_with_fmri.csv`
@@ -428,6 +472,144 @@ Replicates age-related differences in affect in MIDUS 3.
 - All analyses use complete cases for outcome and covariates
 - Minimum N: 10 for correlations, 20 for regressions
 
+---
+
+### Analysis 02: Persistence × Affect
+
+**File:** `scripts/analysis/02_persistence_affect.py`
+
+Tests associations between amygdala persistence to negative images and daily life affect (replication of Puccetti et al., 2021).
+
+**Input:**
+- `data/processed/midus_with_fmri.csv`
+
+**Samples:**
+1. **Full sample** - All participants with imaging + affect data
+   - Filter: `has_neg_persistence == 1` AND any affect measure present
+2. **Conservative sample** - Strict QC criteria
+   - Filter: `qc_conservative == 1` (all 3 runs pass QC AND mean FD < 0.5 mm)
+
+**Persistence Measures (Fisher z-transformed):**
+- **Primary (Confirmatory):**
+  - Cross-run negative persistence (L, R, bilateral)
+- **Sensitivity:**
+  - Cross-run positive persistence (L, R, bilateral)
+  - Concatenated negative persistence (L, R, bilateral)
+
+**Affect Outcomes:**
+- **Primary:** Daily diary PA, NA, and NA_log
+- **Secondary:** PANAS (C5SPGP, C5SPGN, C5SPGN_log)
+
+**Covariates:**
+- Age (C5PAGE)
+- Sex
+- Race (dummy-coded)
+- Twin pairs (dummy-coded)
+- Time between visits (time_P2_P5)
+- Number of diary days completed (n_days_complete)
+
+**Analyses:**
+1. Zero-order Pearson correlations between persistence and affect
+2. OLS regressions: `affect ~ persistence + covariates`
+
+**Outputs:**
+- `results/tables/02_persistence_affect_correlations_full.csv`
+- `results/tables/02_persistence_affect_regressions_full.csv`
+- `results/tables/02_persistence_affect_correlations_conservative.csv`
+- `results/tables/02_persistence_affect_regressions_conservative.csv`
+
+**Notes:**
+- Primary analyses use cross-run negative persistence (replication)
+- Conservative sample is primary per preregistration
+- Full sample results are exploratory if conservative sample unavailable
+
+---
+
+### Analysis 02: Summary
+
+**File:** `scripts/analysis/02_persistence_affect_summary.py`
+
+Summarizes persistence × affect results, focusing on consistency across analytical methods.
+
+**Inputs:**
+- `results/tables/02_persistence_affect_correlations_full.csv`
+- `results/tables/02_persistence_affect_regressions_full.csv`
+- `results/tables/02_persistence_affect_correlations_conservative.csv`
+- `results/tables/02_persistence_affect_regressions_conservative.csv`
+
+**Summary Approach:**
+1. Identifies findings significant in BOTH correlations AND regressions (p < 0.05)
+2. Reports findings significant in only ONE method (with non-significant pair for comparison)
+3. Categorizes results as primary (confirmatory) vs sensitivity analyses
+
+**Output:**
+- `results/tables/02_persistence_affect_summary.txt` - Human-readable summary
+
+**Structure:**
+- Sample status (conservative vs full)
+- Analysis categories breakdown
+- Consistent findings (significant in both methods)
+- Single-method findings (significant in one method only)
+
+---
+
+## Visualization Scripts
+
+### Visualization 01: Affect-Age Figures
+
+**File:** `scripts/visualization/01_affect_age_figures.py`
+
+Generates publication-ready figures for the affect-age replication analysis.
+
+**Inputs:**
+- `data/processed/midus_merged_clean.csv` (for scatterplots)
+- `results/tables/01_affect_age_regressions.csv` (for coefficient plot)
+
+**Figures Created:**
+1. **Scatterplots:** Age × affect relationships with regression lines
+2. **Coefficient plot (forest plot):** Summarizes all regression results
+
+**Outputs:**
+- `results/figures/analysis_01/01_affect_age_scatterplots.pdf`
+- `results/figures/analysis_01/01_affect_age_coefficients.pdf`
+
+**Figure Settings:**
+- Format: PDF
+- DPI: 300
+- Color palette distinguishes daily diary vs neuroscience samples
+
+---
+
+### Visualization 02: Persistence-Affect Figures
+
+**File:** `scripts/visualization/02_persistence_affect_figures.py`
+
+Creates publication-quality figures for persistence × affect associations.
+
+**Inputs:**
+- `data/processed/midus_with_fmri.csv` (for scatterplots)
+- `results/tables/02_persistence_affect_regressions_full.csv`
+- `results/tables/02_persistence_affect_regressions_conservative.csv`
+
+**Figures Created:**
+1. **Scatterplots:** Individual plots for each persistence × affect relationship
+2. **Forest plots:** Regression coefficients (primary vs sensitivity analyses)
+
+**Outputs:**
+- `results/figures/analysis_02/primary/` - Primary analysis figures
+- `results/figures/analysis_02/sensitivity/` - Sensitivity analysis figures
+
+**Figure Organization:**
+- Separate subdirectories for full sample vs conservative sample
+- Primary analyses (cross-run negative persistence) vs sensitivity analyses
+- Color coding distinguishes persistence types and samples
+
+**Figure Settings:**
+- Format: PNG
+- DPI: 300
+- Organized by analysis type (primary/sensitivity) and persistence measure
+
+---
 
 ## Citation and Acknowledgment
 

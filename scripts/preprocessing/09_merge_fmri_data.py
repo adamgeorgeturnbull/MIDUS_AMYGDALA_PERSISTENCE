@@ -11,6 +11,7 @@ Inputs:
 - data/fMRI/negative_persistence_cross_run.csv (neg persistence cross-run, 3 rows/participant)
 - data/fMRI/positive_persistence_cross_run.csv (pos persistence cross-run, 3 rows/participant)
 - data/fMRI/fd_summary.csv (framewise displacement, multiple rows/participant)
+- data/fMRI/fmri_qc_processed.csv (quality control flags, 1 row/participant)
 
 Outputs:
 - data/processed/midus_with_fmri.csv (master dataset + fMRI measures + availability flags)
@@ -42,6 +43,7 @@ NEG_PERSIST_CONCAT_FILE = os.path.join(FMRI_DIR, "negative_persistence_concat.cs
 NEG_PERSIST_CROSS_FILE = os.path.join(FMRI_DIR, "negative_persistence_cross_run.csv")
 POS_PERSIST_CROSS_FILE = os.path.join(FMRI_DIR, "positive_persistence_cross_run.csv")
 FD_FILE = os.path.join(FMRI_DIR, "fd_summary.csv")
+QC_FILE = os.path.join(FMRI_DIR, "fmri_qc_processed.csv")
 
 # Output file
 OUT_FILE = os.path.join(PROCESSED_DIR, "midus_with_fmri.csv")
@@ -70,6 +72,10 @@ def pivot_persistence_long(
     -------
     DataFrame with one row per M2ID
     """
+    # Standardize hemisphere values (BI → bilateral)
+    df = df.copy()
+    df["hemisphere"] = df["hemisphere"].replace({"BI": "bilateral"})
+
     wide_dfs = []
 
     for col in value_cols:
@@ -151,6 +157,9 @@ def main():
         .reset_index()
     )
 
+    # Quality control (QC) flags
+    qc = pd.read_csv(QC_FILE)
+
     # ========================================================================
     # Merge All fMRI Data with Master Dataset
     # ========================================================================
@@ -159,6 +168,7 @@ def main():
     merged = merged.merge(neg_cross_wide, on="M2ID", how="left")
     merged = merged.merge(pos_cross_wide, on="M2ID", how="left")
     merged = merged.merge(fd_summary, on="M2ID", how="left")
+    merged = merged.merge(qc, on="M2ID", how="left")
 
     # ========================================================================
     # Create Availability Flags
