@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 # -*- coding: utf-8 -*-
 """
-merge_midus_data.py
+05_merge_master_dataset.py
 
 Merge MIDUS participant-level diary data with P5 and MKE2 covariates.
 Ensures:
@@ -43,22 +43,30 @@ def merge_combine(df1, df2, key="M2ID"):
     for col in overlap_cols:
         col_1 = f"{col}_1"
         col_2 = f"{col}_2"
-        df_merged[col] = df_merged[col_1].combine_first(df_merged[col_2])
+        df_merged[col] = df_merged[col_1].fillna(df_merged[col_2])
         df_merged.drop([col_1, col_2], axis=1, inplace=True)
     
     return df_merged
 
-# =========================
-# Merge all datasets
-# =========================
-# First merge diary with M3P5
-merged = merge_combine(daily_diary, m3p5_cov, key="M2ID")
 
-# Then merge in MKE2 covariates
-merged = merge_combine(merged, mke2_cov, key="M2ID")
 
-# =========================
-# Save final merged dataset
-# =========================
-merged.to_csv(OUTPUT_FILE, index=False)
-print(f"Merged dataset saved to: {OUTPUT_FILE}")
+def main():
+    """Main execution function."""
+    # =========================
+    # Merge all datasets
+    # =========================
+    # First merge diary with M3P5
+    merged = merge_combine(daily_diary, m3p5_cov, key="M2ID")
+
+    # Then merge in MKE2 covariates
+    merged = merge_combine(merged, mke2_cov, key="M2ID")
+
+    # =========================
+    # Save final merged dataset
+    # =========================
+    merged.to_csv(OUTPUT_FILE, index=False)
+    print(f"Merged dataset saved to: {OUTPUT_FILE}")
+
+
+if __name__ == "__main__":
+    main()

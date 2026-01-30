@@ -5,46 +5,75 @@
 Process MIDUS daily diary data to compute participant-level positive and
 negative affect summary scores, averages for raw affect items, log-transform
 negative affect, and save processed participant-level data and descriptive
-statistics for the paper.
+statistics.
 
-This script intentionally excludes demographic variables to avoid redundancy
-with other datasets.
+Note: This script intentionally excludes demographic variables to avoid
+redundancy with other datasets.
 
-Run from the project root directory.
+Inputs:
+- data/raw/M3P2_variables.csv (Project 2: daily diary affect, long format)
+
+Outputs:
+- data/processed/daily_diary_processed.csv (participant-level affect summaries)
+- data/processed/daily_diary_descriptives.csv (reliability and distribution stats)
+
+Run from project root directory.
 """
 
-import pandas as pd
-import numpy as np
 import os
-from scipy.stats import skew, kurtosis
-import pingouin as pg
 
-# =========================
-# Paths (relative to project root)
-# =========================
+import numpy as np
+import pandas as pd
+import pingouin as pg
+from scipy.stats import kurtosis, skew
+
+# ============================================================================
+# Paths and Constants
+# ============================================================================
 RAW_DIR = "data/raw"
 PROCESSED_DIR = "data/processed"
-os.makedirs(PROCESSED_DIR, exist_ok=True)
 
 RAW_FILE = os.path.join(RAW_DIR, "M3P2_variables.csv")
 OUTPUT_FILE = os.path.join(PROCESSED_DIR, "daily_diary_processed.csv")
 DESCRIPTIVES_FILE = os.path.join(PROCESSED_DIR, "daily_diary_descriptives.csv")
 
-# =========================
-# Function to process daily diary
-# =========================
+# MIDUS missing value codes to recode as NaN
+MISSING_CODES_AFFECT = [7, 8, 9]  # Don't know, Refused, Not applicable
+MISSING_CODE_MONTH = 98
+MISSING_CODE_YEAR = 9998
+
+# Log transformation offset (to handle zero values)
+LOG_OFFSET = 0.001
+
+# ============================================================================
+# Helper Functions
+# ============================================================================
 def construct_daily_diary_affect(raw_file, output_file, descriptives_file):
-    # Load data
+    """
+    Process daily diary affect data and compute summary statistics.
+
+    Args:
+        raw_file: Path to raw M3P2 daily diary data
+        output_file: Path to save participant-level processed data
+        descriptives_file: Path to save descriptive statistics
+
+    Returns:
+        None (saves files to disk)
+    """
+    # ========================================================================
+    # Load and Clean Data
+    # ========================================================================
     df = pd.read_csv(raw_file)
     print(f"Loaded daily diary data: {df.shape[0]} rows, {df.shape[1]} columns")
 
-    # Affect item columns
+    # Affect item columns (C2DC1 through C2DC27)
     all_items = [f"C2DC{i}" for i in range(1, 28)]
 
-    # Recode invalid responses
-    df[all_items] = df[all_items].replace({7: np.nan, 8: np.nan, 9: np.nan})
-    df["C2DIMON"] = df["C2DIMON"].replace(98, np.nan)
-    df["C2DIYEAR"] = df["C2DIYEAR"].replace(9998, np.nan)
+    # Recode MIDUS missing value codes to NaN
+    missing_dict = {code: np.nan for code in MISSING_CODES_AFFECT}
+    df[all_items] = df[all_items].replace(missing_dict)
+    df["C2DIMON"] = df["C2DIMON"].replace(MISSING_CODE_MONTH, np.nan)
+    df["C2DIYEAR"] = df["C2DIYEAR"].replace(MISSING_CODE_YEAR, np.nan)
 
     # Define positive and negative affect items
     pos_items = [f"C2DC{i}" for i in [7, 8, 9, 10, 11, 12, 21, 22, 23, 24, 25, 26, 27]]
@@ -63,15 +92,15 @@ def construct_daily_diary_affect(raw_file, output_file, descriptives_file):
         .reset_index(name="n_days_complete")
     )
 
-    # =========================
-    # Row-level affect scores
-    # =========================
+    # ========================================================================
+    # Compute Row-Level Affect Scores
+    # ========================================================================
     df_complete.loc[:, "PA_score"] = df_complete[pos_items].mean(axis=1)
     df_complete.loc[:, "NA_score"] = df_complete[neg_items].mean(axis=1)
 
-    # =========================
-    # Participant-level averages
-    # =========================
+    # ========================================================================
+    # Compute Participant-Level Averages
+    # ========================================================================
     summary_scores = (
         df_complete
         .groupby("M2ID")[["PA_score", "NA_score"]]
@@ -79,7 +108,8 @@ def construct_daily_diary_affect(raw_file, output_file, descriptives_file):
         .reset_index()
     )
 
-    summary_scores["NA_score_log"] = np.log(summary_scores["NA_score"] + 0.001)
+    # Log-transform negative affect (add small offset to handle zeros)
+    summary_scores["NA_score_log"] = np.log(summary_scores["NA_score"] + LOG_OFFSET)
 
     # Participant-level raw affect item means
     raw_means = (
@@ -91,9 +121,9 @@ def construct_daily_diary_affect(raw_file, output_file, descriptives_file):
 
     participant_means = summary_scores.merge(raw_means, on="M2ID")
 
-    # =========================
-    # Diary start date (Day 1)
-    # =========================
+    # ========================================================================
+    # Extract Diary Start Date
+    # ========================================================================
     start_date_info = (
         df[df["C2DDAY"] == 1][["M2ID", "C2DIMON", "C2DIYEAR"]]
         .drop_duplicates("M2ID")
@@ -103,9 +133,9 @@ def construct_daily_diary_affect(raw_file, output_file, descriptives_file):
         })
     )
 
-    # =========================
-    # Merge all participant-level data
-    # =========================
+    # ========================================================================
+    # Merge All Participant-Level Data
+    # ========================================================================
     final_df = (
         participant_means
         .merge(n_days_any, on="M2ID")
@@ -116,9 +146,9 @@ def construct_daily_diary_affect(raw_file, output_file, descriptives_file):
     final_df.to_csv(output_file, index=False)
     print(f"Processed daily diary data saved to: {output_file}")
 
-    # =========================
-    # Descriptive statistics
-    # =========================
+    # ========================================================================
+    # Compute Descriptive Statistics
+    # ========================================================================
     alpha_pos = pg.cronbach_alpha(data=df_complete[pos_items])[0]
     alpha_neg = pg.cronbach_alpha(data=df_complete[neg_items])[0]
 
@@ -169,8 +199,17 @@ def construct_daily_diary_affect(raw_file, output_file, descriptives_file):
     print(f"Descriptive statistics saved to: {descriptives_file}")
 
 
-# =========================
-# Run script
-# =========================
-if __name__ == "__main__":
+# ============================================================================
+# Main Execution
+# ============================================================================
+def main():
+    """Main execution function."""
+    # Ensure output directory exists
+    os.makedirs(PROCESSED_DIR, exist_ok=True)
+
+    # Process daily diary data
     construct_daily_diary_affect(RAW_FILE, OUTPUT_FILE, DESCRIPTIVES_FILE)
+
+
+if __name__ == "__main__":
+    main()

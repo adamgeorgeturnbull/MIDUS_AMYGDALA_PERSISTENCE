@@ -1,5 +1,4 @@
 #!/usr/bin/env python3
-# -*- coding: utf-8 -*-
 
 """
 Construct demographics variables for MIDUS datasets independently (MKE2, M3P5).
@@ -40,19 +39,19 @@ def clean_demographics(df):
     # harmonized demographics
     sex_1 = get_clean_col(df, "C1PRSEX")
     sex_2 = get_clean_col(df, "CACRSEX")
-    df["sex"] = sex_1.combine_first(sex_2)
+    df["sex"] = sex_1.fillna(sex_2)
 
     educ_1 = get_clean_col(df, "C1PB1")
     educ_2 = get_clean_col(df, "CACB1")
-    df["educ"] = educ_1.combine_first(educ_2)
+    df["educ"] = educ_1.fillna(educ_2)
 
     eth_1 = get_clean_col(df, "C1PF1")
     eth_2 = get_clean_col(df, "CACF1")
-    df["ethnicity"] = eth_1.combine_first(eth_2)
+    df["ethnicity"] = eth_1.fillna(eth_2)
 
     race_1 = get_clean_col(df, "C1PF7A")
     race_2 = get_clean_col(df, "CACF7A")
-    df["race"] = race_1.combine_first(race_2)
+    df["race"] = race_1.fillna(race_2)
 
     # MIDUS missing codes → NA
     df["educ"] = df["educ"].replace({97: pd.NA, 98: pd.NA})
@@ -62,29 +61,37 @@ def clean_demographics(df):
     return df
 
 
+
+
+def main():
+    """Main execution function."""
 # ------------------------------
 # Load data
 # ------------------------------
-df_mke2 = pd.read_csv(MKE2_FILE)
-df_m3p5 = pd.read_csv(M3P5_FILE)
+    df_mke2 = pd.read_csv(MKE2_FILE)
+    df_m3p5 = pd.read_csv(M3P5_FILE)
 
 # ------------------------------
 # Clean demographics independently
 # ------------------------------
-df_mke2_demos = clean_demographics(df_mke2)
-df_m3p5_demos = clean_demographics(df_m3p5)
+    df_mke2_demos = clean_demographics(df_mke2)
+    df_m3p5_demos = clean_demographics(df_m3p5)
 
 # ------------------------------
 # Save outputs
 # ------------------------------
-df_mke2_demos.to_csv(
-    os.path.join(PROCESSED_DIR, "mke2_demos.csv"),
-    index=False
-)
+    df_mke2_demos.to_csv(
+        os.path.join(PROCESSED_DIR, "mke2_demos.csv"),
+        index=False
+    )
 
-df_m3p5_demos.to_csv(
-    os.path.join(PROCESSED_DIR, "m3p5_demos.csv"),
-    index=False
-)
+    df_m3p5_demos.to_csv(
+        os.path.join(PROCESSED_DIR, "m3p5_demos.csv"),
+        index=False
+    )
 
-print("Demographics constructed and saved for MKE2 and M3P5.")
+    print("Demographics constructed and saved for MKE2 and M3P5.")
+
+
+if __name__ == "__main__":
+    main()
