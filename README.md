@@ -547,6 +547,40 @@ Tests associations between amygdala persistence to negative images and daily lif
 
 ---
 
+### Analysis 03: Persistence × Age
+
+**File:** `scripts/analysis/03_persistence_age.py`
+
+Tests whether amygdala persistence to negative images decreases with age (Extension #1, Confirmatory). The hypothesis is directional: negative persistence should be negatively associated with age.
+
+**Input:**
+- `data/processed/midus_with_fmri.csv`
+
+**Samples:**
+1. **Full sample** - `has_neg_persistence == 1` AND valid `C5PAGE`
+2. **Conservative sample** - Full + `qc_conservative == 1`
+
+**Persistence Outcomes (Fisher z-transformed):**
+- **Primary:** Cross-run negative persistence (L, R, bilateral)
+- **Sensitivity:** Cross-run positive persistence, concatenated negative persistence
+
+**Predictor:** C5PAGE (age at neuroscience visit)
+
+**Covariates:** sex, race dummies, twin pair dummies, time_P2_P5, n_days_complete
+- Note: C5PAGE is the predictor, not a covariate
+
+**Analyses:**
+1. Zero-order Pearson correlations (persistence ~ age)
+2. OLS regressions: `persistence ~ C5PAGE + covariates`
+
+**Outputs:**
+- `results/tables/03_persistence_age_correlations_full.csv`
+- `results/tables/03_persistence_age_regressions_full.csv`
+- `results/tables/03_persistence_age_correlations_conservative.csv`
+- `results/tables/03_persistence_age_regressions_conservative.csv`
+
+---
+
 ### Analysis 02: Sensitivity — Mixed-Effects Models
 
 **File:** `scripts/analysis/02_persistence_affect_mlm.py`
