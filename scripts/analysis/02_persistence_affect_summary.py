@@ -14,6 +14,8 @@ Inputs:
 - results/tables/02_persistence_affect_regressions_full.csv
 - results/tables/02_persistence_affect_correlations_conservative.csv
 - results/tables/02_persistence_affect_regressions_conservative.csv
+- results/tables/02_persistence_affect_mlm_full.csv  (optional)
+- results/tables/02_persistence_affect_mlm_conservative.csv  (optional)
 
 Outputs:
 - results/tables/02_persistence_affect_summary.txt
@@ -37,6 +39,8 @@ CORR_FILE_FULL = RESULTS_DIR / "02_persistence_affect_correlations_full.csv"
 REG_FILE_FULL = RESULTS_DIR / "02_persistence_affect_regressions_full.csv"
 CORR_FILE_CONS = RESULTS_DIR / "02_persistence_affect_correlations_conservative.csv"
 REG_FILE_CONS = RESULTS_DIR / "02_persistence_affect_regressions_conservative.csv"
+MLM_FILE_FULL = RESULTS_DIR / "02_persistence_affect_mlm_full.csv"
+MLM_FILE_CONS = RESULTS_DIR / "02_persistence_affect_mlm_conservative.csv"
 
 # Output files
 SUMMARY_TEXT = RESULTS_DIR / "02_persistence_affect_summary.txt"
@@ -224,6 +228,65 @@ def find_single_method_results(corr_df, reg_df, p_threshold=0.05):
     return pd.DataFrame(corr_only), pd.DataFrame(reg_only)
 
 
+def compare_ols_mlm(reg_df, mlm_df, p_threshold=0.05):
+    """
+    Compare OLS regression and mixed-effects model results.
+
+    For each persistence_var × affect_var pair, classifies agreement as:
+      - both_sig: significant in both OLS and MLM
+      - both_ns: non-significant in both
+      - ols_only: significant in OLS but not MLM
+      - mlm_only: significant in MLM but not OLS
+
+    Args:
+        reg_df: OLS regression results with p_persistence column
+        mlm_df: MLM results with p_persistence column
+        p_threshold: P-value threshold for significance
+
+    Returns:
+        DataFrame with comparison results
+    """
+    comparisons = []
+
+    for idx, reg_row in reg_df.iterrows():
+        match = mlm_df[
+            (mlm_df["persistence_var"] == reg_row["persistence_var"]) &
+            (mlm_df["affect_var"] == reg_row["affect_var"])
+        ]
+
+        if len(match) == 0:
+            continue
+
+        mlm_row = match.iloc[0]
+        ols_sig = reg_row["p_persistence"] < p_threshold
+        mlm_sig = mlm_row["p_persistence"] < p_threshold
+
+        if ols_sig and mlm_sig:
+            agreement = "both_sig"
+        elif not ols_sig and not mlm_sig:
+            agreement = "both_ns"
+        elif ols_sig and not mlm_sig:
+            agreement = "ols_only"
+        else:
+            agreement = "mlm_only"
+
+        comparisons.append({
+            "persistence_var": reg_row["persistence_var"],
+            "affect_var": reg_row["affect_var"],
+            "category": reg_row["category"],
+            "beta_ols": reg_row["beta_persistence"],
+            "p_ols": reg_row["p_persistence"],
+            "n_ols": reg_row["n"],
+            "beta_mlm": mlm_row["beta_persistence"],
+            "p_mlm": mlm_row["p_persistence"],
+            "n_mlm": mlm_row["n"],
+            "converged": mlm_row.get("converged", True),
+            "agreement": agreement,
+        })
+
+    return pd.DataFrame(comparisons)
+
+
 # ============================================================================
 # Main Execution
 # ============================================================================
@@ -255,6 +318,25 @@ def main():
     reg_full = pd.read_csv(REG_FILE_FULL)
     print(f"✓ Full sample: {len(corr_full)} correlations, {len(reg_full)} regressions")
 
+    # MLM results (optional — may not exist yet)
+    try:
+        mlm_full = pd.read_csv(MLM_FILE_FULL)
+        mlm_full_available = len(mlm_full) > 0
+        print(f"✓ Full sample MLM: {len(mlm_full)} models")
+    except (pd.errors.EmptyDataError, FileNotFoundError):
+        mlm_full = pd.DataFrame()
+        mlm_full_available = False
+        print("  MLM full sample: Not available")
+
+    try:
+        mlm_cons = pd.read_csv(MLM_FILE_CONS)
+        mlm_cons_available = len(mlm_cons) > 0
+        print(f"✓ Conservative sample MLM: {len(mlm_cons)} models")
+    except (pd.errors.EmptyDataError, FileNotFoundError):
+        mlm_cons = pd.DataFrame()
+        mlm_cons_available = False
+        print("  MLM conservative sample: Not available")
+
     # ========================================================================
     # Categorize Analyses
     # ========================================================================
@@ -266,6 +348,11 @@ def main():
     if cons_available:
         corr_cons["category"] = corr_cons.apply(categorize_analysis, axis=1)
         reg_cons["category"] = reg_cons.apply(categorize_analysis, axis=1)
+
+    if mlm_full_available:
+        mlm_full["category"] = mlm_full.apply(categorize_analysis, axis=1)
+    if mlm_cons_available:
+        mlm_cons["category"] = mlm_cons.apply(categorize_analysis, axis=1)
 
     # ========================================================================
     # Find Consistent Results (sig in BOTH methods)
@@ -534,6 +621,91 @@ def main():
         f.write("Note: * indicates p < 0.05. These findings are not consistent across methods and\n")
         f.write("should be interpreted with caution.\n")
 
+        # ====================================================================
+        # OLS vs MLM Comparison
+        # ====================================================================
+        # Determine which samples have both OLS and MLM results
+        compare_full = mlm_full_available
+        compare_cons = cons_available and mlm_cons_available
+
+        if compare_full or compare_cons:
+            f.write("\n\n")
+            f.write("=" * 80 + "\n")
+            f.write("OLS vs MIXED-EFFECTS MODEL COMPARISON\n")
+            f.write("=" * 80 + "\n")
+            f.write("Compares OLS regressions (with twin pair dummies) to linear mixed-effects\n")
+            f.write("models (random intercept for family). MLM avoids the degrees-of-freedom\n")
+            f.write("cost of one dummy per twin pair while properly handling non-independence.\n\n")
+
+        if compare_cons:
+            comp_cons = compare_ols_mlm(reg_cons, mlm_cons)
+            n_both_sig = (comp_cons["agreement"] == "both_sig").sum()
+            n_both_ns = (comp_cons["agreement"] == "both_ns").sum()
+            n_ols_only = (comp_cons["agreement"] == "ols_only").sum()
+            n_mlm_only = (comp_cons["agreement"] == "mlm_only").sum()
+
+            f.write("Conservative Sample\n")
+            f.write("-" * 80 + "\n")
+            f.write(f"  Both significant:     {n_both_sig}\n")
+            f.write(f"  Both non-significant: {n_both_ns}\n")
+            f.write(f"  OLS only:             {n_ols_only}\n")
+            f.write(f"  MLM only:             {n_mlm_only}\n")
+            f.write(f"  Agreement rate:       {(n_both_sig + n_both_ns)}/{len(comp_cons)}"
+                    f" ({100 * (n_both_sig + n_both_ns) / len(comp_cons):.0f}%)\n\n" if len(comp_cons) > 0 else "\n\n")
+
+            # Show disagreements
+            disagree_cons = comp_cons[comp_cons["agreement"].isin(["ols_only", "mlm_only"])]
+            if len(disagree_cons) > 0:
+                f.write("  Disagreements:\n")
+                for _, row in disagree_cons.iterrows():
+                    direction = "OLS sig, MLM not" if row["agreement"] == "ols_only" else "MLM sig, OLS not"
+                    f.write(f"    {row['persistence_var']} x {row['affect_var']} [{row['category']}]\n")
+                    f.write(f"      OLS: b={row['beta_ols']:.3f}, p={row['p_ols']:.4f} | "
+                            f"MLM: b={row['beta_mlm']:.3f}, p={row['p_mlm']:.4f} ({direction})\n")
+                f.write("\n")
+
+        if compare_full:
+            comp_full = compare_ols_mlm(reg_full, mlm_full)
+            n_both_sig = (comp_full["agreement"] == "both_sig").sum()
+            n_both_ns = (comp_full["agreement"] == "both_ns").sum()
+            n_ols_only = (comp_full["agreement"] == "ols_only").sum()
+            n_mlm_only = (comp_full["agreement"] == "mlm_only").sum()
+
+            f.write("Full Sample (Exploratory)\n")
+            f.write("-" * 80 + "\n")
+            f.write(f"  Both significant:     {n_both_sig}\n")
+            f.write(f"  Both non-significant: {n_both_ns}\n")
+            f.write(f"  OLS only:             {n_ols_only}\n")
+            f.write(f"  MLM only:             {n_mlm_only}\n")
+            if len(comp_full) > 0:
+                f.write(f"  Agreement rate:       {(n_both_sig + n_both_ns)}/{len(comp_full)}"
+                        f" ({100 * (n_both_sig + n_both_ns) / len(comp_full):.0f}%)\n\n")
+            else:
+                f.write("\n\n")
+
+            # Show disagreements
+            disagree_full = comp_full[comp_full["agreement"].isin(["ols_only", "mlm_only"])]
+            if len(disagree_full) > 0:
+                f.write("  Disagreements:\n")
+                for _, row in disagree_full.iterrows():
+                    direction = "OLS sig, MLM not" if row["agreement"] == "ols_only" else "MLM sig, OLS not"
+                    f.write(f"    {row['persistence_var']} x {row['affect_var']} [{row['category']}]\n")
+                    f.write(f"      OLS: b={row['beta_ols']:.3f}, p={row['p_ols']:.4f} | "
+                            f"MLM: b={row['beta_mlm']:.3f}, p={row['p_mlm']:.4f} ({direction})\n")
+                f.write("\n")
+
+            # Show all comparisons for primary analyses
+            primary_comp = comp_full[comp_full["category"] == "primary"]
+            if len(primary_comp) > 0:
+                f.write("  Primary analyses detail (OLS vs MLM):\n")
+                for _, row in primary_comp.iterrows():
+                    sig_ols = "*" if row["p_ols"] < 0.05 else ""
+                    sig_mlm = "*" if row["p_mlm"] < 0.05 else ""
+                    f.write(f"    {row['persistence_var']} x {row['affect_var']}:\n")
+                    f.write(f"      OLS: b={row['beta_ols']:.3f}, p={row['p_ols']:.4f}{sig_ols} (n={int(row['n_ols'])})\n")
+                    f.write(f"      MLM: b={row['beta_mlm']:.3f}, p={row['p_mlm']:.4f}{sig_mlm} (n={int(row['n_mlm'])})\n")
+                f.write("\n")
+
     print(f"✓ Text summary saved to {SUMMARY_TEXT}")
 
     # ========================================================================
@@ -564,6 +736,20 @@ def main():
             sens_full = pd.DataFrame()
         print(f"  Primary: {len(primary_full)}/9")
         print(f"  Sensitivity: {len(sens_full)}/45")
+
+    # MLM comparison console output
+    if mlm_full_available:
+        comp = compare_ols_mlm(reg_full, mlm_full)
+        n_agree = ((comp["agreement"] == "both_sig") | (comp["agreement"] == "both_ns")).sum()
+        print(f"\nOLS vs MLM (full sample): {n_agree}/{len(comp)} agree on significance")
+        n_disagree = len(comp) - n_agree
+        if n_disagree > 0:
+            print(f"  Disagreements: {n_disagree}")
+
+    if cons_available and mlm_cons_available:
+        comp = compare_ols_mlm(reg_cons, mlm_cons)
+        n_agree = ((comp["agreement"] == "both_sig") | (comp["agreement"] == "both_ns")).sum()
+        print(f"\nOLS vs MLM (conservative): {n_agree}/{len(comp)} agree on significance")
 
     print("\n" + "=" * 80)
     print("✓ Summary complete!")

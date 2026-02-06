@@ -85,3 +85,71 @@ None
 
 Note: * indicates p < 0.05. These findings are not consistent across methods and
 should be interpreted with caution.
+
+
+================================================================================
+OLS vs MIXED-EFFECTS MODEL COMPARISON
+================================================================================
+Compares OLS regressions (with twin pair dummies) to linear mixed-effects
+models (random intercept for family). MLM avoids the degrees-of-freedom
+cost of one dummy per twin pair while properly handling non-independence.
+
+Conservative Sample
+--------------------------------------------------------------------------------
+  Both significant:     3
+  Both non-significant: 50
+  OLS only:             0
+  MLM only:             1
+  Agreement rate:       53/54 (98%)
+
+  Disagreements:
+    neg_persist_crossrun_mean_z_bilateral x PA_score [primary]
+      OLS: b=-1.632, p=0.1151 | MLM: b=-1.442, p=0.0306 (MLM sig, OLS not)
+
+Full Sample (Exploratory)
+--------------------------------------------------------------------------------
+  Both significant:     2
+  Both non-significant: 48
+  OLS only:             0
+  MLM only:             4
+  Agreement rate:       50/54 (93%)
+
+  Disagreements:
+    neg_persist_crossrun_mean_z_L x PA_score [primary]
+      OLS: b=-0.862, p=0.2460 | MLM: b=-1.059, p=0.0356 (MLM sig, OLS not)
+    neg_persist_crossrun_mean_z_L x C5SPGP [sensitivity_panas]
+      OLS: b=-1.033, p=0.1222 | MLM: b=-1.270, p=0.0198 (MLM sig, OLS not)
+    pos_persist_crossrun_mean_z_R x PA_score [sensitivity_positive]
+      OLS: b=1.012, p=0.1015 | MLM: b=0.945, p=0.0480 (MLM sig, OLS not)
+    pos_persist_crossrun_mean_z_bilateral x C5SPGN_log [sensitivity_positive]
+      OLS: b=-0.331, p=0.0720 | MLM: b=-0.337, p=0.0284 (MLM sig, OLS not)
+
+  Primary analyses detail (OLS vs MLM):
+    neg_persist_crossrun_mean_z_L x PA_score:
+      OLS: b=-0.862, p=0.2460 (n=94)
+      MLM: b=-1.059, p=0.0356* (n=94)
+    neg_persist_crossrun_mean_z_L x NA_score:
+      OLS: b=0.442, p=0.0556 (n=94)
+      MLM: b=0.287, p=0.0807 (n=94)
+    neg_persist_crossrun_mean_z_L x NA_score_log:
+      OLS: b=0.781, p=0.6300 (n=94)
+      MLM: b=1.372, p=0.2816 (n=94)
+    neg_persist_crossrun_mean_z_R x PA_score:
+      OLS: b=-0.133, p=0.8585 (n=94)
+      MLM: b=-0.040, p=0.9392 (n=94)
+    neg_persist_crossrun_mean_z_R x NA_score:
+      OLS: b=-0.129, p=0.5816 (n=94)
+      MLM: b=-0.121, p=0.4903 (n=94)
+    neg_persist_crossrun_mean_z_R x NA_score_log:
+      OLS: b=0.288, p=0.8589 (n=94)
+      MLM: b=0.104, p=0.9388 (n=94)
+    neg_persist_crossrun_mean_z_bilateral x PA_score:
+      OLS: b=-0.930, p=0.3248 (n=94)
+      MLM: b=-1.111, p=0.0836 (n=94)
+    neg_persist_crossrun_mean_z_bilateral x NA_score:
+      OLS: b=0.185, p=0.5322 (n=94)
+      MLM: b=0.111, p=0.6061 (n=94)
+    neg_persist_crossrun_mean_z_bilateral x NA_score_log:
+      OLS: b=1.118, p=0.5864 (n=94)
+      MLM: b=1.243, p=0.4761 (n=94)
+

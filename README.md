@@ -19,7 +19,7 @@ The study combines daily diary data, survey-based demographics, and neuroimaging
 2. Test whether age-related differences in affect are mediated by amygdala persistence
 
 ### Novel Analyses (Exploratory)
-1. Examine model-free emotion regulation indexed by task-based amygdala–vmPFC/sgACC connectivity using beta-series modeling
+1. Examine model-free emotion regulation indexed by task-based amygdala–vmPFC connectivity using beta-series modeling
 2. Test whether model-free emotion regulation relates to amygdala persistence and daily life affect
 3. Examine moderation by emotion regulation strategy use (reappraisal, suppression)
 4. Test age-related differences in these effects, including analyses restricted to older adults
@@ -83,6 +83,28 @@ MIDUS_AMYGDALA_PERSISTENCE/
 │   │   ├── 01_affect_age_replication.py
 │   │   ├── 02_persistence_affect.py
 │   │   └── 02_persistence_affect_summary.py
+│   ├── fMRI/
+│   │   ├── preprocessing/
+│   │   │   ├── extractSliceTiming.py
+│   │   │   ├── fixOrientation.py
+│   │   │   ├── getMotion.py
+│   │   │   ├── getMotion.sh
+│   │   │   ├── M3_slice_time_correction.sh
+│   │   │   ├── slurm_M3_stc_parallel.sh
+│   │   │   ├── slurm_fmriprep_parallel.sh
+│   │   │   ├── slurm_fmriprep_parallel_pre_fs.sh
+│   │   │   └── slurm_recon_all_parallel.sh
+│   │   └── analysis/
+│   │       ├── runGLM.sh
+│   │       ├── runGLM_concat.sh
+│   │       ├── extract_amygdala.sh
+│   │       ├── extract_amygdala_concat.sh
+│   │       ├── run_cross_corr.py
+│   │       ├── run_cross_corr_concat.py
+│   │       ├── combineBTS.py
+│   │       ├── runBStaskFC.sh
+│   │       ├── seedbasedBStaskFC.sh
+│   │       └── grouplevelSeedBasedFC.sh
 │   ├── visualization/
 │   │   ├── 01_affect_age_figures.py
 │   │   └── 02_persistence_affect_figures.py
@@ -415,7 +437,7 @@ Merges fMRI-derived participant-level measures into the cleaned MIDUS master dat
 **Processing Steps:**
 1. Load cleaned master dataset
 2. Load and process fMRI files:
-   - Rename beta-series connectivity columns (e.g., `l_amyg-vmPFC` → `conn_l_amyg_vmPFC_neg_vs_neu`)
+   - Rename beta-series connectivity columns (e.g., `l_amyg-ant_vmPFC` → `conn_l_amyg_ant_vmPFC_neg_vs_neu`)
    - Pivot hemisphere-wise persistence data from long to wide format
    - Aggregate framewise displacement across runs
 3. Merge all fMRI data with master dataset using left joins on M2ID
@@ -525,6 +547,35 @@ Tests associations between amygdala persistence to negative images and daily lif
 
 ---
 
+### Analysis 02: Sensitivity — Mixed-Effects Models
+
+**File:** `scripts/analysis/02_persistence_affect_mlm.py`
+
+Sensitivity reanalysis replacing OLS regressions (with twin pair dummies) with linear mixed-effects models. This avoids the degrees-of-freedom cost of one dummy variable per twin pair while properly accounting for non-independence within twin families via a random intercept.
+
+**Input:**
+- `data/processed/midus_with_fmri.csv`
+
+**Grouping Variable (`family_id`):**
+- Twins (`SAMPLMAJ == 3` AND 2+ members share `M2FAMNUM`): grouped by `M2FAMNUM`
+- Everyone else: own cluster (`M2ID`)
+
+**Model:**
+- Fixed effects: `affect ~ persistence + C5PAGE + sex + race dummies + time_P2_P5 + n_days_complete`
+- Random effects: random intercept for `family_id`
+- Estimation: REML (optimizer: LBFGS with Powell fallback)
+
+**Outputs:**
+- `results/tables/02_persistence_affect_mlm_full.csv`
+- `results/tables/02_persistence_affect_mlm_conservative.csv`
+
+**Notes:**
+- Correlations are identical to `02_persistence_affect.py` and are not re-run
+- Only the covariate-adjusted models differ (MLM vs OLS)
+- Zero-variance covariates (e.g., race dummies with no cases) are automatically dropped
+
+---
+
 ### Analysis 02: Summary
 
 **File:** `scripts/analysis/02_persistence_affect_summary.py`
@@ -536,11 +587,14 @@ Summarizes persistence × affect results, focusing on consistency across analyti
 - `results/tables/02_persistence_affect_regressions_full.csv`
 - `results/tables/02_persistence_affect_correlations_conservative.csv`
 - `results/tables/02_persistence_affect_regressions_conservative.csv`
+- `results/tables/02_persistence_affect_mlm_full.csv` (optional)
+- `results/tables/02_persistence_affect_mlm_conservative.csv` (optional)
 
 **Summary Approach:**
 1. Identifies findings significant in BOTH correlations AND regressions (p < 0.05)
 2. Reports findings significant in only ONE method (with non-significant pair for comparison)
 3. Categorizes results as primary (confirmatory) vs sensitivity analyses
+4. Compares OLS vs MLM regression results (agreement rate and disagreements)
 
 **Output:**
 - `results/tables/02_persistence_affect_summary.txt` - Human-readable summary
@@ -550,6 +604,7 @@ Summarizes persistence × affect results, focusing on consistency across analyti
 - Analysis categories breakdown
 - Consistent findings (significant in both methods)
 - Single-method findings (significant in one method only)
+- OLS vs MLM comparison (if MLM results available)
 
 ---
 
@@ -608,6 +663,61 @@ Creates publication-quality figures for persistence × affect associations.
 - Format: PNG
 - DPI: 300
 - Organized by analysis type (primary/sensitivity) and persistence measure
+
+---
+
+## fMRI Processing Pipeline
+
+These scripts were run on the Stanford Sherlock HPC cluster. Most are SLURM array jobs that process subjects in parallel. The pipeline order is:
+
+1. Fix orientation → 2. Slice timing correction → 3. FreeSurfer recon-all → 4. fMRIPrep → 5. Motion QC → 6. GLM → 7. Amygdala extraction → 8. Persistence computation → 9. Beta-series connectivity
+
+### fMRI Preprocessing
+
+| Script | Description |
+|--------|-------------|
+| `fixOrientation.py` | Fix transposed NIfTI axes in raw BOLD data (run before all processing) |
+| `extractSliceTiming.py` | Extract slice acquisition order from BIDS JSON sidecar for FSL |
+| `M3_slice_time_correction.sh` | Single-subject STC prototype using FSL slicetimer with axis swapping |
+| `slurm_M3_stc_parallel.sh` | SLURM array: STC for all 160 subjects (production version) |
+| `slurm_recon_all_parallel.sh` | SLURM array: FreeSurfer recon-all for subjects that failed during fMRIPrep |
+| `slurm_fmriprep_parallel.sh` | SLURM array: fMRIPrep v24.1.0 (main batch) |
+| `slurm_fmriprep_parallel_pre_fs.sh` | SLURM array: fMRIPrep with pre-computed FreeSurfer surfaces |
+| `getMotion.py` | Extract framewise displacement metrics from fMRIPrep confounds |
+| `getMotion.sh` | SLURM wrapper for FD extraction (alternative to getMotion.py) |
+
+### fMRI Analysis
+
+**GLM and feature extraction:**
+
+| Script | Description |
+|--------|-------------|
+| `runGLM.sh` | SLURM array: Per-run first-level GLM (nilearn, 6 conditions, 24 motion params) |
+| `runGLM_concat.sh` | SLURM array: Concatenated all-runs GLM (sensitivity analysis) |
+| `extract_amygdala.sh` | SLURM array: Extract voxelwise amygdala betas from per-run GLM (Harvard-Oxford 50%) |
+| `extract_amygdala_concat.sh` | SLURM array: Extract voxelwise amygdala betas from concatenated GLM |
+
+**Persistence computation:**
+
+| Script | Description |
+|--------|-------------|
+| `run_cross_corr.py` | Compute cross-run voxelwise persistence (primary measure) |
+| `run_cross_corr_concat.py` | Compute concatenated persistence (sensitivity measure) |
+
+**Beta-series functional connectivity:**
+
+| Script | Description |
+|--------|-------------|
+| `runBStaskFC.sh` | SLURM array: ROI-level beta-series connectivity (amygdala–anterior/posterior vmPFC, neg vs neu; Tashjian et al., 2021 TICS) |
+| `combineBTS.py` | Combine per-subject beta-series ROI CSVs into group file |
+| `seedbasedBStaskFC.sh` | SLURM array: Voxelwise seed-based beta-series FC (whole-brain maps) |
+| `grouplevelSeedBasedFC.sh` | Group-level second-level analysis of seed-based FC maps |
+
+**Common GLM parameters across scripts:**
+- TR = 2.0s, HRF = Glover, drift = cosine (1/128 Hz), noise = AR(1)
+- 24 motion regressors (6 params + temporal derivatives + quadratic terms)
+- First 4 dummy scans removed
+- Amygdala mask: Harvard-Oxford atlas, 50% probability threshold, 2mm
 
 ---
 
