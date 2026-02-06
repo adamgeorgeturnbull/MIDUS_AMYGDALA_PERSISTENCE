@@ -113,10 +113,10 @@ def main():
     # Beta-series connectivity
     beta = pd.read_csv(BETA_FILE)
     beta = beta.rename(columns={
-        "l_amyg-vmPFC": "conn_l_amyg_vmPFC_neg_vs_neu",
-        "l_amyg-sgACC": "conn_l_amyg_sgACC_neg_vs_neu",
-        "r_amyg-vmPFC": "conn_r_amyg_vmPFC_neg_vs_neu",
-        "r_amyg-sgACC": "conn_r_amyg_sgACC_neg_vs_neu"
+        "l_amyg-ant_vmPFC": "conn_l_amyg_ant_vmPFC_neg_vs_neu",
+        "l_amyg-post_vmPFC": "conn_l_amyg_post_vmPFC_neg_vs_neu",
+        "r_amyg-ant_vmPFC": "conn_r_amyg_ant_vmPFC_neg_vs_neu",
+        "r_amyg-post_vmPFC": "conn_r_amyg_post_vmPFC_neg_vs_neu"
     })
 
     # Negative persistence (concatenated runs)
@@ -175,7 +175,7 @@ def main():
     # ========================================================================
     # Flag participants with each fMRI modality
     merged["has_beta_series"] = merged[
-        ["conn_l_amyg_vmPFC_neg_vs_neu", "conn_r_amyg_vmPFC_neg_vs_neu"]
+        ["conn_l_amyg_ant_vmPFC_neg_vs_neu", "conn_r_amyg_ant_vmPFC_neg_vs_neu"]
     ].notna().any(axis=1).astype(int)
 
     merged["has_neg_persistence"] = merged.filter(
