@@ -6,7 +6,7 @@ Merge fMRI-derived participant-level measures into the cleaned MIDUS master data
 
 Inputs:
 - data/processed/midus_merged_clean.csv (cleaned master dataset)
-- data/fMRI/betaSeries_neg_vs_neu.csv (beta-series connectivity, 1 row/participant)
+- data/fMRI/betaSeries_neg_vs_neu_threat_safety.csv (beta-series connectivity, 1 row/participant)
 - data/fMRI/negative_persistence_concat.csv (negative persistence, 3 rows/participant)
 - data/fMRI/negative_persistence_cross_run.csv (neg persistence cross-run, 3 rows/participant)
 - data/fMRI/positive_persistence_cross_run.csv (pos persistence cross-run, 3 rows/participant)
@@ -38,7 +38,7 @@ FMRI_DIR = "data/fMRI"
 MASTER_FILE = os.path.join(PROCESSED_DIR, "midus_merged_clean.csv")
 
 # fMRI input files
-BETA_FILE = os.path.join(FMRI_DIR, "betaSeries_neg_vs_neu.csv")
+BETA_FILE = os.path.join(FMRI_DIR, "betaSeries_neg_vs_neu_threat_safety.csv")
 NEG_PERSIST_CONCAT_FILE = os.path.join(FMRI_DIR, "negative_persistence_concat.csv")
 NEG_PERSIST_CROSS_FILE = os.path.join(FMRI_DIR, "negative_persistence_cross_run.csv")
 POS_PERSIST_CROSS_FILE = os.path.join(FMRI_DIR, "positive_persistence_cross_run.csv")

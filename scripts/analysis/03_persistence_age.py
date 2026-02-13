@@ -260,18 +260,17 @@ def main():
     race_dummies = [col for col in df.columns if col.startswith("race_")]
     twin_dummies = [col for col in df.columns if col.startswith("twin_pair_")]
 
+    # No diary-specific covariates (time_P2_P5, n_days_complete) — this
+    # analysis is entirely neuroscience-based (persistence × age).
     covariates = [
         "sex",
-        "time_P2_P5",
-        "n_days_complete",
     ] + race_dummies + twin_dummies
 
     print(f"\nPredictor: {age_var} (age at neuroscience visit)")
     print(f"Outcomes: {len(persistence_vars)} persistence measures (Fisher z)")
     print(f"  Primary: 3 cross-run negative (L, R, bilateral)")
     print(f"  Sensitivity: 3 cross-run positive + 3 concatenated negative")
-    print(f"Covariates: sex, time_P2_P5, n_days_complete, "
-          f"{len(race_dummies)} race, {len(twin_dummies)} twin dummies")
+    print(f"Covariates: sex, {len(race_dummies)} race, {len(twin_dummies)} twin dummies")
     print(f"  NOTE: C5PAGE is the predictor, not a covariate")
 
     # ========================================================================

@@ -67,10 +67,14 @@ def fisher_z(r):
 
 
 def get_full_sample(df):
-    """Define full analysis sample: participants with imaging + affect + ER data."""
+    """Define full analysis sample: participants with imaging data.
+
+    Per-model dropna() handles missing affect outcomes, so we do NOT
+    pre-filter on affect availability. This lets PANAS analyses include
+    participants who have MRI data but no daily diary data.
+    """
     has_persistence = df["has_neg_persistence"] == 1
-    has_affect = df[["PA_score", "NA_score"]].notna().any(axis=1)
-    sample = df[has_persistence & has_affect].copy()
+    sample = df[has_persistence].copy()
 
     print(f"\nFull sample: {len(sample)} participants")
     print(f"  With daily diary affect: {sample['PA_score'].notna().sum()}")
@@ -147,12 +151,20 @@ def run_moderation(df, persistence_var, affect_var, moderator, covariates):
     }
 
 
-def run_all_moderations(df, persistence_vars, affect_vars, moderators, covariates):
-    """Run all persistence × affect × moderator interaction models."""
+def run_all_moderations(df, persistence_vars, affect_vars, moderators,
+                        base_covariates, diary_covariates, diary_affect_vars):
+    """Run all persistence × affect × moderator interaction models.
+
+    Diary-specific covariates only included for daily diary outcomes.
+    """
     results = []
     for moderator in moderators:
         for persist_var in persistence_vars:
             for affect_var in affect_vars:
+                if affect_var in diary_affect_vars:
+                    covariates = base_covariates + diary_covariates
+                else:
+                    covariates = base_covariates
                 result = run_moderation(df, persist_var, affect_var, moderator, covariates)
                 if result is not None:
                     results.append(result)
@@ -160,7 +172,8 @@ def run_all_moderations(df, persistence_vars, affect_vars, moderators, covariate
 
 
 def run_sample_analysis(sample, sample_name, persistence_vars, affect_vars,
-                        moderators, moderator_labels, covariates):
+                        moderators, moderator_labels,
+                        base_covariates, diary_covariates, diary_affect_vars):
     """Run moderation analysis for a given sample and save results."""
     print("\n" + "=" * 80)
     print(f"Moderation Analysis: {sample_name}")
@@ -176,7 +189,8 @@ def run_sample_analysis(sample, sample_name, persistence_vars, affect_vars,
     print(f"\nRunning moderation models (interaction term is key test)...")
 
     results = run_all_moderations(
-        sample, persistence_vars, affect_vars, moderators, covariates
+        sample, persistence_vars, affect_vars, moderators,
+        base_covariates, diary_covariates, diary_affect_vars
     )
 
     if len(results) > 0:
@@ -273,18 +287,25 @@ def main():
     race_dummies = [col for col in df.columns if col.startswith("race_")]
     twin_dummies = [col for col in df.columns if col.startswith("twin_pair_")]
 
-    covariates = [
+    # Diary-specific covariates only for daily diary outcomes
+    base_covariates = [
         "C5PAGE",
         "sex",
+    ] + race_dummies + twin_dummies
+
+    diary_covariates = [
         "time_P2_P5",
         "n_days_complete",
-    ] + race_dummies + twin_dummies
+    ]
+
+    diary_affect_vars = {"PA_score", "NA_score", "NA_score_log"}
 
     print(f"\nPredictors: {len(persistence_vars)} persistence measures (Fisher z)")
     print(f"Outcomes: {len(affect_vars)} affect measures")
     print(f"Moderators: {', '.join(f'{l} ({m})' for m, l in zip(moderators, moderator_labels))}")
-    print(f"Covariates: C5PAGE, sex, time_P2_P5, n_days_complete, "
-          f"{len(race_dummies)} race, {len(twin_dummies)} twin dummies")
+    print(f"Covariates:")
+    print(f"  Base (all models): C5PAGE, sex, {len(race_dummies)} race, {len(twin_dummies)} twin dummies")
+    print(f"  Diary-only (PA/NA outcomes): time_P2_P5, n_days_complete")
     print(f"Total models per sample: {len(persistence_vars)} × {len(affect_vars)} "
           f"× {len(moderators)} = {len(persistence_vars) * len(affect_vars) * len(moderators)}")
 
@@ -296,12 +317,14 @@ def main():
 
     full_results = run_sample_analysis(
         full_sample, "full", persistence_vars, affect_vars,
-        moderators, moderator_labels, covariates
+        moderators, moderator_labels,
+        base_covariates, diary_covariates, diary_affect_vars
     )
 
     cons_results = run_sample_analysis(
         conservative_sample, "conservative", persistence_vars, affect_vars,
-        moderators, moderator_labels, covariates
+        moderators, moderator_labels,
+        base_covariates, diary_covariates, diary_affect_vars
     )
 
     # ========================================================================

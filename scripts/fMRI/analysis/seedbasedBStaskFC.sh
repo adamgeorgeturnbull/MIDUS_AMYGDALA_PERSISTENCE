@@ -22,8 +22,8 @@
 #     Whole-brain Fisher z contrast map (neg > neu connectivity)
 #
 #SBATCH -J betaSeriesSeedFC
-#SBATCH --output=/scratch/groups/fvlin/MIDUS/log/betaSeriesSeedFC_%A_%a.log
-#SBATCH --error=/scratch/groups/fvlin/MIDUS/log/betaSeriesSeedFC_%A_%a.err
+#SBATCH --output=/scratch/groups/fvlin/MIDUS/M3/log/betaSeriesSeedFC_%A_%a.log
+#SBATCH --error=/scratch/groups/fvlin/MIDUS/M3/log/betaSeriesSeedFC_%A_%a.err
 #SBATCH --time=24:00:00
 #SBATCH --cpus-per-task=8
 #SBATCH --mem-per-cpu=8G
@@ -38,8 +38,8 @@ ml py-pandas/2.2.1_py312
 pip install --user --no-deps nilearn
 
 bids_root_dir=/scratch/groups/fvlin/MIDUS/M3/M3_ImagingSession
-derivatives_dir=/scratch/groups/fvlin/MIDUS/derivatives
-out_dir=/scratch/groups/fvlin/MIDUS/BetaSeriesSeedFC_output
+derivatives_dir=/scratch/groups/fvlin/MIDUS/M3/derivatives
+out_dir=/scratch/groups/fvlin/MIDUS/M3/BetaSeriesSeedFC_output
 mkdir -p $out_dir
 
 export bids_root_dir=$bids_root_dir
@@ -48,7 +48,7 @@ export out_dir=$out_dir
 
 motion_exclude_ids=(sub-10294 sub-11557 sub-11694 sub-12424 sub-12540 sub-13084 sub-13129 sub-13697 sub-14391 sub-14451 sub-14527 sub-14785 sub-15196 sub-16064 sub-16716 sub-17241 sub-17477 sub-17542 sub-17660 sub-18751)
 
-subid=$(sed -n "${SLURM_ARRAY_TASK_ID}p" /scratch/groups/fvlin/MIDUS/M3_subject_list.txt)
+subid=$(sed -n "${SLURM_ARRAY_TASK_ID}p" /scratch/groups/fvlin/MIDUS/M3/M3_subject_list.txt)
 
 if [[ " ${motion_exclude_ids[@]} " =~ " ${subid} " ]]; then
     echo "Skipping excluded subject $subid"
@@ -79,7 +79,7 @@ print("BIDS root:", os.environ.get("bids_root_dir"))
 print("Derivatives:", os.environ.get("derivatives_dir"))
 sys.stdout.flush()
 
-persistence_file = '/scratch/groups/fvlin/MIDUS/voxelwise_betas_summary/results_summary.csv'
+persistence_file = '/scratch/groups/fvlin/MIDUS/M3/voxelwise_betas_summary/results_summary.csv'
 persistence = pd.read_csv(persistence_file)
 
 rows = persistence.loc[(persistence['subject'] == subid) & (persistence['hemisphere'] == 'L'),'mean_r']

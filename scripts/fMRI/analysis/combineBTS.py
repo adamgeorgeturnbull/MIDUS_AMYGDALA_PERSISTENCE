@@ -26,7 +26,7 @@ import pandas as pd
 from pathlib import Path
 
 # Directory containing per-subject beta-series output folders
-input_dir = Path("/scratch/groups/fvlin/MIDUS/BetaSeries_output")
+input_dir = Path("/scratch/groups/fvlin/MIDUS/M3/BetaSeries_output")
 
 output_file = input_dir / "all_subjects_betaSeries_M2ID.csv"
 

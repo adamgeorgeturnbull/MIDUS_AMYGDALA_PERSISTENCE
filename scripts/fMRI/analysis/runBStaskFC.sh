@@ -29,8 +29,8 @@
 #     Values: Fisher z(neg) - Fisher z(neu), averaged across runs
 #
 #SBATCH -J betaSeries_MIDUS
-#SBATCH --output=/scratch/groups/fvlin/MIDUS/log/betaSeries_%A_%a.log
-#SBATCH --error=/scratch/groups/fvlin/MIDUS/log/betaSeries_%A_%a.err
+#SBATCH --output=/scratch/groups/fvlin/MIDUS/M3/log/betaSeries_%A_%a.log
+#SBATCH --error=/scratch/groups/fvlin/MIDUS/M3/log/betaSeries_%A_%a.err
 #SBATCH --time=12:00:00
 #SBATCH --cpus-per-task=4
 #SBATCH --mem-per-cpu=6G
@@ -45,14 +45,14 @@ ml py-pandas/2.2.1_py312
 pip install --user --no-deps nilearn
 
 bids_root_dir=/scratch/groups/fvlin/MIDUS/M3/M3_ImagingSession
-derivatives_dir=/scratch/groups/fvlin/MIDUS/derivatives
-out_dir=/scratch/groups/fvlin/MIDUS/BetaSeries_output
+derivatives_dir=/scratch/groups/fvlin/MIDUS/M3/derivatives
+out_dir=/scratch/groups/fvlin/MIDUS/M3/BetaSeries_output
 mkdir -p $out_dir
 export bids_root_dir=$bids_root_dir
 export derivatives_dir=$derivatives_dir
 export out_dir=$out_dir
 
-subid=$(sed -n "${SLURM_ARRAY_TASK_ID}p" /scratch/groups/fvlin/MIDUS/M3_subject_list.txt)
+subid=$(sed -n "${SLURM_ARRAY_TASK_ID}p" /scratch/groups/fvlin/MIDUS/M3/M3_subject_list.txt)
 export subid=$subid
 
 python3 << 'EOF'

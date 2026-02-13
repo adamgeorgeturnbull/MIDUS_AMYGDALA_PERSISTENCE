@@ -94,10 +94,14 @@ def create_family_id(df):
 
 
 def get_full_sample(df):
-    """Define full analysis sample: participants with imaging + affect data."""
+    """Define full analysis sample: participants with imaging data.
+
+    Per-model dropna() handles missing affect outcomes, so we do NOT
+    pre-filter on affect availability. This lets PANAS analyses include
+    participants who have MRI data but no daily diary data.
+    """
     has_persistence = df["has_neg_persistence"] == 1
-    has_affect = df[["PA_score", "NA_score"]].notna().any(axis=1)
-    sample = df[has_persistence & has_affect].copy()
+    sample = df[has_persistence].copy()
     print(f"\nFull sample: {len(sample)} participants")
     return sample
 
@@ -172,18 +176,27 @@ def run_mlm(df, persistence_var, affect_var, covariates):
     }
 
 
-def run_all_mlm(df, persistence_vars, affect_vars, covariates):
-    """Run all persistence x affect mixed-effects models."""
+def run_all_mlm(df, persistence_vars, affect_vars, base_covariates,
+                diary_covariates, diary_affect_vars):
+    """Run all persistence x affect mixed-effects models.
+
+    Diary-specific covariates only included for daily diary outcomes.
+    """
     results = []
     for persist_var in persistence_vars:
         for affect_var in affect_vars:
+            if affect_var in diary_affect_vars:
+                covariates = base_covariates + diary_covariates
+            else:
+                covariates = base_covariates
             result = run_mlm(df, persist_var, affect_var, covariates)
             if result is not None:
                 results.append(result)
     return pd.DataFrame(results)
 
 
-def run_sample_analysis(sample, sample_name, persistence_vars, affect_vars, covariates):
+def run_sample_analysis(sample, sample_name, persistence_vars, affect_vars,
+                        base_covariates, diary_covariates, diary_affect_vars):
     """Run MLM analysis for a given sample and save results."""
     print("\n" + "=" * 80)
     print(f"Mixed-Effects Analysis: {sample_name}")
@@ -194,7 +207,8 @@ def run_sample_analysis(sample, sample_name, persistence_vars, affect_vars, cova
 
     print(f"\nRunning mixed-effects models (random intercept for family)...")
 
-    results = run_all_mlm(sample, persistence_vars, affect_vars, covariates)
+    results = run_all_mlm(sample, persistence_vars, affect_vars,
+                          base_covariates, diary_covariates, diary_affect_vars)
 
     if len(results) > 0:
         print(f"\n  Computed {len(results)} models")
@@ -279,20 +293,26 @@ def main():
         "C5SPGN_log",
     ]
 
-    # Covariates: same as OLS but WITHOUT twin dummies
+    # Covariates: same as OLS but WITHOUT twin dummies (handled by random effect).
+    # Diary-specific covariates only for daily diary outcomes.
     race_dummies = [col for col in df.columns if col.startswith("race_")]
 
-    covariates = [
+    base_covariates = [
         "C5PAGE",
         "sex",
-        "time_P2_P5",
-        "n_days_complete",
     ] + race_dummies
 
+    diary_covariates = [
+        "time_P2_P5",
+        "n_days_complete",
+    ]
+
+    diary_affect_vars = {"PA_score", "NA_score", "NA_score_log"}
+
     print(f"\nCovariates (no twin dummies — handled by random effect):")
-    print(f"  Fixed: C5PAGE, sex, time_P2_P5, n_days_complete, {len(race_dummies)} race dummies")
+    print(f"  Base (all models): C5PAGE, sex, {len(race_dummies)} race dummies")
+    print(f"  Diary-only (PA/NA outcomes): time_P2_P5, n_days_complete")
     print(f"  Random: intercept | family_id")
-    print(f"  Total fixed covariates: {len(covariates)}")
 
     # ========================================================================
     # Run Analyses
@@ -301,11 +321,13 @@ def main():
     conservative_sample = get_conservative_sample(df)
 
     full_results = run_sample_analysis(
-        full_sample, "full", persistence_vars, affect_vars, covariates
+        full_sample, "full", persistence_vars, affect_vars,
+        base_covariates, diary_covariates, diary_affect_vars
     )
 
     cons_results = run_sample_analysis(
-        conservative_sample, "conservative", persistence_vars, affect_vars, covariates
+        conservative_sample, "conservative", persistence_vars, affect_vars,
+        base_covariates, diary_covariates, diary_affect_vars
     )
 
     # ========================================================================

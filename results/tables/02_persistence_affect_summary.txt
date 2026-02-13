@@ -38,7 +38,7 @@ PRIMARY ANALYSES (Conservative Sample)
 
 Consistent findings (significant in BOTH methods):
   Primary: 1/9 tests
-  Sensitivity: 2/45 tests
+  Sensitivity: 1/45 tests
 
 Primary findings (sig in BOTH correlation and regression):
 
@@ -46,13 +46,11 @@ Primary findings (sig in BOTH correlation and regression):
     Correlation: r = 0.232, p = 0.0349, n = 83
     Regression:  β = 0.468, p = 0.0198, n = 83
 
-Sensitivity findings (2 total):
+Sensitivity findings (1 total):
 
-  Panas (2 findings):
-    neg_persist_crossrun_mean_z_L × C5SPGP
-      Corr: r=-0.318, p=0.0034 | Reg: β=-1.443, p=0.0451
+  Panas (1 findings):
     neg_persist_crossrun_mean_z_bilateral × C5SPGP
-      Corr: r=-0.306, p=0.0049 | Reg: β=-2.160, p=0.0192
+      Corr: r=-0.266, p=0.0021 | Reg: β=-1.560, p=0.0192
 
 
 ================================================================================
@@ -73,6 +71,10 @@ Negative persistence bilateral × Daily Positive Affect:
   - Regression:  β = -1.632, p = 0.115
 
 Sensitivity analyses:
+
+neg_persist_crossrun L × PANAS Positive Affect:
+  - Correlation: r = -0.197, p = 0.024*
+  - Regression:  β = -0.8984, p = 0.069
 
 Positive persistence R × Daily Positive Affect:
   - Correlation: r = 0.300, p = 0.006*
@@ -96,33 +98,31 @@ cost of one dummy per twin pair while properly handling non-independence.
 
 Conservative Sample
 --------------------------------------------------------------------------------
-  Both significant:     3
+  Both significant:     2
   Both non-significant: 50
   OLS only:             0
-  MLM only:             1
-  Agreement rate:       53/54 (98%)
+  MLM only:             2
+  Agreement rate:       52/54 (96%)
 
   Disagreements:
+    neg_persist_crossrun_mean_z_L x C5SPGP [sensitivity_panas]
+      OLS: b=-0.898, p=0.0694 | MLM: b=-0.934, p=0.0234 (MLM sig, OLS not)
     neg_persist_crossrun_mean_z_bilateral x PA_score [primary]
       OLS: b=-1.632, p=0.1151 | MLM: b=-1.442, p=0.0306 (MLM sig, OLS not)
 
 Full Sample (Exploratory)
 --------------------------------------------------------------------------------
-  Both significant:     2
-  Both non-significant: 48
+  Both significant:     1
+  Both non-significant: 51
   OLS only:             0
-  MLM only:             4
-  Agreement rate:       50/54 (93%)
+  MLM only:             2
+  Agreement rate:       52/54 (96%)
 
   Disagreements:
     neg_persist_crossrun_mean_z_L x PA_score [primary]
       OLS: b=-0.862, p=0.2460 | MLM: b=-1.059, p=0.0356 (MLM sig, OLS not)
-    neg_persist_crossrun_mean_z_L x C5SPGP [sensitivity_panas]
-      OLS: b=-1.033, p=0.1222 | MLM: b=-1.270, p=0.0198 (MLM sig, OLS not)
     pos_persist_crossrun_mean_z_R x PA_score [sensitivity_positive]
       OLS: b=1.012, p=0.1015 | MLM: b=0.945, p=0.0480 (MLM sig, OLS not)
-    pos_persist_crossrun_mean_z_bilateral x C5SPGN_log [sensitivity_positive]
-      OLS: b=-0.331, p=0.0720 | MLM: b=-0.337, p=0.0284 (MLM sig, OLS not)
 
   Primary analyses detail (OLS vs MLM):
     neg_persist_crossrun_mean_z_L x PA_score:

@@ -19,8 +19,8 @@
 #   - group_covariate_<seed>.png    (visualization)
 #
 #SBATCH -J groupLevelSeedFC
-#SBATCH --output=/scratch/groups/fvlin/MIDUS/log/groupSeedFC_%A.log
-#SBATCH --error=/scratch/groups/fvlin/MIDUS/log/groupSeedFC_%A.err
+#SBATCH --output=/scratch/groups/fvlin/MIDUS/M3/log/groupSeedFC_%A.log
+#SBATCH --error=/scratch/groups/fvlin/MIDUS/M3/log/groupSeedFC_%A.err
 #SBATCH --time=24:00:00
 #SBATCH --cpus-per-task=8
 #SBATCH --mem-per-cpu=8G
@@ -44,19 +44,29 @@ from nilearn.glm.second_level import SecondLevelModel
 # ------------------------
 # Paths
 # ------------------------
-output_dir = Path("/scratch/groups/fvlin/MIDUS/BetaSeriesSeedFC_output")
-out_dir = Path("/scratch/groups/fvlin/MIDUS/GroupSeedFC_output")
+output_dir = Path("/scratch/groups/fvlin/MIDUS/M3/BetaSeriesSeedFC_output")
+out_dir = Path("/scratch/groups/fvlin/MIDUS/M3/GroupSeedFC_output")
 out_dir.mkdir(parents=True, exist_ok=True)
 
-persistence_file = '/scratch/groups/fvlin/MIDUS/voxelwise_betas_summary/results_summary.csv'
+persistence_file = '/scratch/groups/fvlin/MIDUS/M3/voxelwise_betas_summary/results_summary.csv'
 persistence = pd.read_csv(persistence_file)
 persistence = persistence[persistence['hemisphere'] == 'L'][['subject','mean_r']]
+# Fisher z-transform persistence r values for use as covariate
+persistence['mean_z'] = np.arctanh(persistence['mean_r'])
+
+# Load QC data and restrict to conservative sample (all 3 runs pass + FD < 0.5mm)
+qc_file = '/scratch/groups/fvlin/MIDUS/M3/fmri_qc_processed.csv'
+qc = pd.read_csv(qc_file)
+conservative_m2ids = set(qc.loc[qc['qc_conservative'] == 1, 'M2ID'].astype(str))
+conservative_subs = {f"sub-{m}" for m in conservative_m2ids}
+print(f"Conservative sample: {len(conservative_subs)} subjects pass QC")
 
 # ------------------------
 # Collect subject-level maps
 # ------------------------
 seeds = ['l_amyg','r_amyg']
-all_subjects = sorted([d.name for d in output_dir.iterdir() if d.is_dir()])
+all_subjects = sorted([d.name for d in output_dir.iterdir() if d.is_dir() and d.name in conservative_subs])
+print(f"Subjects with FC output in conservative sample: {len(all_subjects)}")
 
 maps = {seed: [] for seed in seeds}
 subjects_with_maps = {seed: [] for seed in seeds}
@@ -100,17 +110,25 @@ for seed in seeds:
     # ------------------------
     # 2) Covariate analysis: left amygdala persistence
     # ------------------------
-    df = pd.DataFrame({'subject': subjects_with_maps[seed]})
+    # Build a dataframe linking subjects to their map index
+    df = pd.DataFrame({'subject': subjects_with_maps[seed],
+                        'map_idx': range(len(subjects_with_maps[seed]))})
     df = df.merge(persistence, on='subject', how='inner')
+    # Drop subjects with NaN or Inf persistence values (in z-space)
+    df = df[np.isfinite(df['mean_z'])].reset_index(drop=True)
     if df.empty:
         print(f"No matching subjects with persistence for seed {seed}, skipping covariate analysis")
         continue
 
+    # Filter maps to only include subjects in the merged dataframe
+    cov_maps = [maps[seed][i] for i in df['map_idx']]
+    print(f"  Covariate analysis: {len(cov_maps)} subjects with valid persistence data")
+
     design_matrix = pd.DataFrame({'intercept': np.ones(len(df)),
-                                  'persistence': df['mean_r'].values})
+                                  'persistence': df['mean_z'].values})
 
     second_level_model = SecondLevelModel(mask_img=gm_mask)
-    z_map_cov = second_level_model.fit(maps[seed], design_matrix=design_matrix).compute_contrast(
+    z_map_cov = second_level_model.fit(cov_maps, design_matrix=design_matrix).compute_contrast(
         second_level_contrast=[0,1],  # coefficient for 'persistence'
         output_type='z_score'
     )
