@@ -2,22 +2,19 @@
 """
 combineBTS.py
 
-Combine per-subject beta-series connectivity CSVs into a single group-level
-file with harmonized MIDUS IDs.
+Combine per-subject beta-series connectivity CSVs into single group-level
+files with harmonized MIDUS IDs.
 
-Each subject's beta-series analysis (run via runBStaskFC.sh / nilearn) produces a CSV with
-ROI-level connectivity estimates for the negative > neutral contrast. This
-script concatenates all subjects into one file and converts BIDS subject IDs
-(sub-XXXXX) to MIDUS M2ID format for merging with behavioral data.
+Produces two output files:
+1. all_subjects_betaSeries_M2ID.csv - Backward-compatible neg > neu contrast only
+2. all_subjects_betaSeries_all_conditions_M2ID.csv - Per-condition (neg, neu, pos)
+   Fisher z correlations plus contrasts
 
 Input:
     BetaSeries_output/
         sub-XXXXX/
-            *betaSeries_ROI_contrast_neg_vs_neu.csv  (one per subject)
-
-Output:
-    all_subjects_betaSeries_M2ID.csv - Combined CSV with columns from the
-        beta-series analysis plus M2ID (BIDS 'subid' prefix stripped)
+            *betaSeries_ROI_contrast_neg_vs_neu.csv
+            *betaSeries_ROI_all_conditions.csv
 
 @author: aturnbu2
 """
@@ -28,23 +25,41 @@ from pathlib import Path
 # Directory containing per-subject beta-series output folders
 input_dir = Path("/scratch/groups/fvlin/MIDUS/M3/BetaSeries_output")
 
-output_file = input_dir / "all_subjects_betaSeries_M2ID.csv"
 
-all_dfs = []
+def combine_files(input_dir, glob_pattern, output_file):
+    """Combine per-subject CSVs matching glob_pattern into one file."""
+    all_dfs = []
 
-for sub_dir in input_dir.iterdir():
-    if sub_dir.is_dir():
-        # Each subject folder contains one neg_vs_neu contrast CSV
-        csv_files = list(sub_dir.glob("*betaSeries_ROI_contrast_neg_vs_neu.csv"))
-        if csv_files:
-            df = pd.read_csv(csv_files[0])
-            # Convert BIDS subject ID (sub-XXXXX) to numeric M2ID
-            if 'subid' in df.columns:
-                df['M2ID'] = df['subid'].str.replace('^sub-', '', regex=True)
-                df = df.drop(columns='subid')
-            all_dfs.append(df)
+    for sub_dir in sorted(input_dir.iterdir()):
+        if sub_dir.is_dir():
+            csv_files = list(sub_dir.glob(glob_pattern))
+            if csv_files:
+                df = pd.read_csv(csv_files[0])
+                # Convert BIDS subject ID (sub-XXXXX) to numeric M2ID
+                if 'subid' in df.columns:
+                    df['M2ID'] = df['subid'].str.replace('^sub-', '', regex=True)
+                    df = df.drop(columns='subid')
+                all_dfs.append(df)
 
-combined_df = pd.concat(all_dfs, ignore_index=True)
+    if all_dfs:
+        combined_df = pd.concat(all_dfs, ignore_index=True)
+        combined_df.to_csv(output_file, index=False)
+        print(f"Saved {len(combined_df)} subjects to {output_file}")
+        print(f"  Columns: {list(combined_df.columns)}")
+    else:
+        print(f"No files matching '{glob_pattern}' found.")
 
-combined_df.to_csv(output_file, index=False)
-print(f"Saved combined beta-series CSV to {output_file}")
+
+# 1) Backward-compatible: neg > neu contrast only
+combine_files(
+    input_dir,
+    "*betaSeries_ROI_contrast_neg_vs_neu.csv",
+    input_dir / "all_subjects_betaSeries_M2ID.csv",
+)
+
+# 2) New: per-condition correlations + contrasts
+combine_files(
+    input_dir,
+    "*betaSeries_ROI_all_conditions.csv",
+    input_dir / "all_subjects_betaSeries_all_conditions_M2ID.csv",
+)

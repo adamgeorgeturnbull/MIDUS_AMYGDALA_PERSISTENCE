@@ -115,8 +115,8 @@ for run in runs:
 
     # Create clean events with onset_trimmed and unique trial names
     clean_events_list = []
-    conditions = ['neg','neu']
-    for val in conditions:
+    available_conditions = [v for v in ['neg','neu','pos'] if v in events['valence'].values]
+    for val in available_conditions:
         df_val = events[events['valence']==val][['onset_trimmed','duration']].copy()
         df_val = df_val.rename(columns={'onset_trimmed':'onset'})
         df_val['duration'] = 6.0  # 2s image + 4s fixation
@@ -172,18 +172,30 @@ for run in runs:
     for roi in beta_series:
         beta_series[roi] = np.array(beta_series[roi])
 
-    # Compute Fisher z-transformed correlations for neg vs neu
-    neg_idx = [i for i, t in enumerate(trial_names) if t.startswith('neg')]
-    neu_idx = [i for i, t in enumerate(trial_names) if t.startswith('neu')]
+    # Compute Fisher z-transformed correlations per condition
+    cond_indices = {}
+    for cond in available_conditions:
+        cond_indices[cond] = [i for i, t in enumerate(trial_names) if t.startswith(cond)]
     def fisher_z(r):
         return np.arctanh(np.clip(r, -0.9999, 0.9999))
     roi_pairs = [('l_amyg','ant_vmPFC'), ('l_amyg','post_vmPFC'),
                  ('r_amyg','ant_vmPFC'), ('r_amyg','post_vmPFC')]
     results_run = {'run': run}
     for seed, target in roi_pairs:
-        r_neg, _ = pearsonr(beta_series[seed][neg_idx], beta_series[target][neg_idx])
-        r_neu, _ = pearsonr(beta_series[seed][neu_idx], beta_series[target][neu_idx])
-        results_run[f'{seed}-{target}'] = fisher_z(r_neg) - fisher_z(r_neu)
+        pair_name = f'{seed}-{target}'
+        z_vals = {}
+        for cond, idx in cond_indices.items():
+            if len(idx) >= 3:
+                r, _ = pearsonr(beta_series[seed][idx], beta_series[target][idx])
+                z_vals[cond] = fisher_z(r)
+                results_run[f'{pair_name}_{cond}'] = z_vals[cond]
+            else:
+                results_run[f'{pair_name}_{cond}'] = np.nan
+        # Contrasts
+        if 'neg' in z_vals and 'neu' in z_vals:
+            results_run[f'{pair_name}_neg_vs_neu'] = z_vals['neg'] - z_vals['neu']
+        if 'neg' in z_vals and 'pos' in z_vals:
+            results_run[f'{pair_name}_neg_vs_pos'] = z_vals['neg'] - z_vals['pos']
     results_all_runs.append(results_run)
 
 # Average across runs
@@ -192,9 +204,19 @@ results_df_mean = results_df.drop(columns='run').mean().to_frame().T
 results_df_mean['subid'] = subid
 results_df_mean = results_df_mean[['subid'] + [c for c in results_df_mean.columns if c != 'subid']]
 
-# Save final results
-results_file = sub_out_dir / f"{subid}_betaSeries_ROI_contrast_neg_vs_neu.csv"
+# Save comprehensive results (per-condition + contrasts)
+results_file = sub_out_dir / f"{subid}_betaSeries_ROI_all_conditions.csv"
 results_df_mean.to_csv(results_file, index=False)
 print(f"Saved results to {results_file}")
+
+# Also save backward-compatible neg_vs_neu file
+compat_cols = ['subid'] + [c for c in results_df_mean.columns if c.endswith('_neg_vs_neu')]
+if len(compat_cols) > 1:
+    compat_file = sub_out_dir / f"{subid}_betaSeries_ROI_contrast_neg_vs_neu.csv"
+    # Rename columns to match old format (strip _neg_vs_neu suffix)
+    compat_df = results_df_mean[compat_cols].copy()
+    compat_df.columns = [c.replace('_neg_vs_neu', '') if c != 'subid' else c for c in compat_df.columns]
+    compat_df.to_csv(compat_file, index=False)
+    print(f"Saved backward-compatible file to {compat_file}")
 EOF
 

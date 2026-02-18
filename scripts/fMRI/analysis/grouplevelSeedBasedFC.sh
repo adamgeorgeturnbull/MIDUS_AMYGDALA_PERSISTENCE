@@ -4,19 +4,26 @@
 # SLURM job: Group-level analysis of seed-based beta-series FC maps.
 #
 # Takes subject-level neg > neu connectivity maps from seedbasedBStaskFC.sh
-# and runs second-level (group) analyses using nilearn's SecondLevelModel:
+# and runs second-level (group) analyses using TFCE-based permutation testing
+# (Smith & Nichols, 2009) via nilearn's non_parametric_inference:
 #
 #   1. Group mean: One-sample t-test on neg > neu connectivity maps
-#   2. Covariate analysis: Tests whether left amygdala persistence (mean_r)
+#   2. Covariate analysis: Tests whether left amygdala persistence (mean_z)
 #      predicts voxelwise neg > neu connectivity
+#
+# TFCE (Threshold-Free Cluster Enhancement) avoids choosing a cluster-forming
+# threshold. Family-wise error is controlled via the max-statistic permutation
+# distribution (Eklund et al., 2016).
 #
 # Run separately for each seed (l_amyg, r_amyg).
 #
-# Output:
-#   - group_mean_<seed>.nii.gz     (group mean z-map)
-#   - group_mean_<seed>.png        (visualization)
-#   - group_covariate_<seed>.nii.gz (persistence covariate z-map)
-#   - group_covariate_<seed>.png    (visualization)
+# Output per seed:
+#   - group_mean_<seed>_tstat.nii.gz          (t-statistic map)
+#   - group_mean_<seed>_logp_max_tfce.nii.gz  (-log10 p_FWE from TFCE)
+#   - group_mean_<seed>.png                   (visualization)
+#   - group_covariate_<seed>_tstat.nii.gz
+#   - group_covariate_<seed>_logp_max_tfce.nii.gz
+#   - group_covariate_<seed>.png
 #
 #SBATCH -J groupLevelSeedFC
 #SBATCH --output=/scratch/groups/fvlin/MIDUS/M3/log/groupSeedFC_%A.log
@@ -39,7 +46,14 @@ from pathlib import Path
 import pandas as pd
 import numpy as np
 from nilearn import image, plotting, masking
-from nilearn.glm.second_level import SecondLevelModel
+from nilearn.glm.second_level import non_parametric_inference
+
+# ------------------------
+# Settings
+# ------------------------
+N_PERM = 5000        # number of permutations for TFCE
+TWO_SIDED = True     # test both positive and negative effects
+N_JOBS = 8           # parallel permutations (match --cpus-per-task)
 
 # ------------------------
 # Paths
@@ -79,62 +93,93 @@ for sub in all_subjects:
             subjects_with_maps[seed].append(sub)
 
 # ------------------------
-# Optional gray-matter mask
-# ------------------------
-gm_mask = None
-# gm_mask = masking.compute_gray_matter_mask(maps[seeds[0]][0])  # optional
-
-# ------------------------
 # Group-level analysis per seed
 # ------------------------
 for seed in seeds:
-    print(f"Processing group-level analysis for {seed}")
-
-    # ------------------------
-    # 1) Group mean map (intercept only)
-    # ------------------------
     n_subj = len(maps[seed])
-    if n_subj == 0:
-        print(f"No maps found for seed {seed}, skipping.")
+    print(f"\n{'=' * 60}")
+    print(f"Processing {seed}: N = {n_subj}")
+    print(f"{'=' * 60}")
+
+    if n_subj < 2:
+        print(f"Need >= 2 subjects for permutation testing, skipping {seed}.")
         continue
 
-    design_matrix = pd.DataFrame({'intercept': np.ones(n_subj)})
-    second_level_model = SecondLevelModel(mask_img=gm_mask)
-    second_level_model = second_level_model.fit(maps[seed], design_matrix=design_matrix)
-    z_map_mean = second_level_model.compute_contrast(output_type='z_score')
-    z_map_mean.to_filename(out_dir / f"group_mean_{seed}.nii.gz")
-    plotting.plot_stat_map(z_map_mean, display_mode='z', cut_coords=7,
-                           title=f"{seed} group mean", 
-                           output_file=out_dir / f"group_mean_{seed}.png")
+    # -------------------------------------------------------
+    # 1) Group mean (one-sample test via intercept)
+    # -------------------------------------------------------
+    print(f"  Running TFCE group mean ({N_PERM} permutations)...")
+    design_matrix_mean = pd.DataFrame({
+        'intercept': np.ones(n_subj),
+    })
+    out_mean = non_parametric_inference(
+        maps[seed],
+        design_matrix=design_matrix_mean,
+        model_intercept=False,
+        n_perm=N_PERM,
+        two_sided_test=TWO_SIDED,
+        tfce=True,
+        n_jobs=N_JOBS,
+        verbose=1,
+    )
 
-    # ------------------------
+    # Save outputs
+    out_mean['t'].to_filename(out_dir / f"group_mean_{seed}_tstat.nii.gz")
+    out_mean['logp_max_tfce'].to_filename(out_dir / f"group_mean_{seed}_logp_max_tfce.nii.gz")
+
+    # Visualization: threshold at -log10(0.05) = 1.3 for FWE significance
+    plotting.plot_stat_map(
+        out_mean['logp_max_tfce'], display_mode='z', cut_coords=7,
+        threshold=1.3,  # -log10(0.05)
+        title=f"{seed} group mean (TFCE p<.05 FWE)",
+        output_file=out_dir / f"group_mean_{seed}.png",
+    )
+    print(f"  Saved group mean outputs for {seed}")
+
+    # -------------------------------------------------------
     # 2) Covariate analysis: left amygdala persistence
-    # ------------------------
-    # Build a dataframe linking subjects to their map index
+    # -------------------------------------------------------
     df = pd.DataFrame({'subject': subjects_with_maps[seed],
                         'map_idx': range(len(subjects_with_maps[seed]))})
     df = df.merge(persistence, on='subject', how='inner')
-    # Drop subjects with NaN or Inf persistence values (in z-space)
     df = df[np.isfinite(df['mean_z'])].reset_index(drop=True)
-    if df.empty:
-        print(f"No matching subjects with persistence for seed {seed}, skipping covariate analysis")
+
+    if len(df) < 2:
+        print(f"  Need >= 2 subjects with persistence for covariate analysis, skipping.")
         continue
 
-    # Filter maps to only include subjects in the merged dataframe
     cov_maps = [maps[seed][i] for i in df['map_idx']]
-    print(f"  Covariate analysis: {len(cov_maps)} subjects with valid persistence data")
+    print(f"  Running TFCE covariate analysis: {len(cov_maps)} subjects ({N_PERM} permutations)...")
 
-    design_matrix = pd.DataFrame({'intercept': np.ones(len(df)),
-                                  'persistence': df['mean_z'].values})
+    design_matrix = pd.DataFrame({
+        'persistence': df['mean_z'].values,
+        'intercept': np.ones(len(df)),
+    })
 
-    second_level_model = SecondLevelModel(mask_img=gm_mask)
-    z_map_cov = second_level_model.fit(cov_maps, design_matrix=design_matrix).compute_contrast(
-        second_level_contrast=[0,1],  # coefficient for 'persistence'
-        output_type='z_score'
+    out_cov = non_parametric_inference(
+        cov_maps,
+        design_matrix=design_matrix,
+        second_level_contrast='persistence',
+        model_intercept=False,  # intercept already in design matrix
+        n_perm=N_PERM,
+        two_sided_test=TWO_SIDED,
+        tfce=True,
+        n_jobs=N_JOBS,
+        verbose=1,
     )
-    z_map_cov.to_filename(out_dir / f"group_covariate_{seed}.nii.gz")
-    plotting.plot_stat_map(z_map_cov, display_mode='z', cut_coords=7,
-                           title=f"{seed} covariate", 
-                           output_file=out_dir / f"group_covariate_{seed}.png")
-EOF
 
+    out_cov['t'].to_filename(out_dir / f"group_covariate_{seed}_tstat.nii.gz")
+    out_cov['logp_max_tfce'].to_filename(out_dir / f"group_covariate_{seed}_logp_max_tfce.nii.gz")
+
+    plotting.plot_stat_map(
+        out_cov['logp_max_tfce'], display_mode='z', cut_coords=7,
+        threshold=1.3,
+        title=f"{seed} persistence covariate (TFCE p<.05 FWE)",
+        output_file=out_dir / f"group_covariate_{seed}.png",
+    )
+    print(f"  Saved covariate outputs for {seed}")
+
+print(f"\n{'=' * 60}")
+print("Done.")
+print(f"{'=' * 60}")
+EOF
