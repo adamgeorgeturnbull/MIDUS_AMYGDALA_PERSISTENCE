@@ -1,33 +1,35 @@
 #!/usr/bin/env python3
 """
-06_persistence_affect_moderation.py
+06b_persistence_affect_moderation_mlm.py
 
-Test whether emotion regulation strategy moderates the persistence–affect
-association (Exploratory Analysis #3).
+Mixed-effects (multilevel) reanalysis of persistence x affect moderation
+by emotion regulation strategy.
 
-Moderators:
-- C5SER: ERQ Reappraisal (1–7 scale)
-- C5SES: ERQ Suppression (1–7 scale)
+Replaces the OLS + twin-pair-dummy approach from 06_persistence_affect_moderation.py
+with linear mixed-effects models (random intercept for family). This avoids the
+degrees-of-freedom cost of one dummy per twin pair while properly accounting
+for non-independence within twin families.
 
 Model:
-  affect ~ persistence + moderator + persistence×moderator + covariates
+  affect ~ persistence + moderator + persistence*moderator + covariates,
+  (1 | family_id)
+
+Moderators:
+- C5SER: ERQ Reappraisal (1-7 scale)
+- C5SES: ERQ Suppression (1-7 scale)
 
 Both persistence and moderator are mean-centered before creating the
 interaction term to reduce multicollinearity and aid interpretation.
 
-Covariates (following Puccetti et al., 2021):
-- Age (C5PAGE)
-- Gender (sex)
-- Race (dummy-coded)
-- Twin pairs (dummy-coded)
-- Time between visits (time_P2_P5)
-- Number of diary days completed (n_days_complete)
+Grouping variable (family_id):
+  - Twins (SAMPLMAJ == 3 AND 2+ members share M2FAMNUM): M2FAMNUM
+  - Everyone else: M2ID (cluster of size 1)
+
+Fixed effects: persistence_c + moderator_c + persistence_c*moderator_c +
+               age + sex + race dummies + time_P2_P5 + n_days_complete
+Random effects: random intercept for family_id
 
 Key analysis decisions:
-- Persistence measures are Fisher z-transformed before analysis
-- Primary: Cross-run negative persistence (L, R, bilateral)
-- Sensitivity: Cross-run positive, concatenated negative
-- Mean-centering done within each complete-case subset
 - Two-tailed tests for interaction effects (exploratory)
 - One-tailed p-values for persistence main effect (directional hypothesis)
 - Results tiered: primary (L amyg, PA/NA), secondary (R amyg), sensitivity (rest)
@@ -36,19 +38,19 @@ Inputs:
 - data/processed/midus_with_fmri.csv
 
 Outputs:
-- results/tables/06_persistence_affect_moderation_full.csv
-- results/tables/06_persistence_affect_moderation_conservative.csv
+- results/tables/06b_persistence_affect_moderation_mlm_full.csv
+- results/tables/06b_persistence_affect_moderation_mlm_conservative.csv
 
 Run from project root directory.
 """
 
 import sys
+import warnings
 from pathlib import Path
 
 import numpy as np
 import pandas as pd
-import statsmodels.api as sm
-from scipy import stats
+import statsmodels.formula.api as smf
 
 sys.path.insert(0, str(Path(__file__).resolve().parent))
 from tier_utils import get_persistence_tier, get_affect_tier, combine_tiers, print_by_tier
@@ -72,19 +74,38 @@ def fisher_z(r):
     return 0.5 * np.log((1 + r) / (1 - r))
 
 
-def get_full_sample(df):
-    """Define full analysis sample: participants with imaging data.
-
-    Per-model dropna() handles missing affect outcomes, so we do NOT
-    pre-filter on affect availability. This lets PANAS analyses include
-    participants who have MRI data but no daily diary data.
+def create_family_id(df):
     """
+    Create a family_id column for mixed-effects grouping.
+
+    Twins (SAMPLMAJ == 3) who share a M2FAMNUM with at least one other
+    participant in the dataset are grouped by that family number.
+    All other participants get their own unique group (M2ID).
+    """
+    df = df.copy()
+
+    is_twin_sample = df["SAMPLMAJ"] == 3
+    twin_fam_counts = df.loc[is_twin_sample, "M2FAMNUM"].value_counts()
+    paired_families = twin_fam_counts[twin_fam_counts > 1].index
+
+    df["family_id"] = df["M2ID"].astype(str)
+    paired_mask = is_twin_sample & df["M2FAMNUM"].isin(paired_families)
+    df.loc[paired_mask, "family_id"] = "fam_" + df.loc[paired_mask, "M2FAMNUM"].astype(int).astype(str)
+
+    n_paired = paired_mask.sum()
+    n_families = df.loc[paired_mask, "family_id"].nunique()
+    print(f"  Family grouping: {n_paired} participants in {n_families} twin families, "
+          f"{(~paired_mask).sum()} singletons")
+
+    return df
+
+
+def get_full_sample(df):
+    """Define full analysis sample: participants with imaging data."""
     has_persistence = df["has_neg_persistence"] == 1
     sample = df[has_persistence].copy()
-
     print(f"\nFull sample: {len(sample)} participants")
     print(f"  With daily diary affect: {sample['PA_score'].notna().sum()}")
-
     return sample
 
 
@@ -93,68 +114,84 @@ def get_conservative_sample(df):
     sample = get_full_sample(df)
     qc_pass = sample["qc_conservative"] == 1
     conservative = sample[qc_pass].copy()
-
     print(f"Conservative sample: {len(conservative)} participants")
-
     return conservative
 
 
-def run_moderation(df, persistence_var, affect_var, moderator, covariates):
+def run_mlm_moderation(df, persistence_var, affect_var, moderator, covariates):
     """
-    Run OLS moderation: affect ~ persistence + moderator + persistence×moderator + covariates.
+    Run mixed-effects moderation:
+    affect ~ persistence_c + moderator_c + persistence_c*moderator_c + covariates,
+    (1 | family_id).
 
     Persistence and moderator are mean-centered within the complete-case subset.
 
     Returns dictionary with results, or None if insufficient data.
     """
-    vars_needed = [affect_var, persistence_var, moderator] + covariates
+    vars_needed = [affect_var, persistence_var, moderator, "family_id"] + covariates
     data = df[vars_needed].dropna()
 
     if len(data) < MIN_N_REG:
         return None
 
     # Mean-center persistence and moderator
-    persist_centered = data[persistence_var] - data[persistence_var].mean()
-    mod_centered = data[moderator] - data[moderator].mean()
-    interaction = persist_centered * mod_centered
+    persist_c = data[persistence_var] - data[persistence_var].mean()
+    mod_c = data[moderator] - data[moderator].mean()
+    interaction = persist_c * mod_c
 
-    # Build design matrix: [persist_c, mod_c, interaction, covariates]
-    X = pd.concat([
-        pd.DataFrame({
-            persistence_var: persist_centered,
-            moderator: mod_centered,
-            f"{persistence_var}_x_{moderator}": interaction,
-        }, index=data.index),
-        data[covariates],
-    ], axis=1)
-    X = sm.add_constant(X)
-    y = data[affect_var]
+    # Add centered variables to data for formula interface
+    data = data.copy()
+    persist_c_name = f"{persistence_var}_c"
+    mod_c_name = f"{moderator}_c"
+    interaction_name = f"{persistence_var}_x_{moderator}"
+    data[persist_c_name] = persist_c
+    data[mod_c_name] = mod_c
+    data[interaction_name] = interaction
 
-    try:
-        model = sm.OLS(y, X).fit()
-    except Exception as e:
-        print(f"    Error fitting model for {affect_var} ~ "
-              f"{persistence_var} * {moderator}: {e}")
+    # Drop zero-variance covariates
+    active_covariates = [c for c in covariates if data[c].std() > 0]
+
+    # Build formula (no twin dummies -- handled by random effect)
+    predictors = [persist_c_name, mod_c_name, interaction_name] + active_covariates
+    fixed = f"{affect_var} ~ " + " + ".join(predictors)
+
+    # Try multiple optimizers
+    methods = ["lbfgs", "powell"]
+    result = None
+    for method in methods:
+        try:
+            with warnings.catch_warnings():
+                warnings.simplefilter("ignore")
+                model = smf.mixedlm(fixed, data=data, groups=data["family_id"])
+                result = model.fit(reml=True, method=method)
+                break
+        except Exception:
+            continue
+
+    if result is None:
+        print(f"    Error fitting MLM for {affect_var} ~ "
+              f"{persistence_var} * {moderator}: all optimizers failed")
         return None
-
-    interaction_col = f"{persistence_var}_x_{moderator}"
 
     return {
         "persistence_var": persistence_var,
         "affect_var": affect_var,
         "moderator": moderator,
-        "n": int(model.nobs),
-        "beta_interaction": model.params[interaction_col],
-        "se_interaction": model.bse[interaction_col],
-        "t_interaction": model.tvalues[interaction_col],
-        "p_interaction": model.pvalues[interaction_col],
-        "beta_persistence": model.params[persistence_var],
-        "p_persistence": model.pvalues[persistence_var],
-        "p_persistence_one_tailed": model.pvalues[persistence_var] / 2,
-        "beta_moderator": model.params[moderator],
-        "p_moderator": model.pvalues[moderator],
-        "r_squared": model.rsquared,
-        "adj_r_squared": model.rsquared_adj,
+        "n": int(result.nobs),
+        "n_groups": int(result.nobs - result.df_resid),
+        "beta_interaction": result.fe_params[interaction_name],
+        "se_interaction": result.bse_fe[interaction_name],
+        "z_interaction": result.tvalues[interaction_name],
+        "p_interaction": result.pvalues[interaction_name],
+        "beta_persistence": result.fe_params[persist_c_name],
+        "p_persistence": result.pvalues[persist_c_name],
+        "p_persistence_one_tailed": result.pvalues[persist_c_name] / 2,
+        "beta_moderator": result.fe_params[mod_c_name],
+        "p_moderator": result.pvalues[mod_c_name],
+        "group_var": result.cov_re.iloc[0, 0] if hasattr(result.cov_re, 'iloc') else float(result.cov_re),
+        "log_likelihood": result.llf,
+        "converged": result.converged,
+        "optimizer": method,
         "tier": combine_tiers(
             get_persistence_tier(persistence_var),
             get_affect_tier(affect_var),
@@ -164,7 +201,7 @@ def run_moderation(df, persistence_var, affect_var, moderator, covariates):
 
 def run_all_moderations(df, persistence_vars, affect_vars, moderators,
                         base_covariates, diary_covariates, diary_affect_vars):
-    """Run all persistence × affect × moderator interaction models.
+    """Run all persistence x affect x moderator mixed-effects models.
 
     Diary-specific covariates only included for daily diary outcomes.
     """
@@ -176,7 +213,7 @@ def run_all_moderations(df, persistence_vars, affect_vars, moderators,
                     covariates = base_covariates + diary_covariates
                 else:
                     covariates = base_covariates
-                result = run_moderation(df, persist_var, affect_var, moderator, covariates)
+                result = run_mlm_moderation(df, persist_var, affect_var, moderator, covariates)
                 if result is not None:
                     results.append(result)
     return pd.DataFrame(results)
@@ -185,19 +222,22 @@ def run_all_moderations(df, persistence_vars, affect_vars, moderators,
 def run_sample_analysis(sample, sample_name, persistence_vars, affect_vars,
                         moderators, moderator_labels,
                         base_covariates, diary_covariates, diary_affect_vars):
-    """Run moderation analysis for a given sample and save results."""
+    """Run MLM moderation analysis for a given sample and save results."""
     print("\n" + "=" * 80)
-    print(f"Moderation Analysis: {sample_name}")
+    print(f"Mixed-Effects Moderation Analysis: {sample_name}")
     print("=" * 80)
+
+    # Create family grouping
+    sample = create_family_id(sample)
 
     # Moderator descriptives
     for mod, label in zip(moderators, moderator_labels):
         valid = sample[mod].dropna()
         print(f"\n  {label} ({mod}): N={len(valid)}, "
               f"M={valid.mean():.2f}, SD={valid.std():.2f}, "
-              f"range={valid.min():.1f}–{valid.max():.1f}")
+              f"range={valid.min():.1f}-{valid.max():.1f}")
 
-    print(f"\nRunning moderation models (interaction term is key test)...")
+    print(f"\nRunning mixed-effects moderation models (random intercept for family)...")
 
     results = run_all_moderations(
         sample, persistence_vars, affect_vars, moderators,
@@ -226,7 +266,7 @@ def run_sample_analysis(sample, sample_name, persistence_vars, affect_vars,
     else:
         print("\n  No models computed (insufficient data)")
 
-    out_file = RESULTS_DIR / f"06_persistence_affect_moderation_{sample_name}.csv"
+    out_file = RESULTS_DIR / f"06b_persistence_affect_moderation_mlm_{sample_name}.csv"
     results.to_csv(out_file, index=False)
     print(f"\n  Saved to {out_file}")
 
@@ -241,7 +281,7 @@ def main():
     RESULTS_DIR.mkdir(parents=True, exist_ok=True)
 
     print("=" * 80)
-    print("Analysis 06: Persistence × Affect — Moderation by Emotion Regulation")
+    print("Analysis 06b (MLM): Persistence x Affect -- Moderation by Emotion Regulation")
     print("=" * 80)
 
     # ========================================================================
@@ -297,14 +337,13 @@ def main():
     moderators = ["C5SER", "C5SES"]
     moderator_labels = ["ERQ Reappraisal", "ERQ Suppression"]
 
+    # Covariates: same as OLS but WITHOUT twin dummies (handled by random effect).
     race_dummies = [col for col in df.columns if col.startswith("race_")]
-    twin_dummies = [col for col in df.columns if col.startswith("twin_pair_")]
 
-    # Diary-specific covariates only for daily diary outcomes
     base_covariates = [
         "C5PAGE",
         "sex",
-    ] + race_dummies + twin_dummies
+    ] + race_dummies
 
     diary_covariates = [
         "time_P2_P5",
@@ -316,11 +355,12 @@ def main():
     print(f"\nPredictors: {len(persistence_vars)} persistence measures (Fisher z)")
     print(f"Outcomes: {len(affect_vars)} affect measures")
     print(f"Moderators: {', '.join(f'{l} ({m})' for m, l in zip(moderators, moderator_labels))}")
-    print(f"Covariates:")
-    print(f"  Base (all models): C5PAGE, sex, {len(race_dummies)} race, {len(twin_dummies)} twin dummies")
+    print(f"Covariates (no twin dummies -- handled by random effect):")
+    print(f"  Base (all models): C5PAGE, sex, {len(race_dummies)} race dummies")
     print(f"  Diary-only (PA/NA outcomes): time_P2_P5, n_days_complete")
-    print(f"Total models per sample: {len(persistence_vars)} × {len(affect_vars)} "
-          f"× {len(moderators)} = {len(persistence_vars) * len(affect_vars) * len(moderators)}")
+    print(f"  Random: intercept | family_id")
+    print(f"Total models per sample: {len(persistence_vars)} x {len(affect_vars)} "
+          f"x {len(moderators)} = {len(persistence_vars) * len(affect_vars) * len(moderators)}")
 
     # ========================================================================
     # Run Analyses

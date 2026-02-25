@@ -22,10 +22,8 @@ Key analysis decisions:
 - Persistence measures are Fisher z-transformed before analysis
 - Primary persistence: Cross-run negative persistence (replication)
 - Sensitivity persistence: Cross-run positive, concatenated negative
-- Primary affect outcomes: Daily diary PA, NA
-- Sensitivity affect outcomes: NA_log, PANAS (C5SPGP, C5SPGN, C5SPGN_log)
-- One-tailed p-values for persistence–affect associations (directional)
-- Results tiered: primary (L amyg, PA/NA), secondary (R amyg), sensitivity (rest)
+- Primary affect outcomes: Daily diary PA, NA, and NA_log
+- Secondary affect outcomes: PANAS (C5SPGP, C5SPGN, C5SPGN_log)
 
 Two versions:
 - Full sample: All participants with imaging + affect data
@@ -43,16 +41,13 @@ Outputs:
 Run from project root directory.
 """
 
-import sys
+import os
 from pathlib import Path
 
 import numpy as np
 import pandas as pd
 import statsmodels.api as sm
 from scipy import stats
-
-sys.path.insert(0, str(Path(__file__).resolve().parent))
-from tier_utils import get_persistence_tier, get_affect_tier, combine_tiers, print_by_tier
 
 
 # ============================================================================
@@ -180,11 +175,6 @@ def compute_correlations(df, persistence_vars, affect_vars):
                 "n": n,
                 "r": r,
                 "p": p,
-                "p_one_tailed": p / 2,
-                "tier": combine_tiers(
-                    get_persistence_tier(persist_var),
-                    get_affect_tier(affect_var),
-                ),
             })
 
     return pd.DataFrame(results)
@@ -236,15 +226,10 @@ def run_regression(df, persistence_var, affect_var, covariates):
         "se_persistence": model.bse.iloc[persist_idx],
         "t_persistence": model.tvalues.iloc[persist_idx],
         "p_persistence": model.pvalues.iloc[persist_idx],
-        "p_persistence_one_tailed": model.pvalues.iloc[persist_idx] / 2,
         "r_squared": model.rsquared,
         "adj_r_squared": model.rsquared_adj,
         "f_stat": model.fvalue,
         "f_pvalue": model.f_pvalue,
-        "tier": combine_tiers(
-            get_persistence_tier(persistence_var),
-            get_affect_tier(affect_var),
-        ),
     }
 
     return result
@@ -313,23 +298,19 @@ def run_sample_analysis(sample, sample_name, persistence_vars, affect_vars,
     corr_results = compute_correlations(sample, persistence_vars, affect_vars)
 
     if len(corr_results) > 0:
-        print(f"\nComputed {len(corr_results)} correlations")
-
-        def _fmt_corr(row):
-            sig = ("***" if row["p"] < 0.001 else "**" if row["p"] < 0.01
-                   else "*" if row["p"] < 0.05 else "")
-            return (f"{row['persistence_var']:40s} x {row['affect_var']:15s}: "
-                    f"r = {row['r']:6.3f}, p = {row['p']:.4f}{sig:3s}, "
-                    f"p(1t) = {row['p_one_tailed']:.4f}, n = {int(row['n'])}")
-
-        print_by_tier(corr_results, _fmt_corr, p_col="p")
+        print(f"\n✓ Computed {len(corr_results)} correlations")
+        print("\nCorrelation results:")
+        for _, row in corr_results.iterrows():
+            sig_marker = "***" if row["p"] < 0.001 else "**" if row["p"] < 0.01 else "*" if row["p"] < 0.05 else ""
+            print(f"  {row['persistence_var']:40s} × {row['affect_var']:15s}: "
+                  f"r = {row['r']:6.3f}, p = {row['p']:.4f}{sig_marker:3s}, n = {int(row['n'])}")
     else:
-        print("\n  No correlations computed (insufficient data)")
+        print("\n✗ No correlations computed (insufficient data)")
 
     # Save correlations
     corr_file = RESULTS_DIR / f"02_persistence_affect_correlations_{sample_name}.csv"
     corr_results.to_csv(corr_file, index=False)
-    print(f"\n  Saved to {corr_file}")
+    print(f"\n✓ Correlation results saved to {corr_file}")
 
     # ========================================================================
     # OLS Regressions with Covariates
@@ -340,23 +321,20 @@ def run_sample_analysis(sample, sample_name, persistence_vars, affect_vars,
                                       base_covariates, diary_covariates, diary_affect_vars)
 
     if len(reg_results) > 0:
-        print(f"\nComputed {len(reg_results)} regressions")
-
-        def _fmt_reg(row):
-            sig = ("***" if row["p_persistence"] < 0.001 else "**" if row["p_persistence"] < 0.01
-                   else "*" if row["p_persistence"] < 0.05 else "")
-            return (f"{row['persistence_var']:40s} -> {row['affect_var']:15s}: "
-                    f"b = {row['beta_persistence']:6.3f}, p = {row['p_persistence']:.4f}{sig:3s}, "
-                    f"p(1t) = {row['p_persistence_one_tailed']:.4f}, n = {int(row['n'])}")
-
-        print_by_tier(reg_results, _fmt_reg, p_col="p_persistence")
+        print(f"\n✓ Computed {len(reg_results)} regressions")
+        print("\nRegression results (persistence effect):")
+        for _, row in reg_results.iterrows():
+            sig_marker = "***" if row["p_persistence"] < 0.001 else "**" if row["p_persistence"] < 0.01 else "*" if row["p_persistence"] < 0.05 else ""
+            print(f"  {row['persistence_var']:40s} → {row['affect_var']:15s}: "
+                  f"β = {row['beta_persistence']:6.3f}, p = {row['p_persistence']:.4f}{sig_marker:3s}, "
+                  f"n = {int(row['n'])}")
     else:
-        print("\n  No regressions computed (insufficient data)")
+        print("\n✗ No regressions computed (insufficient data)")
 
     # Save regressions
     reg_file = RESULTS_DIR / f"02_persistence_affect_regressions_{sample_name}.csv"
     reg_results.to_csv(reg_file, index=False)
-    print(f"\n  Saved to {reg_file}")
+    print(f"\n✓ Regression results saved to {reg_file}")
 
     return corr_results, reg_results
 

@@ -9,9 +9,20 @@ Tests whether per-condition FC (neg, neu, pos) relates to persistence,
 as well as contrast-level FC (neg > neu, neg > pos). This approach uses
 a 3-condition GLM and tests condition-specific associations.
 
+Key analysis decisions:
+- Two-tailed tests (FC hypotheses are exploratory)
+- Results tiered: primary (L amyg neg, L persistence), secondary (R amyg neg, R persistence),
+  sensitivity (bilateral, other conditions, contrasts, positive/concat persistence)
+
 FC measures are ROI-level beta-series correlations (Fisher z-transformed)
 between amygdala seeds (L, R) and vmPFC targets (anterior = safety signaling,
 posterior = threat signaling), based on Tashjian et al. (2021, TICS).
+
+Analysis plan:
+1. Zero-order correlations between FC and persistence
+2. OLS regressions: persistence ~ FC + covariates
+   - Covariates: C5PAGE, sex, race dummies, twin dummies
+   - No diary covariates (purely neuroscience measures)
 
 Input:
   - data/fMRI/betaSeries_all_conditions.csv
@@ -19,17 +30,24 @@ Input:
   - data/processed/midus_with_fmri.csv
 
 Output:
-  - results/tables/05_fc_persistence_correlations_conservative.csv
   - results/tables/05_fc_persistence_correlations_full.csv
+  - results/tables/05_fc_persistence_correlations_conservative.csv
+  - results/tables/05_fc_persistence_regressions_full.csv
+  - results/tables/05_fc_persistence_regressions_conservative.csv
 
 Run from project root directory.
 """
 
+import sys
 from pathlib import Path
 
 import numpy as np
 import pandas as pd
+import statsmodels.api as sm
 from scipy import stats
+
+sys.path.insert(0, str(Path(__file__).resolve().parent))
+from tier_utils import get_fc_tier, get_persistence_tier, combine_tiers, print_by_tier
 
 # ============================================================================
 # Paths and Constants
@@ -42,6 +60,7 @@ MASTER_FILE = PROCESSED_DIR / "midus_with_fmri.csv"
 FC_FILE = FMRI_DIR / "betaSeries_all_conditions.csv"
 
 MIN_N_CORR = 10
+MIN_N_REG = 20
 
 ROI_PAIRS = [
     ("l_amyg", "ant_vmPFC"),
@@ -73,6 +92,20 @@ def fisher_z(r):
     return 0.5 * np.log((1 + r) / (1 - r))
 
 
+def parse_fc_var(fc_var):
+    """Parse condition and seed_target from FC variable name."""
+    if "safety_vs_threat" in fc_var:
+        condition = fc_var.rsplit("_", 1)[-1]
+        seed_target = fc_var.rsplit("_", 1)[0]
+    elif "_vs_" in fc_var:
+        condition = "_".join(fc_var.rsplit("_", 3)[-3:])
+        seed_target = fc_var.rsplit("_", 3)[0]
+    else:
+        condition = fc_var.rsplit("_", 1)[-1]
+        seed_target = fc_var.rsplit("_", 1)[0]
+    return condition, seed_target
+
+
 def compute_correlations(df, fc_vars, persistence_vars, min_n=MIN_N_CORR):
     """Compute bivariate Pearson correlations between FC and persistence vars."""
     results = []
@@ -83,16 +116,7 @@ def compute_correlations(df, fc_vars, persistence_vars, min_n=MIN_N_CORR):
             if n < min_n:
                 continue
             r, p = stats.pearsonr(data[fc_var], data[persist_var])
-            # Parse condition and seed_target from variable name
-            if "safety_vs_threat" in fc_var:
-                condition = fc_var.rsplit("_", 1)[-1]
-                seed_target = fc_var.rsplit("_", 1)[0]
-            elif "_vs_" in fc_var:
-                condition = "_".join(fc_var.rsplit("_", 3)[-3:])
-                seed_target = fc_var.rsplit("_", 3)[0]
-            else:
-                condition = fc_var.rsplit("_", 1)[-1]
-                seed_target = fc_var.rsplit("_", 1)[0]
+            condition, seed_target = parse_fc_var(fc_var)
 
             results.append({
                 "fc_var": fc_var,
@@ -102,65 +126,128 @@ def compute_correlations(df, fc_vars, persistence_vars, min_n=MIN_N_CORR):
                 "n": n,
                 "r": r,
                 "p": p,
+                "tier": combine_tiers(
+                    get_fc_tier(fc_var, condition=condition, seed_target=seed_target),
+                    get_persistence_tier(persist_var),
+                ),
             })
     return pd.DataFrame(results)
 
 
-def run_sample_analysis(df, sample_name, fc_vars, persistence_vars):
-    """Run correlation analysis for a given sample."""
+def run_regression(df, fc_var, persist_var, covariates):
+    """
+    Run OLS regression: persistence ~ FC + covariates.
+
+    Returns dictionary with results, or None if insufficient data.
+    """
+    vars_needed = [persist_var, fc_var] + covariates
+    data = df[vars_needed].dropna()
+
+    if len(data) < MIN_N_REG:
+        return None
+
+    y = data[persist_var]
+    X = data[[fc_var] + covariates]
+    X = sm.add_constant(X)
+
+    try:
+        model = sm.OLS(y, X).fit()
+    except Exception as e:
+        print(f"    Error fitting model for {persist_var} ~ {fc_var}: {e}")
+        return None
+
+    condition, seed_target = parse_fc_var(fc_var)
+    fc_idx = 1  # First column after intercept
+
+    return {
+        "fc_var": fc_var,
+        "condition": condition,
+        "seed_target": seed_target,
+        "persistence_var": persist_var,
+        "n": int(model.nobs),
+        "beta_fc": model.params.iloc[fc_idx],
+        "se_fc": model.bse.iloc[fc_idx],
+        "t_fc": model.tvalues.iloc[fc_idx],
+        "p_fc": model.pvalues.iloc[fc_idx],
+        "r_squared": model.rsquared,
+        "adj_r_squared": model.rsquared_adj,
+        "tier": combine_tiers(
+            get_fc_tier(fc_var, condition=condition, seed_target=seed_target),
+            get_persistence_tier(persist_var),
+        ),
+    }
+
+
+def run_all_regressions(df, fc_vars, persistence_vars, covariates):
+    """Run all FC x persistence regressions.
+
+    No diary-specific covariates (purely neuroscience measures).
+    """
+    results = []
+    for fc_var in fc_vars:
+        for persist_var in persistence_vars:
+            result = run_regression(df, fc_var, persist_var, covariates)
+            if result is not None:
+                results.append(result)
+    return pd.DataFrame(results)
+
+
+def run_sample_analysis(df, sample_name, fc_vars, persistence_vars, covariates):
+    """Run correlation + regression analysis for a given sample."""
     print(f"\n{'=' * 70}")
     print(f"Condition-Level FC x Persistence: {sample_name}")
     print(f"{'=' * 70}")
     print(f"  N = {len(df)}")
 
-    results = compute_correlations(df, fc_vars, persistence_vars)
+    # ========================================================================
+    # Zero-Order Correlations
+    # ========================================================================
+    print("\nComputing zero-order correlations...")
+    corr_results = compute_correlations(df, fc_vars, persistence_vars)
 
-    if len(results) == 0:
-        print("  No results (insufficient data)")
-        return pd.DataFrame()
+    if len(corr_results) > 0:
+        print(f"\n  Computed {len(corr_results)} correlations")
 
-    # Print summary per condition
-    for cond in CONDITIONS:
-        cond_results = results[results["condition"] == cond]
-        if len(cond_results) == 0:
-            continue
-        n_sig = (cond_results["p"] < 0.05).sum()
-        n_total = len(cond_results)
-        print(f"\n  {cond}: {n_sig}/{n_total} significant (p < .05)")
+        def _fmt_corr(row):
+            sig = ("***" if row["p"] < 0.001 else "**" if row["p"] < 0.01
+                   else "*" if row["p"] < 0.05 else "")
+            return (f"{row['fc_var']:45s} x {row['persistence_var']:40s}: "
+                    f"r = {row['r']:7.3f}, p = {row['p']:.4f}{sig:3s}, "
+                    f"n = {int(row['n'])}")
 
-        for _, row in cond_results.iterrows():
-            sig = ("***" if row["p"] < 0.001
-                   else "**" if row["p"] < 0.01
-                   else "*" if row["p"] < 0.05
-                   else "")
-            print(f"    {row['fc_var']:45s} x {row['persistence_var']:40s}: "
-                  f"r = {row['r']:7.3f}, p = {row['p']:.4f}{sig:3s}, "
-                  f"n = {int(row['n'])}")
+        print_by_tier(corr_results, _fmt_corr, p_col="p")
+    else:
+        print("  No correlations computed (insufficient data)")
 
-    # Compare neg vs neu vs pos for any persistence var with a significant hit
-    print(f"\n  --- Condition comparison for significant associations ---")
-    sig_persists = results.loc[results["p"] < 0.05, "persistence_var"].unique()
-    sig_seeds = results.loc[results["p"] < 0.05, "seed_target"].unique()
-    for seed_target in sig_seeds:
-        for persist_var in sig_persists:
-            subset = results[
-                (results["seed_target"] == seed_target) &
-                (results["persistence_var"] == persist_var) &
-                (results["condition"].isin(["neg", "neu", "pos"]))
-            ]
-            if len(subset) > 0:
-                print(f"\n    {seed_target} -> {persist_var}:")
-                for _, row in subset.iterrows():
-                    sig = "*" if row["p"] < 0.05 else ""
-                    print(f"      {row['condition']:6s}: r = {row['r']:7.3f}, "
-                          f"p = {row['p']:.4f}{sig}")
+    corr_file = RESULTS_DIR / f"05_fc_persistence_correlations_{sample_name}.csv"
+    corr_results.to_csv(corr_file, index=False)
+    print(f"\n  Saved to {corr_file}")
 
-    # Save
-    out_file = RESULTS_DIR / f"05_fc_persistence_correlations_{sample_name}.csv"
-    results.to_csv(out_file, index=False)
-    print(f"\n  Saved to {out_file}")
+    # ========================================================================
+    # OLS Regressions with Covariates
+    # ========================================================================
+    print("\nRunning OLS regressions (persistence ~ FC + covariates)...")
+    reg_results = run_all_regressions(df, fc_vars, persistence_vars, covariates)
 
-    return results
+    if len(reg_results) > 0:
+        print(f"\n  Computed {len(reg_results)} regressions")
+
+        def _fmt_reg(row):
+            sig = ("***" if row["p_fc"] < 0.001 else "**" if row["p_fc"] < 0.01
+                   else "*" if row["p_fc"] < 0.05 else "")
+            return (f"{row['fc_var']:45s} -> {row['persistence_var']:40s}: "
+                    f"b = {row['beta_fc']:7.3f}, p = {row['p_fc']:.4f}{sig:3s}, "
+                    f"n = {int(row['n'])}")
+
+        print_by_tier(reg_results, _fmt_reg, p_col="p_fc")
+    else:
+        print("  No regressions computed (insufficient data)")
+
+    reg_file = RESULTS_DIR / f"05_fc_persistence_regressions_{sample_name}.csv"
+    reg_results.to_csv(reg_file, index=False)
+    print(f"\n  Saved to {reg_file}")
+
+    return corr_results, reg_results
 
 
 # ============================================================================
@@ -230,6 +317,19 @@ def main():
     print(f"\n  FC variables: {len(fc_vars)}")
     print(f"  Persistence variables: {len(persistence_vars)}")
 
+    # Covariates (neuroscience-only, no diary covariates)
+    race_dummies = [col for col in df.columns if col.startswith("race_")]
+    twin_dummies = [col for col in df.columns if col.startswith("twin_pair_")]
+
+    covariates = [
+        "C5PAGE",
+        "sex",
+    ] + race_dummies + twin_dummies
+
+    print(f"\nCovariates (for regressions):")
+    print(f"  C5PAGE, sex, {len(race_dummies)} race, {len(twin_dummies)} twin dummies")
+    print(f"  (No diary covariates -- purely neuroscience measures)")
+
     # Define samples
     has_fc = df[fc_vars[0]].notna() if fc_vars else pd.Series(False, index=df.index)
     has_persist = df.get("has_neg_persistence", pd.Series(0, index=df.index)) == 1
@@ -238,25 +338,40 @@ def main():
     conservative_sample = full_sample[full_sample.get("qc_conservative", 0) == 1].copy()
 
     # Run analyses
-    full_results = run_sample_analysis(full_sample, "full", fc_vars, persistence_vars)
-    cons_results = run_sample_analysis(conservative_sample, "conservative", fc_vars, persistence_vars)
+    full_corr, full_reg = run_sample_analysis(
+        full_sample, "full", fc_vars, persistence_vars, covariates
+    )
+    cons_corr, cons_reg = run_sample_analysis(
+        conservative_sample, "conservative", fc_vars, persistence_vars, covariates
+    )
 
     # Summary
     print(f"\n{'=' * 70}")
     print("Summary")
     print(f"{'=' * 70}")
-    for label, results in [("Full", full_results), ("Conservative", cons_results)]:
-        if len(results) == 0:
-            print(f"\n{label}: no results")
-            continue
-        for cond in ["neg", "neu", "pos"]:
-            cond_res = results[results["condition"] == cond]
-            n_sig = (cond_res["p"] < 0.05).sum() if len(cond_res) > 0 else 0
-            n_total = len(cond_res)
-            print(f"  {label} {cond:6s}: {n_sig}/{n_total} significant")
-        contrast_res = results[results["condition"] == "neg_vs_neu"]
-        n_sig = (contrast_res["p"] < 0.05).sum() if len(contrast_res) > 0 else 0
-        print(f"  {label} neg>neu: {n_sig}/{len(contrast_res)} significant")
+    for label, corr_results, reg_results in [
+        ("Full", full_corr, full_reg),
+        ("Conservative", cons_corr, cons_reg),
+    ]:
+        print(f"\n{label}:")
+        if len(corr_results) > 0:
+            for tier in ["primary", "secondary", "sensitivity"]:
+                tier_res = corr_results[corr_results["tier"] == tier]
+                if len(tier_res) == 0:
+                    continue
+                n_sig = (tier_res["p"] < 0.05).sum()
+                print(f"  Correlations {tier.upper()}: {n_sig}/{len(tier_res)} significant")
+        else:
+            print("  No correlations")
+        if len(reg_results) > 0:
+            for tier in ["primary", "secondary", "sensitivity"]:
+                tier_res = reg_results[reg_results["tier"] == tier]
+                if len(tier_res) == 0:
+                    continue
+                n_sig = (tier_res["p_fc"] < 0.05).sum()
+                print(f"  Regressions  {tier.upper()}: {n_sig}/{len(tier_res)} significant")
+        else:
+            print("  No regressions")
 
 
 if __name__ == "__main__":

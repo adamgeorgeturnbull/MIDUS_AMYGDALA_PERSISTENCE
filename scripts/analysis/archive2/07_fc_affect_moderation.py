@@ -2,20 +2,27 @@
 """
 07_fc_affect_moderation.py
 
-Test whether emotion regulation strategy moderates the FC-affect association
+Test whether emotion regulation strategy moderates the FC–affect association
 (pre-registered exploratory analysis).
 
 Model:
-  affect ~ FC + moderator + FC*moderator + covariates
+  affect ~ FC + moderator + FC×moderator + covariates
 
 Moderators:
-- C5SER: ERQ Reappraisal (1-7 scale)
-- C5SES: ERQ Suppression (1-7 scale)
+- C5SER: ERQ Reappraisal (1–7 scale)
+- C5SES: ERQ Suppression (1–7 scale)
 
-FC measures are per-condition ROI-level beta-series correlations (Fisher
-z-transformed) between amygdala seeds (L, R) and vmPFC targets (anterior =
-safety signaling, posterior = threat signaling), based on Tashjian et al.
-(2021, TICS). Conditions: neg, neu, pos, neg_vs_neu, neg_vs_pos.
+FC variables (6, already Fisher z-transformed neg > neu from runBStaskFC.sh):
+  - L amygdala -> anterior vmPFC (safety)
+  - L amygdala -> posterior vmPFC (threat)
+  - R amygdala -> anterior vmPFC (safety)
+  - R amygdala -> posterior vmPFC (threat)
+  - L amygdala: safety - threat (relative connectivity)
+  - R amygdala: safety - threat (relative connectivity)
+
+Affect outcomes (6):
+  - Primary (daily diary): PA_score, NA_score, NA_score_log
+  - Secondary (PANAS): C5SPGP, C5SPGN, C5SPGN_log
 
 Both FC and moderator are mean-centered before creating the interaction term
 to reduce multicollinearity and aid interpretation.
@@ -25,18 +32,15 @@ Covariates (following Puccetti et al., 2021):
 - Gender (sex)
 - Race (dummy-coded)
 - Twin pairs (dummy-coded)
-- Time between visits (time_P2_P5) -- diary outcomes only
-- Number of diary days completed (n_days_complete) -- diary outcomes only
+- Time between visits (time_P2_P5) — diary outcomes only
+- Number of diary days completed (n_days_complete) — diary outcomes only
 
-Key analysis decisions:
-- Per-condition FC from betaSeries_all_conditions.csv (not neg>neu contrast)
-- Two-tailed tests for all interaction and FC effects (exploratory)
-- Results tiered: primary (L amyg neg, PA/NA), secondary (R amyg neg),
-  sensitivity (bilateral, other conditions, contrasts, PANAS, log-transforms)
+Two versions:
+- Full sample: All participants with FC data
+- Conservative sample: Full + mean FD < 0.5 AND all 3 runs pass QC
 
 Inputs:
 - data/processed/midus_with_fmri.csv
-- data/fMRI/betaSeries_all_conditions.csv
 
 Outputs:
 - results/tables/07_fc_affect_moderation_full.csv
@@ -45,58 +49,55 @@ Outputs:
 Run from project root directory.
 """
 
-import sys
 from pathlib import Path
 
 import numpy as np
 import pandas as pd
 import statsmodels.api as sm
 
-sys.path.insert(0, str(Path(__file__).resolve().parent))
-from tier_utils import get_fc_tier, get_affect_tier, combine_tiers, print_by_tier
-
 # ============================================================================
 # Paths and Constants
 # ============================================================================
 PROCESSED_DIR = Path("data/processed")
-FMRI_DIR = Path("data/fMRI")
 RESULTS_DIR = Path("results/tables")
 
-MASTER_FILE = PROCESSED_DIR / "midus_with_fmri.csv"
-FC_FILE = FMRI_DIR / "betaSeries_all_conditions.csv"
+DATA_FILE = PROCESSED_DIR / "midus_with_fmri.csv"
 
 MIN_N_REG = 20
-
-ROI_PAIRS = [
-    ("l_amyg", "ant_vmPFC"),
-    ("l_amyg", "post_vmPFC"),
-    ("r_amyg", "ant_vmPFC"),
-    ("r_amyg", "post_vmPFC"),
-]
-
-CONDITIONS = ["neg", "neu", "pos", "neg_vs_neu", "neg_vs_pos"]
 
 
 # ============================================================================
 # Helper Functions
 # ============================================================================
-def parse_fc_var(fc_var):
-    """Parse condition and seed_target from FC variable name."""
-    if "safety_vs_threat" in fc_var:
-        condition = fc_var.rsplit("_", 1)[-1]
-        seed_target = fc_var.rsplit("_", 1)[0]
-    elif "_vs_" in fc_var:
-        condition = "_".join(fc_var.rsplit("_", 3)[-3:])
-        seed_target = fc_var.rsplit("_", 3)[0]
-    else:
-        condition = fc_var.rsplit("_", 1)[-1]
-        seed_target = fc_var.rsplit("_", 1)[0]
-    return condition, seed_target
+def get_full_sample(df):
+    """Define full analysis sample: participants with FC data.
+
+    Per-model dropna() handles missing affect/moderator outcomes, so we do
+    NOT pre-filter on affect availability.
+    """
+    has_fc = df["has_beta_series"] == 1
+    sample = df[has_fc].copy()
+
+    print(f"\nFull sample: {len(sample)} participants")
+    print(f"  With daily diary affect: {sample['PA_score'].notna().sum()}")
+
+    return sample
+
+
+def get_conservative_sample(df):
+    """Define conservative sample with strict QC criteria."""
+    sample = get_full_sample(df)
+    qc_pass = sample["qc_conservative"] == 1
+    conservative = sample[qc_pass].copy()
+
+    print(f"Conservative sample: {len(conservative)} participants")
+
+    return conservative
 
 
 def run_moderation(df, fc_var, affect_var, moderator, covariates):
     """
-    Run OLS moderation: affect ~ FC + moderator + FC*moderator + covariates.
+    Run OLS moderation: affect ~ FC + moderator + FC×moderator + covariates.
 
     FC and moderator are mean-centered within the complete-case subset.
 
@@ -115,7 +116,7 @@ def run_moderation(df, fc_var, affect_var, moderator, covariates):
 
     interaction_col = f"{fc_var}_x_{moderator}"
 
-    # Build design matrix
+    # Build design matrix: [fc_c, mod_c, interaction, covariates]
     X = pd.concat([
         pd.DataFrame({
             fc_var: fc_centered,
@@ -134,12 +135,8 @@ def run_moderation(df, fc_var, affect_var, moderator, covariates):
               f"{fc_var} * {moderator}: {e}")
         return None
 
-    condition, seed_target = parse_fc_var(fc_var)
-
     return {
         "fc_var": fc_var,
-        "condition": condition,
-        "seed_target": seed_target,
         "affect_var": affect_var,
         "moderator": moderator,
         "n": int(model.nobs),
@@ -153,16 +150,12 @@ def run_moderation(df, fc_var, affect_var, moderator, covariates):
         "p_moderator": model.pvalues[moderator],
         "r_squared": model.rsquared,
         "adj_r_squared": model.rsquared_adj,
-        "tier": combine_tiers(
-            get_fc_tier(fc_var, condition=condition, seed_target=seed_target),
-            get_affect_tier(affect_var),
-        ),
     }
 
 
 def run_all_moderations(df, fc_vars, affect_vars, moderators,
                         base_covariates, diary_covariates, diary_affect_vars):
-    """Run all FC x affect x moderator interaction models.
+    """Run all FC × affect × moderator interaction models.
 
     Diary-specific covariates only included for daily diary outcomes.
     """
@@ -208,19 +201,17 @@ def run_sample_analysis(sample, sample_name, fc_vars, affect_vars,
         for mod, label in zip(moderators, moderator_labels):
             mod_results = results[results["moderator"] == mod]
             n_sig = (mod_results["p_interaction"] < 0.05).sum()
-            print(f"\n  --- {label} ({mod}): {n_sig}/{len(mod_results)} significant interactions ---")
+            print(f"\n  {label} ({mod}): {n_sig}/{len(mod_results)} significant interactions")
 
-            def _fmt_mod(row):
+            for _, row in mod_results.iterrows():
                 sig = ("***" if row["p_interaction"] < 0.001
                        else "**" if row["p_interaction"] < 0.01
                        else "*" if row["p_interaction"] < 0.05
                        else "")
-                return (f"{row['fc_var']:45s} x {row['affect_var']:15s}: "
-                        f"b_int = {row['beta_interaction']:8.5f}, "
-                        f"p_int = {row['p_interaction']:.4f}{sig:3s}, "
-                        f"n = {int(row['n'])}")
-
-            print_by_tier(mod_results, _fmt_mod, p_col="p_interaction")
+                print(f"    {row['fc_var']:45s} x {row['affect_var']:15s}: "
+                      f"b = {row['beta_interaction']:8.5f}, "
+                      f"p = {row['p_interaction']:.4f}{sig:3s}, "
+                      f"n = {int(row['n'])}")
     else:
         print("\n  No models computed (insufficient data)")
 
@@ -239,57 +230,45 @@ def main():
     RESULTS_DIR.mkdir(parents=True, exist_ok=True)
 
     print("=" * 80)
-    print("Analysis 07: FC x Affect -- Moderation by Emotion Regulation")
+    print("Analysis 07: FC x Affect — Moderation by Emotion Regulation")
     print("=" * 80)
 
     # ========================================================================
     # Load Data
     # ========================================================================
-    print(f"\nLoading behavioral data from {MASTER_FILE}...")
-    master = pd.read_csv(MASTER_FILE)
-    print(f"  Loaded {len(master)} participants")
-
-    print(f"Loading condition-level FC from {FC_FILE}...")
-    fc = pd.read_csv(FC_FILE)
-    print(f"  Loaded {len(fc)} participants, {len(fc.columns) - 1} FC columns")
-
-    # Ensure M2ID types match for merge
-    master["M2ID"] = master["M2ID"].astype(str)
-    fc["M2ID"] = fc["M2ID"].astype(str)
-
-    # Merge
-    df = master.merge(fc, on="M2ID", how="inner")
-    print(f"  Merged: {len(df)} participants with both FC and behavioral data")
+    print(f"\nLoading data from {DATA_FILE}...")
+    df = pd.read_csv(DATA_FILE)
+    print(f"Loaded {len(df)} participants")
 
     # ========================================================================
-    # Build FC Variable List
+    # Compute Derived FC Variables (safety - threat)
     # ========================================================================
-    fc_vars = []
-    for seed, target in ROI_PAIRS:
-        pair = f"{seed}-{target}"
-        for cond in CONDITIONS:
-            col = f"{pair}_{cond}"
-            if col in df.columns:
-                fc_vars.append(col)
+    print("\nComputing derived FC variables (safety - threat)...")
 
-    # Add safety-vs-threat derived variables per condition
-    for cond in CONDITIONS:
-        l_ant = f"l_amyg-ant_vmPFC_{cond}"
-        l_post = f"l_amyg-post_vmPFC_{cond}"
-        r_ant = f"r_amyg-ant_vmPFC_{cond}"
-        r_post = f"r_amyg-post_vmPFC_{cond}"
-        if l_ant in df.columns and l_post in df.columns:
-            derived = f"l_amyg_safety_vs_threat_{cond}"
-            df[derived] = df[l_ant] - df[l_post]
-            fc_vars.append(derived)
-        if r_ant in df.columns and r_post in df.columns:
-            derived = f"r_amyg_safety_vs_threat_{cond}"
-            df[derived] = df[r_ant] - df[r_post]
-            fc_vars.append(derived)
+    df["conn_l_amyg_safety_vs_threat"] = (
+        df["conn_l_amyg_ant_vmPFC_neg_vs_neu"]
+        - df["conn_l_amyg_post_vmPFC_neg_vs_neu"]
+    )
+    df["conn_r_amyg_safety_vs_threat"] = (
+        df["conn_r_amyg_ant_vmPFC_neg_vs_neu"]
+        - df["conn_r_amyg_post_vmPFC_neg_vs_neu"]
+    )
+
+    print("  conn_l_amyg_safety_vs_threat = ant_vmPFC - post_vmPFC (left amygdala)")
+    print("  conn_r_amyg_safety_vs_threat = ant_vmPFC - post_vmPFC (right amygdala)")
 
     # ========================================================================
     # Define Variables
     # ========================================================================
+    fc_vars = [
+        "conn_l_amyg_ant_vmPFC_neg_vs_neu",
+        "conn_l_amyg_post_vmPFC_neg_vs_neu",
+        "conn_l_amyg_safety_vs_threat",
+        "conn_r_amyg_ant_vmPFC_neg_vs_neu",
+        "conn_r_amyg_post_vmPFC_neg_vs_neu",
+        "conn_r_amyg_safety_vs_threat",
+    ]
+
     affect_vars = [
         "PA_score",
         "NA_score",
@@ -317,7 +296,7 @@ def main():
 
     diary_affect_vars = {"PA_score", "NA_score", "NA_score_log"}
 
-    print(f"\nFC predictors: {len(fc_vars)} (per-condition, Fisher z)")
+    print(f"\nFC predictors: {len(fc_vars)} (already Fisher z, neg > neu)")
     print(f"Affect outcomes: {len(affect_vars)}")
     print(f"Moderators: {', '.join(f'{l} ({m})' for m, l in zip(moderators, moderator_labels))}")
     print(f"Covariates:")
@@ -327,21 +306,11 @@ def main():
           f"x {len(moderators)} = {len(fc_vars) * len(affect_vars) * len(moderators)}")
 
     # ========================================================================
-    # Define Samples
-    # ========================================================================
-    has_fc = df[fc_vars[0]].notna() if fc_vars else pd.Series(False, index=df.index)
-    has_persist = df.get("has_neg_persistence", pd.Series(0, index=df.index)) == 1
-
-    full_sample = df[has_fc & has_persist].copy()
-    conservative_sample = full_sample[full_sample.get("qc_conservative", 0) == 1].copy()
-
-    print(f"\nFull sample: {len(full_sample)} participants")
-    print(f"  With daily diary affect: {full_sample['PA_score'].notna().sum()}")
-    print(f"Conservative sample: {len(conservative_sample)} participants")
-
-    # ========================================================================
     # Run Analyses
     # ========================================================================
+    full_sample = get_full_sample(df)
+    conservative_sample = get_conservative_sample(df)
+
     full_results = run_sample_analysis(
         full_sample, "full", fc_vars, affect_vars,
         moderators, moderator_labels,
@@ -376,18 +345,14 @@ def main():
                 print(f"  {mod_label}: no models")
                 continue
 
-            print(f"\n  {mod_label} ({mod}):")
-            for tier in ["primary", "secondary", "sensitivity"]:
-                tier_res = mod_results[mod_results["tier"] == tier]
-                if len(tier_res) == 0:
-                    continue
-                n_sig = (tier_res["p_interaction"] < 0.05).sum()
-                print(f"    {tier.upper()}: {n_sig}/{len(tier_res)} significant interactions")
-                if tier != "sensitivity":
-                    sig = tier_res[tier_res["p_interaction"] < 0.05]
-                    for _, row in sig.iterrows():
-                        print(f"      {row['fc_var']} x {row['affect_var']}: "
-                              f"b = {row['beta_interaction']:.5f}, p = {row['p_interaction']:.4f}")
+            n_sig = (mod_results["p_interaction"] < 0.05).sum()
+            print(f"  {mod_label} ({mod}): {n_sig}/{len(mod_results)} significant interactions")
+
+            sig_results = mod_results[mod_results["p_interaction"] < 0.05]
+            if len(sig_results) > 0:
+                for _, row in sig_results.iterrows():
+                    print(f"    * {row['fc_var']} x {row['affect_var']}: "
+                          f"b = {row['beta_interaction']:.5f}, p = {row['p_interaction']:.4f}")
 
 
 if __name__ == "__main__":

@@ -28,9 +28,7 @@ Key analysis decisions:
 - Primary: Cross-run negative persistence (L, R, bilateral)
 - Sensitivity: Cross-run positive, concatenated negative
 - Mean-centering done within each complete-case subset
-- Two-tailed tests for interaction effects (exploratory)
-- One-tailed p-values for persistence main effect (directional hypothesis)
-- Results tiered: primary (L amyg, PA/NA), secondary (R amyg), sensitivity (rest)
+- Two-tailed tests for all interaction effects (exploratory)
 
 Inputs:
 - data/processed/midus_with_fmri.csv
@@ -42,16 +40,12 @@ Outputs:
 Run from project root directory.
 """
 
-import sys
 from pathlib import Path
 
 import numpy as np
 import pandas as pd
 import statsmodels.api as sm
 from scipy import stats
-
-sys.path.insert(0, str(Path(__file__).resolve().parent))
-from tier_utils import get_persistence_tier, get_affect_tier, combine_tiers, print_by_tier
 
 # ============================================================================
 # Paths and Constants
@@ -150,15 +144,10 @@ def run_moderation(df, persistence_var, affect_var, moderator, covariates):
         "p_interaction": model.pvalues[interaction_col],
         "beta_persistence": model.params[persistence_var],
         "p_persistence": model.pvalues[persistence_var],
-        "p_persistence_one_tailed": model.pvalues[persistence_var] / 2,
         "beta_moderator": model.params[moderator],
         "p_moderator": model.pvalues[moderator],
         "r_squared": model.rsquared,
         "adj_r_squared": model.rsquared_adj,
-        "tier": combine_tiers(
-            get_persistence_tier(persistence_var),
-            get_affect_tier(affect_var),
-        ),
     }
 
 
@@ -210,19 +199,17 @@ def run_sample_analysis(sample, sample_name, persistence_vars, affect_vars,
         for mod, label in zip(moderators, moderator_labels):
             mod_results = results[results["moderator"] == mod]
             n_sig = (mod_results["p_interaction"] < 0.05).sum()
-            print(f"\n  --- {label} ({mod}): {n_sig}/{len(mod_results)} significant interactions ---")
+            print(f"\n  {label} ({mod}): {n_sig}/{len(mod_results)} significant interactions")
 
-            def _fmt_mod(row):
+            for _, row in mod_results.iterrows():
                 sig = ("***" if row["p_interaction"] < 0.001
                        else "**" if row["p_interaction"] < 0.01
                        else "*" if row["p_interaction"] < 0.05
                        else "")
-                return (f"{row['persistence_var']:40s} x {row['affect_var']:15s}: "
-                        f"b_int = {row['beta_interaction']:8.5f}, "
-                        f"p_int = {row['p_interaction']:.4f}{sig:3s}, "
-                        f"n = {int(row['n'])}")
-
-            print_by_tier(mod_results, _fmt_mod, p_col="p_interaction")
+                print(f"    {row['persistence_var']:40s} × {row['affect_var']:15s}: "
+                      f"b = {row['beta_interaction']:8.5f}, "
+                      f"p = {row['p_interaction']:.4f}{sig:3s}, "
+                      f"n = {int(row['n'])}")
     else:
         print("\n  No models computed (insufficient data)")
 
@@ -362,18 +349,18 @@ def main():
                 print(f"  {mod_label}: no models")
                 continue
 
-            print(f"\n  {mod_label} ({mod}):")
-            for tier in ["primary", "secondary", "sensitivity"]:
-                tier_res = mod_results[mod_results["tier"] == tier]
-                if len(tier_res) == 0:
-                    continue
-                n_sig = (tier_res["p_interaction"] < 0.05).sum()
-                print(f"    {tier.upper()}: {n_sig}/{len(tier_res)} significant interactions")
-                if tier != "sensitivity":
-                    sig = tier_res[tier_res["p_interaction"] < 0.05]
-                    for _, row in sig.iterrows():
-                        print(f"      {row['persistence_var']} x {row['affect_var']}: "
-                              f"b = {row['beta_interaction']:.5f}, p = {row['p_interaction']:.4f}")
+            n_sig = (mod_results["p_interaction"] < 0.05).sum()
+            print(f"  {mod_label} ({mod}): {n_sig}/{len(mod_results)} significant interactions")
+
+            # Highlight any significant primary results (cross-run negative)
+            primary = mod_results[
+                mod_results["persistence_var"].str.contains("neg_persist_crossrun")
+            ]
+            sig_primary = primary[primary["p_interaction"] < 0.05]
+            if len(sig_primary) > 0:
+                for _, row in sig_primary.iterrows():
+                    print(f"    * {row['persistence_var']} × {row['affect_var']}: "
+                          f"b = {row['beta_interaction']:.5f}, p = {row['p_interaction']:.4f}")
 
 
 if __name__ == "__main__":

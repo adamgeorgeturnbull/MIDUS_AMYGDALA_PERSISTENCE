@@ -25,8 +25,7 @@ Key analysis decisions:
 - Persistence measures are Fisher z-transformed before analysis
 - Primary: Cross-run negative persistence (L, R, bilateral)
 - Sensitivity: Cross-run positive, concatenated negative
-- One-tailed p-values for directional hypothesis (persistence decreases with age)
-- Results tiered: primary (L amyg), secondary (R amyg), sensitivity (rest)
+- Two-tailed tests reported; hypothesis is directional (negative association)
 
 Inputs:
 - data/processed/midus_with_fmri.csv
@@ -40,16 +39,12 @@ Outputs:
 Run from project root directory.
 """
 
-import sys
 from pathlib import Path
 
 import numpy as np
 import pandas as pd
 import statsmodels.api as sm
 from scipy import stats
-
-sys.path.insert(0, str(Path(__file__).resolve().parent))
-from tier_utils import get_persistence_tier, print_by_tier
 
 # ============================================================================
 # Paths and Constants
@@ -110,15 +105,11 @@ def compute_correlations(df, persistence_vars, age_var="C5PAGE"):
             continue
 
         r, p = stats.pearsonr(data[persist_var], data[age_var])
-        # Directional one-tailed: hypothesis is r < 0 (persistence decreases with age)
-        p_one_tailed = p / 2 if r < 0 else 1 - p / 2
         results.append({
             "persistence_var": persist_var,
             "n": n,
             "r": r,
             "p": p,
-            "p_one_tailed": p_one_tailed,
-            "tier": get_persistence_tier(persist_var),
         })
 
     return pd.DataFrame(results)
@@ -146,22 +137,15 @@ def run_regression(df, persistence_var, age_var, covariates):
         print(f"    Error fitting model for {persistence_var} ~ {age_var}: {e}")
         return None
 
-    beta_age = model.params[age_var]
-    p_age = model.pvalues[age_var]
-    # Directional one-tailed: hypothesis is beta < 0
-    p_age_one_tailed = p_age / 2 if beta_age < 0 else 1 - p_age / 2
-
     return {
         "persistence_var": persistence_var,
         "n": int(model.nobs),
-        "beta_age": beta_age,
+        "beta_age": model.params[age_var],
         "se_age": model.bse[age_var],
         "t_age": model.tvalues[age_var],
-        "p_age": p_age,
-        "p_age_one_tailed": p_age_one_tailed,
+        "p_age": model.pvalues[age_var],
         "r_squared": model.rsquared,
         "adj_r_squared": model.rsquared_adj,
-        "tier": get_persistence_tier(persistence_var),
     }
 
 
@@ -186,17 +170,11 @@ def run_sample_analysis(sample, sample_name, persistence_vars, age_var, covariat
     corr_results = compute_correlations(sample, persistence_vars, age_var)
 
     if len(corr_results) > 0:
-        print(f"\nComputed {len(corr_results)} correlations")
-
-        def _fmt_corr(row):
-            sig = ("***" if row["p"] < 0.001 else "**" if row["p"] < 0.01
-                   else "*" if row["p"] < 0.05 else "")
-            direction = "neg" if row["r"] < 0 else "pos"
-            return (f"{row['persistence_var']:45s}: "
-                    f"r = {row['r']:7.4f}, p = {row['p']:.4f}{sig:3s}, "
-                    f"p(1t) = {row['p_one_tailed']:.4f} [{direction}], n = {int(row['n'])}")
-
-        print_by_tier(corr_results, _fmt_corr, p_col="p")
+        print(f"  Computed {len(corr_results)} correlations\n")
+        for _, row in corr_results.iterrows():
+            sig = "***" if row["p"] < 0.001 else "**" if row["p"] < 0.01 else "*" if row["p"] < 0.05 else ""
+            print(f"  {row['persistence_var']:45s}: "
+                  f"r = {row['r']:7.4f}, p = {row['p']:.4f}{sig:3s}, n = {int(row['n'])}")
     else:
         print("  No correlations computed (insufficient data)")
 
@@ -209,17 +187,12 @@ def run_sample_analysis(sample, sample_name, persistence_vars, age_var, covariat
     reg_results = run_all_regressions(sample, persistence_vars, age_var, covariates)
 
     if len(reg_results) > 0:
-        print(f"\nComputed {len(reg_results)} regressions")
-
-        def _fmt_reg(row):
-            sig = ("***" if row["p_age"] < 0.001 else "**" if row["p_age"] < 0.01
-                   else "*" if row["p_age"] < 0.05 else "")
-            direction = "neg" if row["beta_age"] < 0 else "pos"
-            return (f"{row['persistence_var']:45s}: "
-                    f"b = {row['beta_age']:8.5f}, p = {row['p_age']:.4f}{sig:3s}, "
-                    f"p(1t) = {row['p_age_one_tailed']:.4f} [{direction}], n = {int(row['n'])}")
-
-        print_by_tier(reg_results, _fmt_reg, p_col="p_age")
+        print(f"  Computed {len(reg_results)} regressions\n")
+        for _, row in reg_results.iterrows():
+            sig = "***" if row["p_age"] < 0.001 else "**" if row["p_age"] < 0.01 else "*" if row["p_age"] < 0.05 else ""
+            print(f"  {row['persistence_var']:45s}: "
+                  f"b = {row['beta_age']:8.5f}, p = {row['p_age']:.4f}{sig:3s}, "
+                  f"n = {int(row['n'])}")
     else:
         print("  No regressions computed (insufficient data)")
 
@@ -321,7 +294,6 @@ def main():
     print("Summary")
     print("=" * 80)
     print(f"\nHypothesis: Negative persistence decreases with age (negative r expected)")
-    print("One-tailed p-values: p/2 when r < 0 (as hypothesized), 1 - p/2 otherwise")
 
     for label, corr_df, reg_df, n in [
         ("Full sample", full_corr, full_reg, len(full_sample)),
@@ -329,38 +301,18 @@ def main():
     ]:
         print(f"\n{label} (N={n}):")
         if len(corr_df) > 0:
-            for tier in ["primary", "secondary"]:
-                tier_corr = corr_df[corr_df["tier"] == tier]
-                if len(tier_corr) == 0:
-                    continue
-                n_sig = (tier_corr["p_one_tailed"] < 0.05).sum()
-                print(f"  {tier.upper()} correlations: {n_sig}/{len(tier_corr)} significant (one-tailed)")
-                for _, row in tier_corr.iterrows():
-                    direction = "neg (as hypothesized)" if row["r"] < 0 else "pos (opposite)"
-                    print(f"    {row['persistence_var']}: r = {row['r']:.4f}, "
-                          f"p(1t) = {row['p_one_tailed']:.4f} [{direction}]")
-            sens_corr = corr_df[corr_df["tier"] == "sensitivity"]
-            if len(sens_corr) > 0:
-                n_sig = (sens_corr["p_one_tailed"] < 0.05).sum()
-                print(f"  SENSITIVITY correlations: {n_sig}/{len(sens_corr)} significant (one-tailed)")
+            n_sig_corr = (corr_df["p"] < 0.05).sum()
+            print(f"  Significant correlations: {n_sig_corr}/{len(corr_df)}")
+            primary = corr_df[corr_df["persistence_var"].str.contains("neg_persist_crossrun")]
+            for _, row in primary.iterrows():
+                direction = "neg (as hypothesized)" if row["r"] < 0 else "pos (opposite)"
+                print(f"    {row['persistence_var']}: r = {row['r']:.4f}, p = {row['p']:.4f} [{direction}]")
         else:
             print("  No correlations (insufficient data)")
 
         if len(reg_df) > 0:
-            for tier in ["primary", "secondary"]:
-                tier_reg = reg_df[reg_df["tier"] == tier]
-                if len(tier_reg) == 0:
-                    continue
-                n_sig = (tier_reg["p_age_one_tailed"] < 0.05).sum()
-                print(f"  {tier.upper()} regressions: {n_sig}/{len(tier_reg)} significant (one-tailed)")
-                for _, row in tier_reg.iterrows():
-                    direction = "neg (as hypothesized)" if row["beta_age"] < 0 else "pos (opposite)"
-                    print(f"    {row['persistence_var']}: b = {row['beta_age']:.5f}, "
-                          f"p(1t) = {row['p_age_one_tailed']:.4f} [{direction}]")
-            sens_reg = reg_df[reg_df["tier"] == "sensitivity"]
-            if len(sens_reg) > 0:
-                n_sig = (sens_reg["p_age_one_tailed"] < 0.05).sum()
-                print(f"  SENSITIVITY regressions: {n_sig}/{len(sens_reg)} significant (one-tailed)")
+            n_sig_reg = (reg_df["p_age"] < 0.05).sum()
+            print(f"  Significant regressions: {n_sig_reg}/{len(reg_df)}")
         else:
             print("  No regressions (insufficient data)")
 
