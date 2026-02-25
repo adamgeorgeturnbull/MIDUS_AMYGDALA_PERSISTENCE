@@ -5,21 +5,25 @@
 #
 # Extends runBStaskFC.sh from ROI-level to whole-brain voxelwise connectivity.
 # For each amygdala seed (L, R), computes voxelwise correlations between the
-# seed beta-series and every gray-matter voxel, then contrasts neg vs neu.
+# seed beta-series and every gray-matter voxel for each condition separately,
+# then computes contrast maps.
 #
 # Method:
-#   1. Fit trial-wise GLM (same as runBStaskFC.sh)
+#   1. Fit trial-wise GLM with all 3 conditions (neg, neu, pos)
 #   2. Extract mean amygdala beta per trial (seed time series)
 #   3. Extract voxelwise betas across all gray-matter voxels
-#   4. Correlate seed with each voxel separately for neg and neu trials
-#   5. Compute neg - neu contrast map in Fisher z-space
+#   4. Correlate seed with each voxel separately per condition
+#   5. Compute contrast maps in Fisher z-space (neg-neu, neg-pos)
 #
 # Subjects in motion_exclude_ids are skipped (excessive motion).
 # Gray-matter mask: MNI152 GM mask (2mm, threshold=0.2)
 #
 # Output per subject per seed:
-#   - <subid>_<seed>_seedFC_neg_vs_neu.nii.gz
-#     Whole-brain Fisher z contrast map (neg > neu connectivity)
+#   - <subid>_<seed>_seedFC_neg.nii.gz        (per-condition Fisher z map)
+#   - <subid>_<seed>_seedFC_neu.nii.gz
+#   - <subid>_<seed>_seedFC_pos.nii.gz
+#   - <subid>_<seed>_seedFC_neg_vs_neu.nii.gz  (contrast: neg - neu)
+#   - <subid>_<seed>_seedFC_neg_vs_pos.nii.gz  (contrast: neg - pos)
 #
 #SBATCH -J betaSeriesSeedFC
 #SBATCH --output=/scratch/groups/fvlin/MIDUS/M3/log/betaSeriesSeedFC_%A_%a.log
@@ -156,7 +160,7 @@ for seed_name, seed_mask in seeds.items():
 
         # Load and clean events
         events = pd.read_csv(events_file, sep='\t')
-        conditions = ['neg','neu']
+        conditions = ['neg','neu','pos']
         clean_events_list = []
         for val in conditions:
             df_val = events[events['valence']==val][['onset_trimmed','duration']].copy()
@@ -244,20 +248,34 @@ for seed_name, seed_mask in seeds.items():
     z_corrs = np.array([fisher_z(pearsonr(seed_beta_series, voxel_beta_matrix[v, :])[0]) for v in range(voxel_beta_matrix.shape[0])])
 
     # ------------------------
-    # Split neg vs neu trials for contrast
+    # Split trials by condition
     # ------------------------
-    neg_idx = [i for i, t in enumerate(all_trial_names) if t.startswith('neg')]
-    neu_idx = [i for i, t in enumerate(all_trial_names) if t.startswith('neu')]
+    seed_beta_arr = np.array(seed_beta_series)
+    n_voxels = voxel_beta_matrix.shape[0]
 
-    z_neg = np.array([fisher_z(pearsonr(np.array(seed_beta_series)[neg_idx], voxel_beta_matrix[v, neg_idx])[0]) for v in range(voxel_beta_matrix.shape[0])])
-    z_neu = np.array([fisher_z(pearsonr(np.array(seed_beta_series)[neu_idx], voxel_beta_matrix[v, neu_idx])[0]) for v in range(voxel_beta_matrix.shape[0])])
-    z_contrast = z_neg - z_neu  # neg > neu
+    cond_indices = {}
+    for cond in ['neg', 'neu', 'pos']:
+        cond_indices[cond] = [i for i, t in enumerate(all_trial_names) if t.startswith(cond)]
+        print(f"  {cond}: {len(cond_indices[cond])} trials")
+
+    # Compute per-condition Fisher z correlation maps
+    z_maps = {}
+    for cond, idx in cond_indices.items():
+        z_maps[cond] = np.array([
+            fisher_z(pearsonr(seed_beta_arr[idx], voxel_beta_matrix[v, idx])[0])
+            for v in range(n_voxels)
+        ])
+
+    # Compute contrast maps
+    z_maps['neg_vs_neu'] = z_maps['neg'] - z_maps['neu']
+    z_maps['neg_vs_pos'] = z_maps['neg'] - z_maps['pos']
 
     # ------------------------
-    # Save subject-level map
+    # Save all subject-level maps
     # ------------------------
-    z_map_img = brain_masker.inverse_transform(z_contrast)
-    z_map_img.to_filename(sub_out_dir / f"{subid}_{seed_name}_seedFC_neg_vs_neu.nii.gz")
-    print(f"Saved {seed_name} neg>neu map for {subid}")
+    for map_name, z_data in z_maps.items():
+        z_img = brain_masker.inverse_transform(z_data)
+        z_img.to_filename(sub_out_dir / f"{subid}_{seed_name}_seedFC_{map_name}.nii.gz")
+        print(f"  Saved {seed_name} {map_name} map for {subid}")
 EOF
 
