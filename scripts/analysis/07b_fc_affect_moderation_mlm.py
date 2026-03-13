@@ -65,7 +65,10 @@ FMRI_DIR = Path("data/fMRI")
 RESULTS_DIR = Path("results/tables")
 
 MASTER_FILE = PROCESSED_DIR / "midus_with_fmri.csv"
-FC_FILE = FMRI_DIR / "betaSeries_all_conditions.csv"
+# Prefer LSS (primary method) over LSA if available
+_LSS_FILE = FMRI_DIR / "all_subjects_betaSeries_LSS_all_conditions_M2ID.csv"
+_LSA_FILE = FMRI_DIR / "all_subjects_betaSeries_all_conditions_M2ID.csv"
+FC_FILE = _LSS_FILE if _LSS_FILE.exists() else _LSA_FILE
 
 MIN_N_REG = 20
 
@@ -76,7 +79,7 @@ ROI_PAIRS = [
     ("r_amyg", "post_vmPFC"),
 ]
 
-CONDITIONS = ["neg", "neu", "pos", "neg_vs_neu", "neg_vs_pos"]
+CONDITIONS = ["neg", "neu", "pos"]  # contrasts removed: GLM already encodes condition differences
 
 
 # ============================================================================
@@ -138,16 +141,20 @@ def run_mlm_moderation(df, fc_var, affect_var, moderator, covariates):
     if len(data) < MIN_N_REG:
         return None
 
+    # Sanitize fc_var name for patsy formula (hyphens are treated as minus)
+    fc_safe = fc_var.replace("-", "__")
+    data = data.rename(columns={fc_var: fc_safe})
+
     # Mean-center FC and moderator
-    fc_c = data[fc_var] - data[fc_var].mean()
+    fc_c = data[fc_safe] - data[fc_safe].mean()
     mod_c = data[moderator] - data[moderator].mean()
     interaction = fc_c * mod_c
 
     # Add centered variables to data for formula interface
     data = data.copy()
-    fc_c_name = f"{fc_var}_c"
+    fc_c_name = f"{fc_safe}_c"
     mod_c_name = f"{moderator}_c"
-    interaction_name = f"{fc_var}_x_{moderator}"
+    interaction_name = f"{fc_safe}_x_{moderator}"
     data[fc_c_name] = fc_c
     data[mod_c_name] = mod_c
     data[interaction_name] = interaction
@@ -179,6 +186,24 @@ def run_mlm_moderation(df, fc_var, affect_var, moderator, covariates):
 
     condition, seed_target = parse_fc_var(fc_var)
 
+    # Extract SE; if NaN (degenerate random effect with near-zero variance),
+    # recover from absolute value of covariance diagonal
+    with warnings.catch_warnings():
+        warnings.simplefilter("ignore", RuntimeWarning)
+        se_int = result.bse_fe[interaction_name]
+    degenerate_re = False
+    if np.isnan(se_int):
+        degenerate_re = True
+        idx = list(result.fe_params.index).index(interaction_name)
+        var = result.cov_params().iloc[idx, idx]
+        se_int = np.sqrt(abs(var)) if abs(var) > 0 else np.nan
+    z_int = result.fe_params[interaction_name] / se_int if not np.isnan(se_int) else np.nan
+    if not np.isnan(z_int):
+        from scipy import stats as _stats
+        p_int = 2 * (1 - _stats.norm.cdf(abs(z_int)))
+    else:
+        p_int = np.nan
+
     return {
         "fc_var": fc_var,
         "condition": condition,
@@ -188,9 +213,9 @@ def run_mlm_moderation(df, fc_var, affect_var, moderator, covariates):
         "n": int(result.nobs),
         "n_groups": int(result.nobs - result.df_resid),
         "beta_interaction": result.fe_params[interaction_name],
-        "se_interaction": result.bse_fe[interaction_name],
-        "z_interaction": result.tvalues[interaction_name],
-        "p_interaction": result.pvalues[interaction_name],
+        "se_interaction": se_int,
+        "z_interaction": z_int,
+        "p_interaction": p_int,
         "beta_fc": result.fe_params[fc_c_name],
         "p_fc": result.pvalues[fc_c_name],
         "beta_moderator": result.fe_params[mod_c_name],
@@ -198,6 +223,7 @@ def run_mlm_moderation(df, fc_var, affect_var, moderator, covariates):
         "group_var": result.cov_re.iloc[0, 0] if hasattr(result.cov_re, 'iloc') else float(result.cov_re),
         "log_likelihood": result.llf,
         "converged": result.converged,
+        "degenerate_re": degenerate_re,
         "optimizer": method,
         "tier": combine_tiers(
             get_fc_tier(fc_var, condition=condition, seed_target=seed_target),

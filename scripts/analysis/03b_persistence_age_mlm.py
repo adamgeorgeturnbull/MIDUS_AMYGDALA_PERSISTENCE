@@ -55,14 +55,12 @@ DATA_FILE = PROCESSED_DIR / "midus_with_fmri.csv"
 
 MIN_N_REG = 20
 
-
 # ============================================================================
 # Helper Functions
 # ============================================================================
 def fisher_z(r):
     """Apply Fisher z-transformation to correlation coefficient."""
     return 0.5 * np.log((1 + r) / (1 - r))
-
 
 def create_family_id(df):
     """
@@ -89,7 +87,6 @@ def create_family_id(df):
 
     return df
 
-
 def get_full_sample(df):
     """Define full analysis sample: participants with imaging data and valid age."""
     has_persistence = df["has_neg_persistence"] == 1
@@ -101,7 +98,6 @@ def get_full_sample(df):
     print(f"  Age mean (SD): {sample['C5PAGE'].mean():.1f} ({sample['C5PAGE'].std():.1f})")
 
     return sample
-
 
 def get_conservative_sample(df):
     """Define conservative sample with strict QC criteria."""
@@ -115,7 +111,6 @@ def get_conservative_sample(df):
         print(f"  Age mean (SD): {conservative['C5PAGE'].mean():.1f} ({conservative['C5PAGE'].std():.1f})")
 
     return conservative
-
 
 def run_mlm(df, persistence_var, age_var, covariates):
     """
@@ -154,26 +149,47 @@ def run_mlm(df, persistence_var, age_var, covariates):
         return None
 
     beta_age = result.fe_params[age_var]
-    p_age = result.pvalues[age_var]
+
+    # Extract SE; if NaN (degenerate random effect with near-zero variance),
+    # recover from absolute value of covariance diagonal
+    with warnings.catch_warnings():
+        warnings.simplefilter("ignore", RuntimeWarning)
+        se_age = result.bse_fe[age_var]
+    degenerate_re = False
+    if np.isnan(se_age):
+        degenerate_re = True
+        idx = list(result.fe_params.index).index(age_var)
+        var = result.cov_params().iloc[idx, idx]
+        se_age = np.sqrt(abs(var)) if abs(var) > 0 else np.nan
+    z_age = beta_age / se_age if not np.isnan(se_age) else np.nan
+    if not np.isnan(z_age):
+        from scipy import stats as _stats
+        p_age = 2 * (1 - _stats.norm.cdf(abs(z_age)))
+    else:
+        p_age = np.nan
+
     # Directional one-tailed: hypothesis is beta < 0
-    p_age_one_tailed = p_age / 2 if beta_age < 0 else 1 - p_age / 2
+    if not np.isnan(p_age):
+        p_age_one_tailed = p_age / 2 if beta_age < 0 else 1 - p_age / 2
+    else:
+        p_age_one_tailed = np.nan
 
     return {
         "persistence_var": persistence_var,
         "n": int(result.nobs),
         "n_groups": int(result.nobs - result.df_resid),
         "beta_age": beta_age,
-        "se_age": result.bse_fe[age_var],
-        "z_age": result.tvalues[age_var],
+        "se_age": se_age,
+        "z_age": z_age,
         "p_age": p_age,
         "p_age_one_tailed": p_age_one_tailed,
         "group_var": result.cov_re.iloc[0, 0] if hasattr(result.cov_re, 'iloc') else float(result.cov_re),
         "log_likelihood": result.llf,
         "converged": result.converged,
+        "degenerate_re": degenerate_re,
         "optimizer": method,
         "tier": get_persistence_tier(persistence_var),
     }
-
 
 def run_all_mlm(df, persistence_vars, age_var, covariates):
     """Run all persistence ~ age mixed-effects models."""
@@ -183,7 +199,6 @@ def run_all_mlm(df, persistence_vars, age_var, covariates):
         if result is not None:
             results.append(result)
     return pd.DataFrame(results)
-
 
 def run_sample_analysis(sample, sample_name, persistence_vars, age_var, covariates):
     """Run MLM analysis for a given sample and save results."""
@@ -221,7 +236,6 @@ def run_sample_analysis(sample, sample_name, persistence_vars, age_var, covariat
 
     return results
 
-
 # ============================================================================
 # Main Execution
 # ============================================================================
@@ -246,13 +260,10 @@ def main():
     persistence_r_vars = [
         "neg_persist_crossrun_mean_r_L",
         "neg_persist_crossrun_mean_r_R",
-        "neg_persist_crossrun_mean_r_bilateral",
         "pos_persist_crossrun_mean_r_L",
         "pos_persist_crossrun_mean_r_R",
-        "pos_persist_crossrun_mean_r_bilateral",
         "neg_persist_concat_r_L",
         "neg_persist_concat_r_R",
-        "neg_persist_concat_r_bilateral",
     ]
 
     for var in persistence_r_vars:
@@ -267,14 +278,21 @@ def main():
     persistence_vars = [
         "neg_persist_crossrun_mean_z_L",
         "neg_persist_crossrun_mean_z_R",
-        "neg_persist_crossrun_mean_z_bilateral",
         "pos_persist_crossrun_mean_z_L",
         "pos_persist_crossrun_mean_z_R",
-        "pos_persist_crossrun_mean_z_bilateral",
         "neg_persist_concat_z_L",
         "neg_persist_concat_z_R",
-        "neg_persist_concat_z_bilateral",
     ]
+
+    # vmPFC persistence (secondary comparison ROI — available after Sherlock jobs complete)
+    vmPFC_r_cols = sorted([c for c in df.columns
+                           if "vmPFC" in c and "neg_image" in c and c.endswith("_mean_r")])
+    if vmPFC_r_cols:
+        for var in vmPFC_r_cols:
+            z_var = var.replace("_mean_r", "_mean_z")
+            df[z_var] = fisher_z(df[var])
+            persistence_vars.append(z_var)
+        print(f"  Added {len(vmPFC_r_cols)} vmPFC persistence variables (secondary)")
 
     # Covariates: same as OLS but WITHOUT twin dummies (handled by random effect).
     # No diary-specific covariates (this analysis is entirely neuroscience-based).
@@ -333,7 +351,6 @@ def main():
                     direction = "neg (as hypothesized)" if row["beta_age"] < 0 else "pos (opposite)"
                     print(f"    {row['persistence_var']}: b = {row['beta_age']:.5f}, "
                           f"p(1t) = {row['p_age_one_tailed']:.4f} [{direction}]")
-
 
 if __name__ == "__main__":
     main()

@@ -26,8 +26,7 @@ Key analysis decisions:
 - Two-tailed tests (FC hypotheses are exploratory)
 - No diary covariates (purely neuroscience measures)
 - Results tiered: primary (L amyg neg, L persistence), secondary (R amyg neg,
-  R persistence), sensitivity (bilateral, other conditions, contrasts,
-  positive/concat persistence)
+  R persistence), sensitivity (other conditions, contrasts, positive/concat persistence)
 
 Inputs:
 - data/processed/midus_with_fmri.csv
@@ -59,7 +58,10 @@ FMRI_DIR = Path("data/fMRI")
 RESULTS_DIR = Path("results/tables")
 
 MASTER_FILE = PROCESSED_DIR / "midus_with_fmri.csv"
-FC_FILE = FMRI_DIR / "betaSeries_all_conditions.csv"
+# Prefer LSS (primary method) over LSA if available
+_LSS_FILE = FMRI_DIR / "all_subjects_betaSeries_LSS_all_conditions_M2ID.csv"
+_LSA_FILE = FMRI_DIR / "all_subjects_betaSeries_all_conditions_M2ID.csv"
+FC_FILE = _LSS_FILE if _LSS_FILE.exists() else _LSA_FILE
 
 MIN_N_REG = 20
 
@@ -70,18 +72,15 @@ ROI_PAIRS = [
     ("r_amyg", "post_vmPFC"),
 ]
 
-CONDITIONS = ["neg", "neu", "pos", "neg_vs_neu", "neg_vs_pos"]
+CONDITIONS = ["neg", "neu", "pos"]  # contrasts removed: GLM already encodes condition differences
 
 PERSISTENCE_R_VARS = [
     "neg_persist_crossrun_mean_r_L",
     "neg_persist_crossrun_mean_r_R",
-    "neg_persist_crossrun_mean_r_bilateral",
     "pos_persist_crossrun_mean_r_L",
     "pos_persist_crossrun_mean_r_R",
-    "pos_persist_crossrun_mean_r_bilateral",
     "neg_persist_concat_r_L",
     "neg_persist_concat_r_R",
-    "neg_persist_concat_r_bilateral",
 ]
 
 
@@ -145,11 +144,15 @@ def run_mlm(df, fc_var, persist_var, covariates):
     if len(data) < MIN_N_REG:
         return None
 
+    # Sanitize fc_var name for patsy formula (hyphens are treated as minus)
+    fc_safe = fc_var.replace("-", "__")
+    data = data.rename(columns={fc_var: fc_safe})
+
     # Drop zero-variance covariates
     active_covariates = [c for c in covariates if data[c].std() > 0]
 
     # Build formula (no twin dummies -- handled by random effect)
-    fixed = f"{persist_var} ~ {fc_var} + " + " + ".join(active_covariates)
+    fixed = f"{persist_var} ~ {fc_safe} + " + " + ".join(active_covariates)
 
     # Try multiple optimizers
     methods = ["lbfgs", "powell"]
@@ -171,6 +174,24 @@ def run_mlm(df, fc_var, persist_var, covariates):
 
     condition, seed_target = parse_fc_var(fc_var)
 
+    # Extract SE; if NaN (degenerate random effect with near-zero variance),
+    # recover from absolute value of covariance diagonal
+    with warnings.catch_warnings():
+        warnings.simplefilter("ignore", RuntimeWarning)
+        se_fc = result.bse_fe[fc_safe]
+    degenerate_re = False
+    if np.isnan(se_fc):
+        degenerate_re = True
+        idx = list(result.fe_params.index).index(fc_safe)
+        var = result.cov_params().iloc[idx, idx]
+        se_fc = np.sqrt(abs(var)) if abs(var) > 0 else np.nan
+    z_fc = result.fe_params[fc_safe] / se_fc if not np.isnan(se_fc) else np.nan
+    if not np.isnan(z_fc):
+        from scipy import stats as _stats
+        p_fc = 2 * (1 - _stats.norm.cdf(abs(z_fc)))
+    else:
+        p_fc = np.nan
+
     return {
         "fc_var": fc_var,
         "condition": condition,
@@ -178,13 +199,14 @@ def run_mlm(df, fc_var, persist_var, covariates):
         "persistence_var": persist_var,
         "n": int(result.nobs),
         "n_groups": int(result.nobs - result.df_resid),
-        "beta_fc": result.fe_params[fc_var],
-        "se_fc": result.bse_fe[fc_var],
-        "z_fc": result.tvalues[fc_var],
-        "p_fc": result.pvalues[fc_var],
+        "beta_fc": result.fe_params[fc_safe],
+        "se_fc": se_fc,
+        "z_fc": z_fc,
+        "p_fc": p_fc,
         "group_var": result.cov_re.iloc[0, 0] if hasattr(result.cov_re, 'iloc') else float(result.cov_re),
         "log_likelihood": result.llf,
         "converged": result.converged,
+        "degenerate_re": degenerate_re,
         "optimizer": method,
         "tier": combine_tiers(
             get_fc_tier(fc_var, condition=condition, seed_target=seed_target),
@@ -282,6 +304,16 @@ def main():
             print(f"    {z_var}")
         else:
             print(f"    {var} not found, skipping")
+
+    # vmPFC persistence (secondary comparison ROI — available after Sherlock jobs complete)
+    vmPFC_r_cols = sorted([c for c in df.columns
+                           if "vmPFC" in c and "neg_image" in c and c.endswith("_mean_r")])
+    if vmPFC_r_cols:
+        for var in vmPFC_r_cols:
+            z_var = var.replace("_mean_r", "_mean_z")
+            df[z_var] = fisher_z(df[var])
+            persistence_vars.append(z_var)
+        print(f"  Added {len(vmPFC_r_cols)} vmPFC persistence variables (secondary)")
 
     # Build FC variable list from available columns
     fc_vars = []

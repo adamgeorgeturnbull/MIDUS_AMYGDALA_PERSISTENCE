@@ -54,7 +54,6 @@ from scipy import stats
 sys.path.insert(0, str(Path(__file__).resolve().parent))
 from tier_utils import get_persistence_tier, get_affect_tier, combine_tiers, print_by_tier
 
-
 # ============================================================================
 # Helper Functions for Fisher z-transform
 # ============================================================================
@@ -108,7 +107,6 @@ def get_full_sample(df):
 
     return sample
 
-
 def get_conservative_sample(df):
     """
     Define conservative analysis sample with strict quality criteria.
@@ -146,7 +144,6 @@ def get_conservative_sample(df):
         print(f"  - Failed both: {both_fail}")
 
     return conservative
-
 
 def compute_correlations(df, persistence_vars, affect_vars):
     """
@@ -188,7 +185,6 @@ def compute_correlations(df, persistence_vars, affect_vars):
             })
 
     return pd.DataFrame(results)
-
 
 def run_regression(df, persistence_var, affect_var, covariates):
     """
@@ -249,7 +245,6 @@ def run_regression(df, persistence_var, affect_var, covariates):
 
     return result
 
-
 def run_all_regressions(df, persistence_vars, affect_vars, base_covariates,
                         diary_covariates, diary_affect_vars):
     """
@@ -282,7 +277,6 @@ def run_all_regressions(df, persistence_vars, affect_vars, base_covariates,
                 results.append(result)
 
     return pd.DataFrame(results)
-
 
 def run_sample_analysis(sample, sample_name, persistence_vars, affect_vars,
                         base_covariates, diary_covariates, diary_affect_vars):
@@ -360,7 +354,6 @@ def run_sample_analysis(sample, sample_name, persistence_vars, affect_vars,
 
     return corr_results, reg_results
 
-
 # ============================================================================
 # Main Execution
 # ============================================================================
@@ -389,14 +382,12 @@ def main():
     persistence_r_vars = [
         "neg_persist_crossrun_mean_r_L",
         "neg_persist_crossrun_mean_r_R",
-        "neg_persist_crossrun_mean_r_bilateral",
     ]
 
     # Cross-run positive persistence (sensitivity analysis)
     persistence_r_vars += [
         "pos_persist_crossrun_mean_r_L",
         "pos_persist_crossrun_mean_r_R",
-        "pos_persist_crossrun_mean_r_bilateral",
     ]
 
     # Concatenated negative persistence (sensitivity analysis)
@@ -404,7 +395,6 @@ def main():
     persistence_r_vars += [
         "neg_persist_concat_r_L",
         "neg_persist_concat_r_R",
-        "neg_persist_concat_r_bilateral",
     ]
 
     for var in persistence_r_vars:
@@ -426,30 +416,34 @@ def main():
         # Cross-run negative persistence (PRIMARY - replication of Puccetti et al., 2021)
         "neg_persist_crossrun_mean_z_L",
         "neg_persist_crossrun_mean_z_R",
-        "neg_persist_crossrun_mean_z_bilateral",
         # Cross-run positive persistence (SENSITIVITY)
         "pos_persist_crossrun_mean_z_L",
         "pos_persist_crossrun_mean_z_R",
-        "pos_persist_crossrun_mean_z_bilateral",
         # Concatenated negative persistence (SENSITIVITY)
         "neg_persist_concat_z_L",
         "neg_persist_concat_z_R",
-        "neg_persist_concat_z_bilateral",
     ]
+
+    # vmPFC persistence (secondary comparison ROI — available after Sherlock jobs complete)
+    vmPFC_r_cols = sorted([c for c in df.columns
+                           if "vmPFC" in c and "neg_image" in c and c.endswith("_mean_r")])
+    if vmPFC_r_cols:
+        for var in vmPFC_r_cols:
+            z_var = var.replace("_mean_r", "_mean_z")
+            df[z_var] = fisher_z(df[var])
+            persistence_vars.append(z_var)
+        print(f"  Added {len(vmPFC_r_cols)} vmPFC persistence variables (secondary)")
 
     print(f"\nPersistence measures (Fisher z-transformed):")
     print(f"  Primary (Cross-run Negative):")
     print(f"  - neg_persist_crossrun_mean_z_L")
     print(f"  - neg_persist_crossrun_mean_z_R")
-    print(f"  - neg_persist_crossrun_mean_z_bilateral")
     print(f"  Sensitivity (Cross-run Positive):")
     print(f"  - pos_persist_crossrun_mean_z_L")
     print(f"  - pos_persist_crossrun_mean_z_R")
-    print(f"  - pos_persist_crossrun_mean_z_bilateral")
     print(f"  Sensitivity (Concatenated Negative):")
     print(f"  - neg_persist_concat_z_L")
     print(f"  - neg_persist_concat_z_R")
-    print(f"  - neg_persist_concat_z_bilateral")
 
     # Affect measures
     # Primary: Daily diary (following Puccetti et al., 2021)
@@ -544,7 +538,6 @@ def main():
         print(f"  Significant correlations (p < 0.05): {(cons_corr['p'] < 0.05).sum()}")
     if len(cons_reg) > 0:
         print(f"  Significant regressions (p < 0.05): {(cons_reg['p_persistence'] < 0.05).sum()}")
-
 
 if __name__ == "__main__":
     main()

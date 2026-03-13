@@ -45,6 +45,10 @@ POS_PERSIST_CROSS_FILE = os.path.join(FMRI_DIR, "positive_persistence_cross_run.
 FD_FILE = os.path.join(FMRI_DIR, "fd_summary.csv")
 QC_FILE = os.path.join(FMRI_DIR, "fmri_qc_processed.csv")
 
+# Optional new data sources (merged when available)
+VMRFC_PERSIST_FILE = os.path.join(FMRI_DIR, "vmPFC_persistence_wide.csv")        # from run_cross_corr_vmPFC.py
+ROI_ACTIVATIONS_FILE = os.path.join(FMRI_DIR, "all_subjects_roi_activations.csv") # from extract_roi_activations.sh
+
 # Output file
 OUT_FILE = os.path.join(PROCESSED_DIR, "midus_with_fmri.csv")
 
@@ -169,6 +173,34 @@ def main():
     merged = merged.merge(pos_cross_wide, on="M2ID", how="left")
     merged = merged.merge(fd_summary, on="M2ID", how="left")
     merged = merged.merge(qc, on="M2ID", how="left")
+
+    # ========================================================================
+    # Optional: vmPFC persistence (from run_cross_corr_vmPFC.py)
+    # ========================================================================
+    if os.path.exists(VMRFC_PERSIST_FILE):
+        vmPFC_persist = pd.read_csv(VMRFC_PERSIST_FILE)
+        vmPFC_persist["M2ID"] = vmPFC_persist["subject"].str.replace("sub-", "", regex=False).astype(int)
+        vmPFC_persist = vmPFC_persist.drop(columns="subject")
+        merged = merged.merge(vmPFC_persist, on="M2ID", how="left")
+        print(f"✓ Merged vmPFC persistence ({len(vmPFC_persist)} subjects)")
+    else:
+        print(f"  (skipping vmPFC persistence — {VMRFC_PERSIST_FILE} not found)")
+
+    # ========================================================================
+    # Optional: ROI activations (from extract_roi_activations.sh + combine)
+    # ========================================================================
+    if os.path.exists(ROI_ACTIVATIONS_FILE):
+        roi_act = pd.read_csv(ROI_ACTIVATIONS_FILE)
+        if "subid" in roi_act.columns:
+            roi_act["M2ID"] = roi_act["subid"].str.replace("sub-", "", regex=False).astype(int)
+            roi_act = roi_act.drop(columns="subid")
+        # Average across runs if per-run rows present
+        if "run" in roi_act.columns:
+            roi_act = roi_act.drop(columns="run").groupby("M2ID").mean().reset_index()
+        merged = merged.merge(roi_act, on="M2ID", how="left")
+        print(f"✓ Merged ROI activations ({len(roi_act)} subjects)")
+    else:
+        print(f"  (skipping ROI activations — {ROI_ACTIVATIONS_FILE} not found)")
 
     # ========================================================================
     # Create Availability Flags

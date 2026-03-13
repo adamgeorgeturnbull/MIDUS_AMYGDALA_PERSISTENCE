@@ -25,7 +25,7 @@ Covariates (following Puccetti et al., 2021):
 
 Key analysis decisions:
 - Persistence measures are Fisher z-transformed before analysis
-- Primary: Cross-run negative persistence (L, R, bilateral)
+- Primary: Cross-run negative persistence (L, R)
 - Sensitivity: Cross-run positive, concatenated negative
 - Mean-centering done within each complete-case subset
 - Two-tailed tests for interaction effects (exploratory)
@@ -63,14 +63,12 @@ DATA_FILE = PROCESSED_DIR / "midus_with_fmri.csv"
 
 MIN_N_REG = 20
 
-
 # ============================================================================
 # Helper Functions
 # ============================================================================
 def fisher_z(r):
     """Apply Fisher z-transformation to correlation coefficient."""
     return 0.5 * np.log((1 + r) / (1 - r))
-
 
 def get_full_sample(df):
     """Define full analysis sample: participants with imaging data.
@@ -87,7 +85,6 @@ def get_full_sample(df):
 
     return sample
 
-
 def get_conservative_sample(df):
     """Define conservative sample with strict QC criteria."""
     sample = get_full_sample(df)
@@ -97,7 +94,6 @@ def get_conservative_sample(df):
     print(f"Conservative sample: {len(conservative)} participants")
 
     return conservative
-
 
 def run_moderation(df, persistence_var, affect_var, moderator, covariates):
     """
@@ -161,7 +157,6 @@ def run_moderation(df, persistence_var, affect_var, moderator, covariates):
         ),
     }
 
-
 def run_all_moderations(df, persistence_vars, affect_vars, moderators,
                         base_covariates, diary_covariates, diary_affect_vars):
     """Run all persistence × affect × moderator interaction models.
@@ -180,7 +175,6 @@ def run_all_moderations(df, persistence_vars, affect_vars, moderators,
                 if result is not None:
                     results.append(result)
     return pd.DataFrame(results)
-
 
 def run_sample_analysis(sample, sample_name, persistence_vars, affect_vars,
                         moderators, moderator_labels,
@@ -232,7 +226,6 @@ def run_sample_analysis(sample, sample_name, persistence_vars, affect_vars,
 
     return results
 
-
 # ============================================================================
 # Main Execution
 # ============================================================================
@@ -257,13 +250,10 @@ def main():
     persistence_r_vars = [
         "neg_persist_crossrun_mean_r_L",
         "neg_persist_crossrun_mean_r_R",
-        "neg_persist_crossrun_mean_r_bilateral",
         "pos_persist_crossrun_mean_r_L",
         "pos_persist_crossrun_mean_r_R",
-        "pos_persist_crossrun_mean_r_bilateral",
         "neg_persist_concat_r_L",
         "neg_persist_concat_r_R",
-        "neg_persist_concat_r_bilateral",
     ]
 
     for var in persistence_r_vars:
@@ -276,14 +266,21 @@ def main():
     persistence_vars = [
         "neg_persist_crossrun_mean_z_L",
         "neg_persist_crossrun_mean_z_R",
-        "neg_persist_crossrun_mean_z_bilateral",
         "pos_persist_crossrun_mean_z_L",
         "pos_persist_crossrun_mean_z_R",
-        "pos_persist_crossrun_mean_z_bilateral",
         "neg_persist_concat_z_L",
         "neg_persist_concat_z_R",
-        "neg_persist_concat_z_bilateral",
     ]
+
+    # vmPFC persistence (secondary comparison ROI — available after Sherlock jobs complete)
+    vmPFC_r_cols = sorted([c for c in df.columns
+                           if "vmPFC" in c and "neg_image" in c and c.endswith("_mean_r")])
+    if vmPFC_r_cols:
+        for var in vmPFC_r_cols:
+            z_var = var.replace("_mean_r", "_mean_z")
+            df[z_var] = fisher_z(df[var])
+            persistence_vars.append(z_var)
+        print(f"  Added {len(vmPFC_r_cols)} vmPFC persistence variables (secondary)")
 
     affect_vars = [
         "PA_score",
@@ -374,7 +371,6 @@ def main():
                     for _, row in sig.iterrows():
                         print(f"      {row['persistence_var']} x {row['affect_var']}: "
                               f"b = {row['beta_interaction']:.5f}, p = {row['p_interaction']:.4f}")
-
 
 if __name__ == "__main__":
     main()

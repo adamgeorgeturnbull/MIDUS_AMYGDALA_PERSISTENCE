@@ -23,7 +23,7 @@ Note: Age (C5PAGE) is the predictor, NOT a covariate.
 
 Key analysis decisions:
 - Persistence measures are Fisher z-transformed before analysis
-- Primary: Cross-run negative persistence (L, R, bilateral)
+- Primary: Cross-run negative persistence (L, R)
 - Sensitivity: Cross-run positive, concatenated negative
 - One-tailed p-values for directional hypothesis (persistence decreases with age)
 - Results tiered: primary (L amyg), secondary (R amyg), sensitivity (rest)
@@ -62,14 +62,12 @@ DATA_FILE = PROCESSED_DIR / "midus_with_fmri.csv"
 MIN_N_CORR = 10
 MIN_N_REG = 20
 
-
 # ============================================================================
 # Helper Functions
 # ============================================================================
 def fisher_z(r):
     """Apply Fisher z-transformation to correlation coefficient."""
     return 0.5 * np.log((1 + r) / (1 - r))
-
 
 def get_full_sample(df):
     """Define full analysis sample: participants with imaging data and valid age."""
@@ -83,7 +81,6 @@ def get_full_sample(df):
 
     return sample
 
-
 def get_conservative_sample(df):
     """Define conservative sample with strict QC criteria."""
     sample = get_full_sample(df)
@@ -96,7 +93,6 @@ def get_conservative_sample(df):
         print(f"  Age mean (SD): {conservative['C5PAGE'].mean():.1f} ({conservative['C5PAGE'].std():.1f})")
 
     return conservative
-
 
 def compute_correlations(df, persistence_vars, age_var="C5PAGE"):
     """Compute zero-order Pearson correlations between persistence and age."""
@@ -122,7 +118,6 @@ def compute_correlations(df, persistence_vars, age_var="C5PAGE"):
         })
 
     return pd.DataFrame(results)
-
 
 def run_regression(df, persistence_var, age_var, covariates):
     """
@@ -164,7 +159,6 @@ def run_regression(df, persistence_var, age_var, covariates):
         "tier": get_persistence_tier(persistence_var),
     }
 
-
 def run_all_regressions(df, persistence_vars, age_var, covariates):
     """Run all persistence ~ age regressions."""
     results = []
@@ -173,7 +167,6 @@ def run_all_regressions(df, persistence_vars, age_var, covariates):
         if result is not None:
             results.append(result)
     return pd.DataFrame(results)
-
 
 def run_sample_analysis(sample, sample_name, persistence_vars, age_var, covariates):
     """Run complete analysis (correlations + regressions) for a given sample."""
@@ -229,7 +222,6 @@ def run_sample_analysis(sample, sample_name, persistence_vars, age_var, covariat
 
     return corr_results, reg_results
 
-
 # ============================================================================
 # Main Execution
 # ============================================================================
@@ -254,13 +246,10 @@ def main():
     persistence_r_vars = [
         "neg_persist_crossrun_mean_r_L",
         "neg_persist_crossrun_mean_r_R",
-        "neg_persist_crossrun_mean_r_bilateral",
         "pos_persist_crossrun_mean_r_L",
         "pos_persist_crossrun_mean_r_R",
-        "pos_persist_crossrun_mean_r_bilateral",
         "neg_persist_concat_r_L",
         "neg_persist_concat_r_R",
-        "neg_persist_concat_r_bilateral",
     ]
 
     for var in persistence_r_vars:
@@ -275,14 +264,21 @@ def main():
     persistence_vars = [
         "neg_persist_crossrun_mean_z_L",
         "neg_persist_crossrun_mean_z_R",
-        "neg_persist_crossrun_mean_z_bilateral",
         "pos_persist_crossrun_mean_z_L",
         "pos_persist_crossrun_mean_z_R",
-        "pos_persist_crossrun_mean_z_bilateral",
         "neg_persist_concat_z_L",
         "neg_persist_concat_z_R",
-        "neg_persist_concat_z_bilateral",
     ]
+
+    # vmPFC persistence (secondary comparison ROI — available after Sherlock jobs complete)
+    vmPFC_r_cols = sorted([c for c in df.columns
+                           if "vmPFC" in c and "neg_image" in c and c.endswith("_mean_r")])
+    if vmPFC_r_cols:
+        for var in vmPFC_r_cols:
+            z_var = var.replace("_mean_r", "_mean_z")
+            df[z_var] = fisher_z(df[var])
+            persistence_vars.append(z_var)
+        print(f"  Added {len(vmPFC_r_cols)} vmPFC persistence variables (secondary)")
 
     race_dummies = [col for col in df.columns if col.startswith("race_")]
     twin_dummies = [col for col in df.columns if col.startswith("twin_pair_")]
@@ -295,7 +291,7 @@ def main():
 
     print(f"\nPredictor: {age_var} (age at neuroscience visit)")
     print(f"Outcomes: {len(persistence_vars)} persistence measures (Fisher z)")
-    print(f"  Primary: 3 cross-run negative (L, R, bilateral)")
+    print(f"  Primary: 2 cross-run negative (L, R)")
     print(f"  Sensitivity: 3 cross-run positive + 3 concatenated negative")
     print(f"Covariates: sex, {len(race_dummies)} race, {len(twin_dummies)} twin dummies")
     print(f"  NOTE: C5PAGE is the predictor, not a covariate")
@@ -363,7 +359,6 @@ def main():
                 print(f"  SENSITIVITY regressions: {n_sig}/{len(sens_reg)} significant (one-tailed)")
         else:
             print("  No regressions (insufficient data)")
-
 
 if __name__ == "__main__":
     main()

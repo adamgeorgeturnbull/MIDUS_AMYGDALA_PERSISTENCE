@@ -12,7 +12,7 @@ a 3-condition GLM and tests condition-specific associations.
 Key analysis decisions:
 - Two-tailed tests (FC hypotheses are exploratory)
 - Results tiered: primary (L amyg neg, L persistence), secondary (R amyg neg, R persistence),
-  sensitivity (bilateral, other conditions, contrasts, positive/concat persistence)
+  sensitivity (other conditions, positive/concat persistence)
 
 FC measures are ROI-level beta-series correlations (Fisher z-transformed)
 between amygdala seeds (L, R) and vmPFC targets (anterior = safety signaling,
@@ -57,7 +57,10 @@ FMRI_DIR = Path("data/fMRI")
 RESULTS_DIR = Path("results/tables")
 
 MASTER_FILE = PROCESSED_DIR / "midus_with_fmri.csv"
-FC_FILE = FMRI_DIR / "betaSeries_all_conditions.csv"
+# Prefer LSS (primary method) over LSA if available
+_LSS_FILE = FMRI_DIR / "all_subjects_betaSeries_LSS_all_conditions_M2ID.csv"
+_LSA_FILE = FMRI_DIR / "all_subjects_betaSeries_all_conditions_M2ID.csv"
+FC_FILE = _LSS_FILE if _LSS_FILE.exists() else _LSA_FILE
 
 MIN_N_CORR = 10
 MIN_N_REG = 20
@@ -69,18 +72,15 @@ ROI_PAIRS = [
     ("r_amyg", "post_vmPFC"),
 ]
 
-CONDITIONS = ["neg", "neu", "pos", "neg_vs_neu", "neg_vs_pos"]
+CONDITIONS = ["neg", "neu", "pos"]  # contrasts removed: GLM already encodes condition differences
 
 PERSISTENCE_R_VARS = [
     "neg_persist_crossrun_mean_r_L",
     "neg_persist_crossrun_mean_r_R",
-    "neg_persist_crossrun_mean_r_bilateral",
     "pos_persist_crossrun_mean_r_L",
     "pos_persist_crossrun_mean_r_R",
-    "pos_persist_crossrun_mean_r_bilateral",
     "neg_persist_concat_r_L",
     "neg_persist_concat_r_R",
-    "neg_persist_concat_r_bilateral",
 ]
 
 
@@ -289,6 +289,16 @@ def main():
             print(f"    {z_var}")
         else:
             print(f"    {var} not found, skipping")
+
+    # vmPFC persistence (secondary comparison ROI — available after Sherlock jobs complete)
+    vmPFC_r_cols = sorted([c for c in df.columns
+                           if "vmPFC" in c and "neg_image" in c and c.endswith("_mean_r")])
+    if vmPFC_r_cols:
+        for var in vmPFC_r_cols:
+            z_var = var.replace("_mean_r", "_mean_z")
+            df[z_var] = fisher_z(df[var])
+            persistence_vars.append(z_var)
+        print(f"  Added {len(vmPFC_r_cols)} vmPFC persistence variables (secondary)")
 
     # Build FC variable list from available columns
     fc_vars = []

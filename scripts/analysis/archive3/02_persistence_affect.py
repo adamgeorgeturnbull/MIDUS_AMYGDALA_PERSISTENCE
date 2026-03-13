@@ -1,0 +1,550 @@
+#!/usr/bin/env python3
+"""
+02_persistence_affect.py
+
+Test associations between amygdala persistence to negative images and daily
+life affect (replication of Puccetti et al., 2021).
+
+Confirmatory analysis testing whether amygdala persistence to negative images
+is associated with daily negative and positive affect.
+
+Analysis plan (following Puccetti et al., 2021):
+1. Zero-order correlations between persistence and affect
+2. Multiple linear regressions controlling for:
+   - Age (C5PAGE)
+   - Gender (sex)
+   - Race (dummy-coded)
+   - Twin status (dummy-coded for each twin pair)
+   - Time between visits (time_P2_P5)
+   - Number of diary interviews completed (n_days_complete)
+
+Key analysis decisions:
+- Persistence measures are Fisher z-transformed before analysis
+- Primary persistence: Cross-run negative persistence (replication)
+- Sensitivity persistence: Cross-run positive, concatenated negative
+- Primary affect outcomes: Daily diary PA, NA
+- Sensitivity affect outcomes: NA_log, PANAS (C5SPGP, C5SPGN, C5SPGN_log)
+- One-tailed p-values for persistence–affect associations (directional)
+- Results tiered: primary (L amyg, PA/NA), secondary (R amyg), sensitivity (rest)
+
+Two versions:
+- Full sample: All participants with imaging + affect data
+- Conservative sample: Mean FD < 0.5 AND all 3 runs available
+
+Inputs:
+- data/processed/midus_with_fmri.csv
+
+Outputs:
+- results/tables/02_persistence_affect_correlations_full.csv
+- results/tables/02_persistence_affect_regressions_full.csv
+- results/tables/02_persistence_affect_correlations_conservative.csv
+- results/tables/02_persistence_affect_regressions_conservative.csv
+
+Run from project root directory.
+"""
+
+import sys
+from pathlib import Path
+
+import numpy as np
+import pandas as pd
+import statsmodels.api as sm
+from scipy import stats
+
+sys.path.insert(0, str(Path(__file__).resolve().parent))
+from tier_utils import get_persistence_tier, get_affect_tier, combine_tiers, print_by_tier
+
+
+# ============================================================================
+# Helper Functions for Fisher z-transform
+# ============================================================================
+def fisher_z(r):
+    """
+    Apply Fisher z-transformation to correlation coefficient.
+
+    Args:
+        r: Correlation coefficient (scalar or array)
+
+    Returns:
+        Fisher z-transformed value
+    """
+    return 0.5 * np.log((1 + r) / (1 - r))
+
+# ============================================================================
+# Paths and Constants
+# ============================================================================
+PROCESSED_DIR = Path("data/processed")
+RESULTS_DIR = Path("results/tables")
+
+DATA_FILE = PROCESSED_DIR / "midus_with_fmri.csv"
+
+# Minimum sample size for analyses
+MIN_N_CORR = 10
+MIN_N_REG = 20
+
+# ============================================================================
+# Helper Functions
+# ============================================================================
+def get_full_sample(df):
+    """
+    Define full analysis sample: participants with imaging data.
+
+    Per-model dropna() handles missing affect outcomes, so we do NOT
+    pre-filter on affect availability. This lets PANAS analyses include
+    participants who have MRI data but no daily diary data.
+
+    Args:
+        df: Full dataset
+
+    Returns:
+        DataFrame filtered to analysis sample
+    """
+    has_persistence = df["has_neg_persistence"] == 1
+
+    sample = df[has_persistence].copy()
+
+    print(f"\nFull sample: {len(sample)} participants")
+    print(f"  - With daily diary affect: {sample['PA_score'].notna().sum()}")
+
+    return sample
+
+
+def get_conservative_sample(df):
+    """
+    Define conservative analysis sample with strict quality criteria.
+
+    Uses QC flags from manual inspection (script 08_process_fmri_qc.py):
+    1. All 3 runs pass visual QC
+    2. Mean FD < 0.5 across all runs
+
+    Args:
+        df: Full dataset
+
+    Returns:
+        DataFrame filtered to conservative sample
+    """
+    # Start with full sample
+    sample = get_full_sample(df)
+
+    # Apply QC criteria using qc_conservative flag
+    qc_pass = sample["qc_conservative"] == 1
+
+    conservative = sample[qc_pass].copy()
+
+    print(f"\nConservative sample: {len(conservative)} participants")
+    print(f"  - Excluded for failed QC: {(~qc_pass).sum()}")
+    print(f"  - With daily diary affect: {conservative['PA_score'].notna().sum()}")
+
+    # Additional breakdown if available
+    if "all_runs_pass" in sample.columns and "fd_pass" in sample.columns:
+        excluded = sample[~qc_pass]
+        runs_fail = (excluded["all_runs_pass"] == 0).sum()
+        fd_fail = (excluded["fd_pass"] == 0).sum()
+        both_fail = ((excluded["all_runs_pass"] == 0) & (excluded["fd_pass"] == 0)).sum()
+        print(f"  - Failed run QC only: {runs_fail - both_fail}")
+        print(f"  - Failed FD criterion only: {fd_fail - both_fail}")
+        print(f"  - Failed both: {both_fail}")
+
+    return conservative
+
+
+def compute_correlations(df, persistence_vars, affect_vars):
+    """
+    Compute zero-order correlations between persistence and affect measures.
+
+    Args:
+        df: Dataset
+        persistence_vars: List of persistence variable names
+        affect_vars: List of affect variable names
+
+    Returns:
+        DataFrame with correlation results
+    """
+    results = []
+
+    for persist_var in persistence_vars:
+        for affect_var in affect_vars:
+            # Get complete cases
+            data = df[[persist_var, affect_var]].dropna()
+            n = len(data)
+
+            if n < MIN_N_CORR:
+                continue
+
+            # Compute correlation
+            r, p = stats.pearsonr(data[persist_var], data[affect_var])
+
+            results.append({
+                "persistence_var": persist_var,
+                "affect_var": affect_var,
+                "n": n,
+                "r": r,
+                "p": p,
+                "p_one_tailed": p / 2,
+                "tier": combine_tiers(
+                    get_persistence_tier(persist_var),
+                    get_affect_tier(affect_var),
+                ),
+            })
+
+    return pd.DataFrame(results)
+
+
+def run_regression(df, persistence_var, affect_var, covariates):
+    """
+    Run OLS regression: affect ~ persistence + covariates.
+
+    Following Puccetti et al. (2021), controls for:
+    - Age, gender, race, twin status, time between visits, number of diary days
+
+    Args:
+        df: Dataset
+        persistence_var: Name of persistence predictor
+        affect_var: Name of affect outcome
+        covariates: List of covariate names
+
+    Returns:
+        Dictionary with regression results or None if insufficient data
+    """
+    # Prepare data
+    vars_needed = [affect_var, persistence_var] + covariates
+    data = df[vars_needed].dropna()
+
+    if len(data) < MIN_N_REG:
+        return None
+
+    # Prepare design matrix
+    y = data[affect_var]
+    X = data[[persistence_var] + covariates]
+    X = sm.add_constant(X)
+
+    # Fit model
+    try:
+        model = sm.OLS(y, X).fit()
+    except Exception as e:
+        print(f"    Error fitting model for {affect_var} ~ {persistence_var}: {e}")
+        return None
+
+    # Extract results for persistence variable
+    persist_idx = 1  # First column after intercept
+
+    result = {
+        "persistence_var": persistence_var,
+        "affect_var": affect_var,
+        "n": int(model.nobs),
+        "beta_persistence": model.params.iloc[persist_idx],
+        "se_persistence": model.bse.iloc[persist_idx],
+        "t_persistence": model.tvalues.iloc[persist_idx],
+        "p_persistence": model.pvalues.iloc[persist_idx],
+        "p_persistence_one_tailed": model.pvalues.iloc[persist_idx] / 2,
+        "r_squared": model.rsquared,
+        "adj_r_squared": model.rsquared_adj,
+        "f_stat": model.fvalue,
+        "f_pvalue": model.f_pvalue,
+        "tier": combine_tiers(
+            get_persistence_tier(persistence_var),
+            get_affect_tier(affect_var),
+        ),
+    }
+
+    return result
+
+
+def run_all_regressions(df, persistence_vars, affect_vars, base_covariates,
+                        diary_covariates, diary_affect_vars):
+    """
+    Run all persistence × affect regressions.
+
+    Diary-specific covariates (time_P2_P5, n_days_complete) are only included
+    for daily diary outcomes. PANAS outcomes use base covariates only.
+
+    Args:
+        df: Dataset
+        persistence_vars: List of persistence variable names
+        affect_vars: List of affect variable names
+        base_covariates: Covariates for all models
+        diary_covariates: Additional covariates for diary outcomes only
+        diary_affect_vars: Set of affect vars that are diary-based
+
+    Returns:
+        DataFrame with regression results
+    """
+    results = []
+
+    for persist_var in persistence_vars:
+        for affect_var in affect_vars:
+            if affect_var in diary_affect_vars:
+                covariates = base_covariates + diary_covariates
+            else:
+                covariates = base_covariates
+            result = run_regression(df, persist_var, affect_var, covariates)
+            if result is not None:
+                results.append(result)
+
+    return pd.DataFrame(results)
+
+
+def run_sample_analysis(sample, sample_name, persistence_vars, affect_vars,
+                        base_covariates, diary_covariates, diary_affect_vars):
+    """
+    Run complete analysis (correlations + regressions) for a given sample.
+
+    Args:
+        sample: DataFrame with sample data
+        sample_name: Name of sample (for output files)
+        persistence_vars: List of persistence variables
+        affect_vars: List of affect variables
+        base_covariates: Covariates for all models
+        diary_covariates: Additional covariates for diary outcomes only
+        diary_affect_vars: Set of affect vars that are diary-based
+
+    Returns:
+        Tuple of (corr_results, reg_results)
+    """
+    print("\n" + "=" * 80)
+    print(f"Analysis: {sample_name}")
+    print("=" * 80)
+
+    # ========================================================================
+    # Zero-Order Correlations
+    # ========================================================================
+    print("\nComputing zero-order correlations...")
+
+    corr_results = compute_correlations(sample, persistence_vars, affect_vars)
+
+    if len(corr_results) > 0:
+        print(f"\nComputed {len(corr_results)} correlations")
+
+        def _fmt_corr(row):
+            sig = ("***" if row["p"] < 0.001 else "**" if row["p"] < 0.01
+                   else "*" if row["p"] < 0.05 else "")
+            return (f"{row['persistence_var']:40s} x {row['affect_var']:15s}: "
+                    f"r = {row['r']:6.3f}, p = {row['p']:.4f}{sig:3s}, "
+                    f"p(1t) = {row['p_one_tailed']:.4f}, n = {int(row['n'])}")
+
+        print_by_tier(corr_results, _fmt_corr, p_col="p")
+    else:
+        print("\n  No correlations computed (insufficient data)")
+
+    # Save correlations
+    corr_file = RESULTS_DIR / f"02_persistence_affect_correlations_{sample_name}.csv"
+    corr_results.to_csv(corr_file, index=False)
+    print(f"\n  Saved to {corr_file}")
+
+    # ========================================================================
+    # OLS Regressions with Covariates
+    # ========================================================================
+    print("\nRunning OLS regressions (controlling for covariates)...")
+
+    reg_results = run_all_regressions(sample, persistence_vars, affect_vars,
+                                      base_covariates, diary_covariates, diary_affect_vars)
+
+    if len(reg_results) > 0:
+        print(f"\nComputed {len(reg_results)} regressions")
+
+        def _fmt_reg(row):
+            sig = ("***" if row["p_persistence"] < 0.001 else "**" if row["p_persistence"] < 0.01
+                   else "*" if row["p_persistence"] < 0.05 else "")
+            return (f"{row['persistence_var']:40s} -> {row['affect_var']:15s}: "
+                    f"b = {row['beta_persistence']:6.3f}, p = {row['p_persistence']:.4f}{sig:3s}, "
+                    f"p(1t) = {row['p_persistence_one_tailed']:.4f}, n = {int(row['n'])}")
+
+        print_by_tier(reg_results, _fmt_reg, p_col="p_persistence")
+    else:
+        print("\n  No regressions computed (insufficient data)")
+
+    # Save regressions
+    reg_file = RESULTS_DIR / f"02_persistence_affect_regressions_{sample_name}.csv"
+    reg_results.to_csv(reg_file, index=False)
+    print(f"\n  Saved to {reg_file}")
+
+    return corr_results, reg_results
+
+
+# ============================================================================
+# Main Execution
+# ============================================================================
+def main():
+    """Main execution function."""
+    # Ensure output directory exists
+    RESULTS_DIR.mkdir(parents=True, exist_ok=True)
+
+    print("=" * 80)
+    print("Analysis 02: Amygdala Persistence × Daily Affect Associations")
+    print("=" * 80)
+
+    # ========================================================================
+    # Load Data
+    # ========================================================================
+    print(f"\nLoading data from {DATA_FILE}...")
+    df = pd.read_csv(DATA_FILE)
+    print(f"✓ Loaded {len(df)} participants")
+
+    # ========================================================================
+    # Create Fisher z-transformed persistence measures
+    # ========================================================================
+    print("\nCreating Fisher z-transformed persistence measures...")
+
+    # Cross-run negative persistence (primary measure)
+    persistence_r_vars = [
+        "neg_persist_crossrun_mean_r_L",
+        "neg_persist_crossrun_mean_r_R",
+        "neg_persist_crossrun_mean_r_bilateral",
+    ]
+
+    # Cross-run positive persistence (sensitivity analysis)
+    persistence_r_vars += [
+        "pos_persist_crossrun_mean_r_L",
+        "pos_persist_crossrun_mean_r_R",
+        "pos_persist_crossrun_mean_r_bilateral",
+    ]
+
+    # Concatenated negative persistence (sensitivity analysis)
+    # Note: concat data already has z values from original computation
+    persistence_r_vars += [
+        "neg_persist_concat_r_L",
+        "neg_persist_concat_r_R",
+        "neg_persist_concat_r_bilateral",
+    ]
+
+    for var in persistence_r_vars:
+        z_var = var.replace("_r_", "_z_")
+        df[z_var] = fisher_z(df[var])
+        print(f"  ✓ Created {z_var}")
+
+    # ========================================================================
+    # Define Variables
+    # ========================================================================
+    print("\n" + "=" * 80)
+    print("Analysis Variables")
+    print("=" * 80)
+
+    # Persistence measures (Fisher z-transformed)
+    # Primary: Cross-run negative persistence
+    # Sensitivity: Cross-run positive persistence, concatenated negative persistence
+    persistence_vars = [
+        # Cross-run negative persistence (PRIMARY - replication of Puccetti et al., 2021)
+        "neg_persist_crossrun_mean_z_L",
+        "neg_persist_crossrun_mean_z_R",
+        "neg_persist_crossrun_mean_z_bilateral",
+        # Cross-run positive persistence (SENSITIVITY)
+        "pos_persist_crossrun_mean_z_L",
+        "pos_persist_crossrun_mean_z_R",
+        "pos_persist_crossrun_mean_z_bilateral",
+        # Concatenated negative persistence (SENSITIVITY)
+        "neg_persist_concat_z_L",
+        "neg_persist_concat_z_R",
+        "neg_persist_concat_z_bilateral",
+    ]
+
+    print(f"\nPersistence measures (Fisher z-transformed):")
+    print(f"  Primary (Cross-run Negative):")
+    print(f"  - neg_persist_crossrun_mean_z_L")
+    print(f"  - neg_persist_crossrun_mean_z_R")
+    print(f"  - neg_persist_crossrun_mean_z_bilateral")
+    print(f"  Sensitivity (Cross-run Positive):")
+    print(f"  - pos_persist_crossrun_mean_z_L")
+    print(f"  - pos_persist_crossrun_mean_z_R")
+    print(f"  - pos_persist_crossrun_mean_z_bilateral")
+    print(f"  Sensitivity (Concatenated Negative):")
+    print(f"  - neg_persist_concat_z_L")
+    print(f"  - neg_persist_concat_z_R")
+    print(f"  - neg_persist_concat_z_bilateral")
+
+    # Affect measures
+    # Primary: Daily diary (following Puccetti et al., 2021)
+    # Secondary: PANAS (at neuroscience visit)
+    affect_vars = [
+        # Daily diary
+        "PA_score",          # Daily diary positive affect
+        "NA_score",          # Daily diary negative affect
+        "NA_score_log",      # Daily diary negative affect (log-transformed)
+        # PANAS (secondary)
+        "C5SPGP",            # PANAS positive affect
+        "C5SPGN",            # PANAS negative affect
+        "C5SPGN_log",        # PANAS negative affect (log-transformed)
+    ]
+
+    print(f"\nAffect measures:")
+    print(f"  Primary (Daily Diary):")
+    print(f"  - PA_score")
+    print(f"  - NA_score")
+    print(f"  - NA_score_log")
+    print(f"  Secondary (PANAS):")
+    print(f"  - C5SPGP")
+    print(f"  - C5SPGN")
+    print(f"  - C5SPGN_log")
+
+    # Covariates (following Puccetti et al., 2021)
+    # Diary-specific covariates (time_P2_P5, n_days_complete) only used for
+    # daily diary outcomes; PANAS was collected at the neuroscience visit so
+    # these are not relevant and would unnecessarily reduce N.
+    race_dummies = [col for col in df.columns if col.startswith("race_")]
+    twin_dummies = [col for col in df.columns if col.startswith("twin_pair_")]
+
+    base_covariates = [
+        "C5PAGE",           # Age at neuroscience visit
+        "sex",              # Gender
+    ] + race_dummies + twin_dummies
+
+    diary_covariates = [
+        "time_P2_P5",       # Time between P2 and P5 visits (months)
+        "n_days_complete",  # Number of diary interviews completed
+    ]
+
+    diary_affect_vars = {"PA_score", "NA_score", "NA_score_log"}
+
+    print(f"\nCovariates (following Puccetti et al., 2021):")
+    print(f"  Base (all models): C5PAGE, sex, {len(race_dummies)} race dummies, {len(twin_dummies)} twin dummies")
+    print(f"  Diary-only (PA/NA outcomes): time_P2_P5, n_days_complete")
+    print(f"  Total: {len(base_covariates)} (base) + 2 (diary) = {len(base_covariates) + 2}")
+
+    # ========================================================================
+    # Define Samples
+    # ========================================================================
+    full_sample = get_full_sample(df)
+    conservative_sample = get_conservative_sample(df)
+
+    # ========================================================================
+    # Run Analyses
+    # ========================================================================
+    # Full sample
+    full_corr, full_reg = run_sample_analysis(
+        full_sample, "full", persistence_vars, affect_vars,
+        base_covariates, diary_covariates, diary_affect_vars
+    )
+
+    # Conservative sample
+    cons_corr, cons_reg = run_sample_analysis(
+        conservative_sample, "conservative", persistence_vars, affect_vars,
+        base_covariates, diary_covariates, diary_affect_vars
+    )
+
+    # ========================================================================
+    # Summary
+    # ========================================================================
+    print("\n" + "=" * 80)
+    print("Analysis Complete")
+    print("=" * 80)
+
+    print(f"\nFull sample:")
+    print(f"  N = {len(full_sample)}")
+    print(f"  Correlations: {len(full_corr)}")
+    print(f"  Regressions: {len(full_reg)}")
+    if len(full_corr) > 0:
+        print(f"  Significant correlations (p < 0.05): {(full_corr['p'] < 0.05).sum()}")
+    if len(full_reg) > 0:
+        print(f"  Significant regressions (p < 0.05): {(full_reg['p_persistence'] < 0.05).sum()}")
+
+    print(f"\nConservative sample:")
+    print(f"  N = {len(conservative_sample)}")
+    print(f"  Correlations: {len(cons_corr)}")
+    print(f"  Regressions: {len(cons_reg)}")
+    if len(cons_corr) > 0:
+        print(f"  Significant correlations (p < 0.05): {(cons_corr['p'] < 0.05).sum()}")
+    if len(cons_reg) > 0:
+        print(f"  Significant regressions (p < 0.05): {(cons_reg['p_persistence'] < 0.05).sum()}")
+
+
+if __name__ == "__main__":
+    main()

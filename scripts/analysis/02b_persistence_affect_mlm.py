@@ -54,14 +54,12 @@ DATA_FILE = PROCESSED_DIR / "midus_with_fmri.csv"
 
 MIN_N_REG = 20
 
-
 # ============================================================================
 # Helper Functions
 # ============================================================================
 def fisher_z(r):
     """Apply Fisher z-transformation to correlation coefficient."""
     return 0.5 * np.log((1 + r) / (1 - r))
-
 
 def create_family_id(df):
     """
@@ -100,7 +98,6 @@ def create_family_id(df):
 
     return df
 
-
 def get_full_sample(df):
     """Define full analysis sample: participants with imaging data.
 
@@ -113,7 +110,6 @@ def get_full_sample(df):
     print(f"\nFull sample: {len(sample)} participants")
     return sample
 
-
 def get_conservative_sample(df):
     """Define conservative sample with strict QC criteria."""
     sample = get_full_sample(df)
@@ -121,7 +117,6 @@ def get_conservative_sample(df):
     conservative = sample[qc_pass].copy()
     print(f"Conservative sample: {len(conservative)} participants")
     return conservative
-
 
 def run_mlm(df, persistence_var, affect_var, covariates):
     """
@@ -167,27 +162,44 @@ def run_mlm(df, persistence_var, affect_var, covariates):
               f"all optimizers failed ({', '.join(methods)})")
         return None
 
-    # Extract persistence effect
+    # Extract SE; if NaN (degenerate random effect with near-zero variance),
+    # recover from absolute value of covariance diagonal
+    with warnings.catch_warnings():
+        warnings.simplefilter("ignore", RuntimeWarning)
+        se_p = result.bse_fe[persistence_var]
+    degenerate_re = False
+    if np.isnan(se_p):
+        degenerate_re = True
+        idx = list(result.fe_params.index).index(persistence_var)
+        var = result.cov_params().iloc[idx, idx]
+        se_p = np.sqrt(abs(var)) if abs(var) > 0 else np.nan
+    z_p = result.fe_params[persistence_var] / se_p if not np.isnan(se_p) else np.nan
+    if not np.isnan(z_p):
+        from scipy import stats as _stats
+        p_p = 2 * (1 - _stats.norm.cdf(abs(z_p)))
+    else:
+        p_p = np.nan
+
     return {
         "persistence_var": persistence_var,
         "affect_var": affect_var,
         "n": int(result.nobs),
-        "n_groups": int(result.nobs - result.df_resid),  # approximate
+        "n_groups": int(result.nobs - result.df_resid),
         "beta_persistence": result.fe_params[persistence_var],
-        "se_persistence": result.bse_fe[persistence_var],
-        "z_persistence": result.tvalues[persistence_var],
-        "p_persistence": result.pvalues[persistence_var],
-        "p_persistence_one_tailed": result.pvalues[persistence_var] / 2,
+        "se_persistence": se_p,
+        "z_persistence": z_p,
+        "p_persistence": p_p,
+        "p_persistence_one_tailed": p_p / 2 if not np.isnan(p_p) else np.nan,
         "group_var": result.cov_re.iloc[0, 0] if hasattr(result.cov_re, 'iloc') else float(result.cov_re),
         "log_likelihood": result.llf,
         "converged": result.converged,
+        "degenerate_re": degenerate_re,
         "optimizer": method,
         "tier": combine_tiers(
             get_persistence_tier(persistence_var),
             get_affect_tier(affect_var),
         ),
     }
-
 
 def run_all_mlm(df, persistence_vars, affect_vars, base_covariates,
                 diary_covariates, diary_affect_vars):
@@ -206,7 +218,6 @@ def run_all_mlm(df, persistence_vars, affect_vars, base_covariates,
             if result is not None:
                 results.append(result)
     return pd.DataFrame(results)
-
 
 def run_sample_analysis(sample, sample_name, persistence_vars, affect_vars,
                         base_covariates, diary_covariates, diary_affect_vars):
@@ -245,7 +256,6 @@ def run_sample_analysis(sample, sample_name, persistence_vars, affect_vars,
 
     return results
 
-
 # ============================================================================
 # Main Execution
 # ============================================================================
@@ -270,13 +280,10 @@ def main():
     persistence_r_vars = [
         "neg_persist_crossrun_mean_r_L",
         "neg_persist_crossrun_mean_r_R",
-        "neg_persist_crossrun_mean_r_bilateral",
         "pos_persist_crossrun_mean_r_L",
         "pos_persist_crossrun_mean_r_R",
-        "pos_persist_crossrun_mean_r_bilateral",
         "neg_persist_concat_r_L",
         "neg_persist_concat_r_R",
-        "neg_persist_concat_r_bilateral",
     ]
 
     for var in persistence_r_vars:
@@ -289,14 +296,21 @@ def main():
     persistence_vars = [
         "neg_persist_crossrun_mean_z_L",
         "neg_persist_crossrun_mean_z_R",
-        "neg_persist_crossrun_mean_z_bilateral",
         "pos_persist_crossrun_mean_z_L",
         "pos_persist_crossrun_mean_z_R",
-        "pos_persist_crossrun_mean_z_bilateral",
         "neg_persist_concat_z_L",
         "neg_persist_concat_z_R",
-        "neg_persist_concat_z_bilateral",
     ]
+
+    # vmPFC persistence (secondary comparison ROI — available after Sherlock jobs complete)
+    vmPFC_r_cols = sorted([c for c in df.columns
+                           if "vmPFC" in c and "neg_image" in c and c.endswith("_mean_r")])
+    if vmPFC_r_cols:
+        for var in vmPFC_r_cols:
+            z_var = var.replace("_mean_r", "_mean_z")
+            df[z_var] = fisher_z(df[var])
+            persistence_vars.append(z_var)
+        print(f"  Added {len(vmPFC_r_cols)} vmPFC persistence variables (secondary)")
 
     affect_vars = [
         "PA_score",
@@ -360,7 +374,6 @@ def main():
                     continue
                 n_sig = (tier_res["p_persistence"] < 0.05).sum()
                 print(f"  {tier.upper()}: {n_sig}/{len(tier_res)} significant")
-
 
 if __name__ == "__main__":
     main()

@@ -33,13 +33,16 @@ def combine_tiers(*tiers):
 def get_persistence_tier(var_name):
     """Assign tier based on persistence variable name.
 
-    Primary: left amygdala, cross-run negative
-    Secondary: right amygdala, cross-run negative
-    Sensitivity: bilateral, positive, concatenated
+    Primary: left amygdala, cross-run negative (amygdala replication)
+    Secondary: right amygdala, cross-run negative; vmPFC seeds (comparison ROI)
+    Sensitivity: positive persistence, concatenated persistence
     """
     if var_name == "neg_persist_crossrun_mean_z_L":
         return "primary"
     if var_name == "neg_persist_crossrun_mean_z_R":
+        return "secondary"
+    # vmPFC persistence: same construct, comparison ROI → secondary
+    if "vmPFC" in var_name and "neg_image" in var_name:
         return "secondary"
     return "sensitivity"
 

@@ -63,7 +63,10 @@ FMRI_DIR = Path("data/fMRI")
 RESULTS_DIR = Path("results/tables")
 
 MASTER_FILE = PROCESSED_DIR / "midus_with_fmri.csv"
-FC_FILE = FMRI_DIR / "betaSeries_all_conditions.csv"
+# Prefer LSS (primary method) over LSA if available
+_LSS_FILE = FMRI_DIR / "all_subjects_betaSeries_LSS_all_conditions_M2ID.csv"
+_LSA_FILE = FMRI_DIR / "all_subjects_betaSeries_all_conditions_M2ID.csv"
+FC_FILE = _LSS_FILE if _LSS_FILE.exists() else _LSA_FILE
 
 MIN_N_REG = 20
 
@@ -74,7 +77,7 @@ ROI_PAIRS = [
     ("r_amyg", "post_vmPFC"),
 ]
 
-CONDITIONS = ["neg", "neu", "pos", "neg_vs_neu", "neg_vs_pos"]
+CONDITIONS = ["neg", "neu", "pos"]  # contrasts removed: GLM already encodes condition differences
 
 
 # ============================================================================

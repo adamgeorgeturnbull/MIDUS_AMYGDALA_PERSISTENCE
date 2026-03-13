@@ -18,8 +18,13 @@ The study combines daily diary data, survey-based demographics, and neuroimaging
 1. Test whether amygdala persistence to negative images decreases with age
 2. Test whether age-related differences in affect are mediated by amygdala persistence
 
+### Extensions (Methodological)
+1. Compare amygdala persistence to vmPFC persistence (same measure, comparison ROI)
+2. Validate task effects via amygdala and vmPFC activation maps and individual-level ROI activations
+3. Compare preprocessing strategies: 24 motion parameters (original) vs. 24 motion + 6 aCompCor (modern standard)
+
 ### Novel Analyses (Exploratory)
-1. Examine model-free emotion regulation indexed by task-based amygdala–vmPFC connectivity using beta-series modeling
+1. Examine model-free emotion regulation indexed by task-based amygdala–vmPFC connectivity using Least Squares Separate (LSS) beta-series modeling
 2. Test whether model-free emotion regulation relates to amygdala persistence and daily life affect
 3. Examine moderation by emotion regulation strategy use (reappraisal, suppression)
 4. Test age-related differences in these effects, including analyses restricted to older adults
@@ -49,8 +54,11 @@ MIDUS_AMYGDALA_PERSISTENCE/
 │   │   ├── midus_with_fmri.csv
 │   │   └── README.md
 │   └── fMRI/
-│       ├── betaSeries_neg_vs_neu.csv
-│       ├── betaSeries_all_conditions.csv
+│       ├── betaSeries_neg_vs_neu_threat_safety.csv
+│       ├── all_subjects_betaSeries_all_conditions_M2ID.csv   ← LSA (fallback)
+│       ├── all_subjects_betaSeries_LSS_all_conditions_M2ID.csv  ← LSS (primary, if available)
+│       ├── all_subjects_roi_activations.csv                  ← optional, from extract_roi_activations.sh
+│       ├── vmPFC_persistence_wide.csv                        ← optional, from run_cross_corr_vmPFC.py
 │       ├── negative_persistence_concat.csv
 │       ├── negative_persistence_cross_run.csv
 │       ├── positive_persistence_cross_run.csv
@@ -65,7 +73,8 @@ MIDUS_AMYGDALA_PERSISTENCE/
 │   │   ├── 02_persistence_affect_correlations_conservative.csv
 │   │   ├── 02_persistence_affect_regressions_full.csv
 │   │   ├── 02_persistence_affect_regressions_conservative.csv
-│   │   ├── 02_persistence_affect_summary.txt
+│   │   ├── 02_persistence_affect_mlm_full.csv
+│   │   ├── 02_persistence_affect_mlm_conservative.csv
 │   │   ├── 03_persistence_age_correlations_full.csv
 │   │   ├── 03_persistence_age_regressions_full.csv
 │   │   ├── 03_persistence_age_correlations_conservative.csv
@@ -94,14 +103,20 @@ MIDUS_AMYGDALA_PERSISTENCE/
 │   │   └── 09_merge_fmri_data.py
 │   ├── analysis/
 │   │   ├── 01_affect_age_replication.py
+│   │   ├── 01b_affect_age_replication_mlm.py
 │   │   ├── 02_persistence_affect.py
-│   │   ├── 02_persistence_affect_summary.py
-│   │   ├── 02_persistence_affect_mlm.py
+│   │   ├── 02b_persistence_affect_mlm.py
 │   │   ├── 03_persistence_age.py
+│   │   ├── 03b_persistence_age_mlm.py
 │   │   ├── 04_fc_affect.py
+│   │   ├── 04b_fc_affect_mlm.py
 │   │   ├── 05_fc_persistence.py
+│   │   ├── 05b_fc_persistence_mlm.py
 │   │   ├── 06_persistence_affect_moderation.py
-│   │   └── 07_fc_affect_moderation.py
+│   │   ├── 06b_persistence_affect_moderation_mlm.py
+│   │   ├── 07_fc_affect_moderation.py
+│   │   ├── 07b_fc_affect_moderation_mlm.py
+│   │   └── tier_utils.py
 │   ├── fMRI/
 │   │   ├── preprocessing/
 │   │   │   ├── extractSliceTiming.py
@@ -114,16 +129,26 @@ MIDUS_AMYGDALA_PERSISTENCE/
 │   │   │   ├── slurm_fmriprep_parallel_pre_fs.sh
 │   │   │   └── slurm_recon_all_parallel.sh
 │   │   └── analysis/
-│   │       ├── runGLM.sh
+│   │       ├── runGLM.sh                       ← 24-motion GLM (primary)
+│   │       ├── runGLM_aCompCor.sh              ← 24-motion + 6 aCompCor GLM (comparison)
 │   │       ├── runGLM_concat.sh
 │   │       ├── extract_amygdala.sh
 │   │       ├── extract_amygdala_concat.sh
+│   │       ├── extract_vmPFC.sh                ← vmPFC beta extraction (ant/post × 3 image conditions)
+│   │       ├── extract_roi_activations.sh      ← task validation: mean beta per ROI per condition
 │   │       ├── run_cross_corr.py
 │   │       ├── run_cross_corr_concat.py
-│   │       ├── combineBTS.py
-│   │       ├── runBStaskFC.sh
-│   │       ├── seedbasedBStaskFC.sh
-│   │       └── grouplevelSeedBasedFC.sh
+│   │       ├── run_cross_corr_vmPFC.py         ← vmPFC cross-run persistence
+│   │       ├── combineROIActivations.py        ← combine per-subject ROI activation CSVs
+│   │       ├── runBStaskFC_LSS.sh              ← PRIMARY: ROI-level LSS beta-series FC
+│   │       ├── combineBTS_LSS.py               ← combine per-subject LSS ROI CSVs
+│   │       ├── seedbasedBStaskFC_LSS.sh        ← voxelwise LSS seed-based FC maps
+│   │       ├── grouplevelSeedBasedFC.sh        ← group-level TFCE permutation testing
+│   │       └── archive/                        ← LSA scripts (original method, superseded)
+│   │           ├── runBStaskFC_LSA.sh
+│   │           ├── seedbasedBStaskFC_LSA.sh
+│   │           ├── combineBTS_LSA.py
+│   │           └── grouplevelSeedBasedFC_LSA.sh
 │   ├── visualization/
 │   │   ├── 01_affect_age_figures.py
 │   │   └── 02_persistence_affect_figures.py
@@ -445,13 +470,16 @@ Merges fMRI-derived participant-level measures into the cleaned MIDUS master dat
 
 **Inputs:**
 - `data/processed/midus_merged_clean.csv`
-- **fMRI data files:**
-  - `data/fMRI/betaSeries_neg_vs_neu.csv` - Beta-series connectivity (1 row/participant)
+- **fMRI data files (required):**
+  - `data/fMRI/betaSeries_neg_vs_neu_threat_safety.csv` - Beta-series connectivity (1 row/participant)
   - `data/fMRI/negative_persistence_concat.csv` - Negative persistence concatenated (3 rows/participant)
   - `data/fMRI/negative_persistence_cross_run.csv` - Negative persistence cross-run (3 rows/participant)
   - `data/fMRI/positive_persistence_cross_run.csv` - Positive persistence cross-run (3 rows/participant)
   - `data/fMRI/fd_summary.csv` - Framewise displacement (multiple rows/participant)
   - `data/fMRI/fmri_qc_processed.csv` - Quality control flags (1 row/participant)
+- **fMRI data files (optional — merged when present):**
+  - `data/fMRI/vmPFC_persistence_wide.csv` - vmPFC cross-run persistence (from `run_cross_corr_vmPFC.py`)
+  - `data/fMRI/all_subjects_roi_activations.csv` - ROI activation means (from `extract_roi_activations.sh`)
 
 **Processing Steps:**
 1. Load cleaned master dataset
@@ -460,14 +488,15 @@ Merges fMRI-derived participant-level measures into the cleaned MIDUS master dat
    - Pivot hemisphere-wise persistence data from long to wide format
    - Aggregate framewise displacement across runs
 3. Merge all fMRI data with master dataset using left joins on M2ID
-4. Merge QC flags from processed QC file
-5. Create availability flags:
+4. Optionally merge vmPFC persistence and ROI activations if files are present
+5. Merge QC flags from processed QC file
+6. Create availability flags:
    - `has_beta_series` - Has beta-series connectivity data
    - `has_neg_persistence` - Has negative persistence data
    - `has_pos_persistence` - Has positive persistence data
    - `has_fd_data` - Has framewise displacement data
    - `has_imaging_data` - Has any imaging data
-6. No participant exclusions applied (QC flags used for sample definition in analyses)
+7. No participant exclusions applied (QC flags used for sample definition in analyses)
 
 **Output:**
 - `data/processed/midus_with_fmri.csv`
@@ -515,6 +544,36 @@ Replicates age-related differences in affect in MIDUS 3.
 
 ---
 
+### Analysis Tiering and Statistical Decisions
+
+All analyses (02-07) assign each result to a **tier** (primary, secondary, or sensitivity) based on the variables involved. This organizes the large number of tests into a clear hierarchy aligned with the pre-registered hypotheses, without requiring formal multiple comparisons correction.
+
+**Persistence variable tier:**
+- **Primary:** Left amygdala cross-run negative persistence (`neg_persist_crossrun_mean_z_L`)
+- **Secondary:** Right amygdala cross-run negative persistence (`neg_persist_crossrun_mean_z_R`); vmPFC negative image persistence (`ant_vmPFC_neg_image_mean_z`, `post_vmPFC_neg_image_mean_z`)
+- **Sensitivity:** Positive persistence, concatenated negative persistence
+
+**Affect variable tier:**
+- **Primary:** Daily diary PA (`PA_score`) and NA (`NA_score`)
+- **Sensitivity:** `NA_score_log`, PANAS outcomes (`C5SPGP`, `C5SPGN`, `C5SPGN_log`)
+
+**FC variable tier (condition-level scripts 04, 05, 07):**
+- **Primary:** Negative condition, left amygdala seed, anterior/posterior vmPFC target
+- **Secondary:** Negative condition, right amygdala seed, anterior/posterior vmPFC target
+- **Sensitivity:** Neutral and positive conditions (neu, pos), safety_vs_threat derived variables
+
+**Row-level tier** = worst (least primary) tier among its component variables. For example, a primary FC variable paired with a sensitivity affect variable yields a sensitivity-tier result.
+
+**One-tailed p-values** are reported for persistence analyses with directional hypotheses:
+- Scripts 02, 06: Persistence-affect association (p/2 for the observed direction)
+- Script 03: Persistence decreases with age (p/2 if coefficient < 0, else 1 - p/2)
+
+**Two-tailed p-values** are used for all FC analyses (04, 05, 07) and all interaction terms (exploratory).
+
+Tier assignments are centralized in `scripts/analysis/tier_utils.py` for consistency across all scripts.
+
+---
+
 ### Analysis 02: Persistence × Affect
 
 **File:** `scripts/analysis/02_persistence_affect.py`
@@ -532,14 +591,16 @@ Tests associations between amygdala persistence to negative images and daily lif
 
 **Persistence Measures (Fisher z-transformed):**
 - **Primary (Confirmatory):**
-  - Cross-run negative persistence (L, R, bilateral)
+  - Cross-run negative persistence (L, R)
+- **Secondary (Comparison ROI):**
+  - vmPFC negative image persistence (ant_vmPFC, post_vmPFC) — if `vmPFC_persistence_wide.csv` present
 - **Sensitivity:**
-  - Cross-run positive persistence (L, R, bilateral)
-  - Concatenated negative persistence (L, R, bilateral)
+  - Cross-run positive persistence (L, R)
+  - Concatenated negative persistence (L, R)
 
 **Affect Outcomes:**
-- **Primary:** Daily diary PA, NA, and NA_log
-- **Secondary:** PANAS (C5SPGP, C5SPGN, C5SPGN_log)
+- **Primary:** Daily diary PA (`PA_score`), NA (`NA_score`)
+- **Sensitivity:** `NA_score_log`, PANAS (`C5SPGP`, `C5SPGN`, `C5SPGN_log`)
 
 **Covariates:**
 - Age (C5PAGE)
@@ -560,9 +621,10 @@ Tests associations between amygdala persistence to negative images and daily lif
 - `results/tables/02_persistence_affect_regressions_conservative.csv`
 
 **Notes:**
-- Primary analyses use cross-run negative persistence (replication)
+- Primary analyses use cross-run negative persistence (L, R); vmPFC persistence included as secondary if data available
 - Conservative sample is primary per preregistration
-- Full sample results are exploratory if conservative sample unavailable
+- One-tailed p-values reported for persistence-affect associations
+- All results tiered (primary/secondary/sensitivity) using `tier_utils.py`
 
 ---
 
@@ -580,7 +642,8 @@ Tests whether amygdala persistence to negative images decreases with age (Extens
 2. **Conservative sample** - Full + `qc_conservative == 1`
 
 **Persistence Outcomes (Fisher z-transformed):**
-- **Primary:** Cross-run negative persistence (L, R, bilateral)
+- **Primary:** Cross-run negative persistence (L, R)
+- **Secondary:** vmPFC negative image persistence (ant_vmPFC, post_vmPFC) — if data available
 - **Sensitivity:** Cross-run positive persistence, concatenated negative persistence
 
 **Predictor:** C5PAGE (age at neuroscience visit)
@@ -604,28 +667,33 @@ Tests whether amygdala persistence to negative images decreases with age (Extens
 
 **File:** `scripts/analysis/04_fc_affect.py`
 
-Tests whether condition-level amygdala–vmPFC functional connectivity relates to daily-life affect (Exploratory Analysis #1). Uses per-condition FC from a 3-condition GLM (negative, neutral, positive) rather than relying solely on the neg > neu contrast.
+Tests whether condition-level amygdala–vmPFC functional connectivity relates to daily-life affect (Exploratory Analysis #1). Uses per-condition FC from a 3-condition GLM (negative, neutral, positive) rather than relying solely on a contrast.
 
 **Input:**
 - `data/processed/midus_with_fmri.csv`
-- `data/fMRI/betaSeries_all_conditions.csv` (per-condition Fisher z correlations)
+- `data/fMRI/all_subjects_betaSeries_LSS_all_conditions_M2ID.csv` (LSS; preferred)
+  Fallback: `data/fMRI/all_subjects_betaSeries_all_conditions_M2ID.csv` (LSA)
 
 **FC Variables:**
-- ROI-level beta-series correlations (already Fisher z-transformed) between amygdala seeds (L, R) and vmPFC targets (anterior = safety signaling, posterior = threat signaling), per Tashjian et al. (2021, TICS)
-- 4 seed–target pairs × 5 conditions (neg, neu, pos, neg_vs_neu, neg_vs_pos) = 20 base FC variables
-- 2 derived safety-vs-threat variables per condition (anterior minus posterior) × 5 conditions = 10 derived variables
+- ROI-level beta-series correlations (Fisher z-transformed) between amygdala seeds (L, R) and vmPFC targets (anterior = safety signaling, posterior = threat signaling), per Tashjian et al. (2021, TICS)
+- 4 seed–target pairs × 3 conditions (neg, neu, pos) = 12 base FC variables
+- 2 derived safety-vs-threat variables per condition (anterior minus posterior) × 3 conditions = 6 derived variables
 
 **Affect Outcomes:** 6 (PA_score, NA_score, NA_score_log, C5SPGP, C5SPGN, C5SPGN_log)
 
-**Analyses:** Bivariate Pearson correlations between all FC × affect pairs, with condition comparisons for significant associations.
+**Analyses:**
+1. Bivariate Pearson correlations between all FC × affect pairs
+2. OLS regressions: `affect ~ FC + covariates`
 
 **Samples:**
-- Full: `has_beta_series == 1` AND FC data present
+- Full: `has_beta_series == 1` AND `has_neg_persistence == 1`
 - Conservative: full + `qc_conservative == 1`
 
 **Outputs:**
 - `results/tables/04_fc_affect_correlations_full.csv`
 - `results/tables/04_fc_affect_correlations_conservative.csv`
+- `results/tables/04_fc_affect_regressions_full.csv`
+- `results/tables/04_fc_affect_regressions_conservative.csv`
 
 ---
 
@@ -633,20 +701,23 @@ Tests whether condition-level amygdala–vmPFC functional connectivity relates t
 
 **File:** `scripts/analysis/05_fc_persistence.py`
 
-Tests whether condition-level amygdala–vmPFC functional connectivity relates to amygdala persistence (Exploratory Analysis #2). Same condition-level approach as Analysis 04.
+Tests whether condition-level amygdala–vmPFC functional connectivity relates to amygdala (and vmPFC) persistence (Exploratory Analysis #2). Same condition-level approach as Analysis 04.
 
 **Input:**
 - `data/processed/midus_with_fmri.csv`
-- `data/fMRI/betaSeries_all_conditions.csv`
+- `data/fMRI/all_subjects_betaSeries_LSS_all_conditions_M2ID.csv` (LSS; preferred)
+  Fallback: `data/fMRI/all_subjects_betaSeries_all_conditions_M2ID.csv` (LSA)
 
-**FC Variables:** Same 30 FC variables as Analysis 04.
+**FC Variables:** Same 18 FC variables as Analysis 04 (12 base + 6 safety-vs-threat derived).
 
-**Persistence Measures (Fisher z-transformed):** 9 measures, same as Analysis 02
-- Cross-run negative persistence (L, R, bilateral)
-- Cross-run positive persistence (L, R, bilateral)
-- Concatenated negative persistence (L, R, bilateral)
+**Persistence Measures (Fisher z-transformed):**
+- **Primary:** Cross-run negative persistence (L, R)
+- **Secondary:** vmPFC negative image persistence (ant_vmPFC, post_vmPFC) — if data available
+- **Sensitivity:** Cross-run positive persistence (L, R), concatenated negative persistence (L, R)
 
-**Analyses:** Bivariate Pearson correlations between all FC × persistence pairs, with condition comparisons for significant associations.
+**Analyses:**
+1. Bivariate Pearson correlations between all FC × persistence pairs
+2. OLS regressions: `persistence ~ FC + covariates`
 
 **Samples:**
 - Full: `has_neg_persistence == 1` AND FC data present
@@ -655,6 +726,8 @@ Tests whether condition-level amygdala–vmPFC functional connectivity relates t
 **Outputs:**
 - `results/tables/05_fc_persistence_correlations_full.csv`
 - `results/tables/05_fc_persistence_correlations_conservative.csv`
+- `results/tables/05_fc_persistence_regressions_full.csv`
+- `results/tables/05_fc_persistence_regressions_conservative.csv`
 
 ---
 
@@ -673,11 +746,10 @@ Tests whether self-reported emotion regulation strategy use moderates the persis
 Both persistence and moderator are mean-centered before creating the interaction term to reduce multicollinearity and aid interpretation. The interaction term is the key test: does the persistence–affect slope change as a function of the moderator?
 
 **Variables:**
-- Persistence: 9 measures (Fisher z-transformed), same as Analysis 02
+- Persistence: amygdala (L, R) + vmPFC (ant, post, if available) cross-run negative persistence, positive persistence (L, R), concatenated negative persistence (L, R) — all Fisher z-transformed
 - Affect: 6 outcomes (PA_score, NA_score, NA_score_log, C5SPGP, C5SPGN, C5SPGN_log)
 - Covariates: C5PAGE, sex, race dummies, twin dummies, time_P2_P5, n_days_complete
 - Diary-specific covariates (time_P2_P5, n_days_complete) only for daily diary outcomes
-- Total: 9 × 6 × 2 = 108 interaction models per sample
 
 **Samples:**
 - Full: all participants with persistence + affect + ER data
@@ -693,27 +765,32 @@ Both persistence and moderator are mean-centered before creating the interaction
 
 **File:** `scripts/analysis/07_fc_affect_moderation.py`
 
-Tests whether self-reported emotion regulation strategy use moderates the FC–affect association (Exploratory Analysis #3). Same moderation framework as Analysis 06, but with FC (neg > neu contrast) as the predictor instead of persistence.
+Tests whether self-reported emotion regulation strategy use moderates the FC-affect association (Exploratory Analysis #3). Same moderation framework as Analysis 06, but with per-condition FC as the predictor instead of persistence.
+
+**Input:**
+- `data/processed/midus_with_fmri.csv`
+- `data/fMRI/all_subjects_betaSeries_LSS_all_conditions_M2ID.csv` (LSS; preferred)
+  Fallback: `data/fMRI/all_subjects_betaSeries_all_conditions_M2ID.csv` (LSA)
 
 **Moderators:**
-- C5SER — ERQ Reappraisal (1–7 scale)
-- C5SES — ERQ Suppression (1–7 scale)
+- C5SER - ERQ Reappraisal (1-7 scale)
+- C5SES - ERQ Suppression (1-7 scale)
 
-**Model:** `affect ~ FC + moderator + FC×moderator + covariates`
+**Model:** `affect ~ FC + moderator + FC*moderator + covariates`
 
-**FC Variables (neg > neu contrast):** 6
-- 4 base: L/R amygdala × anterior/posterior vmPFC
-- 2 derived: L/R amygdala safety-vs-threat (anterior minus posterior)
+**FC Variables:** Same 18 per-condition FC variables as Analyses 04/05 (4 seed-target pairs × 3 conditions + 6 safety-vs-threat derived)
 
 **Affect Outcomes:** 6 (PA_score, NA_score, NA_score_log, C5SPGP, C5SPGN, C5SPGN_log)
 
 **Covariates:** C5PAGE, sex, race dummies, twin dummies; diary-specific covariates (time_P2_P5, n_days_complete) only for daily diary outcomes.
 
-**Total:** 6 FC × 6 affect × 2 moderators = 72 interaction models per sample
-
 **Samples:**
-- Full: `has_beta_series == 1`
+- Full: FC data present AND `has_neg_persistence == 1`
 - Conservative: full + `qc_conservative == 1`
+
+**Notes:**
+- All results tiered (primary/secondary/sensitivity); negative condition is primary
+- Two-tailed tests for all interaction and FC effects (exploratory)
 
 **Outputs:**
 - `results/tables/07_fc_affect_moderation_full.csv`
@@ -721,64 +798,32 @@ Tests whether self-reported emotion regulation strategy use moderates the FC–a
 
 ---
 
-### Analysis 02: Sensitivity — Mixed-Effects Models
+### Sensitivity (MLM) Variants
 
-**File:** `scripts/analysis/02_persistence_affect_mlm.py`
+All OLS-based analyses (02–07) have paired mixed-effects model sensitivity scripts (02b–07b). These replace OLS regressions (with twin pair dummies) with linear mixed-effects models, avoiding the degrees-of-freedom cost of per-pair dummies while properly accounting for non-independence within twin families via a random intercept.
 
-Sensitivity reanalysis replacing OLS regressions (with twin pair dummies) with linear mixed-effects models. This avoids the degrees-of-freedom cost of one dummy variable per twin pair while properly accounting for non-independence within twin families via a random intercept.
-
-**Input:**
-- `data/processed/midus_with_fmri.csv`
+**Files:** `scripts/analysis/02b_persistence_affect_mlm.py` through `07b_fc_affect_moderation_mlm.py`
 
 **Grouping Variable (`family_id`):**
 - Twins (`SAMPLMAJ == 3` AND 2+ members share `M2FAMNUM`): grouped by `M2FAMNUM`
 - Everyone else: own cluster (`M2ID`)
 
 **Model:**
-- Fixed effects: `affect ~ persistence + C5PAGE + sex + race dummies + time_P2_P5 + n_days_complete`
+- Fixed effects: same predictors as paired OLS script, minus twin pair dummies
 - Random effects: random intercept for `family_id`
 - Estimation: REML (optimizer: LBFGS with Powell fallback)
 
-**Outputs:**
-- `results/tables/02_persistence_affect_mlm_full.csv`
-- `results/tables/02_persistence_affect_mlm_conservative.csv`
+**Outputs (example for 02b):**
+- `results/tables/02b_persistence_affect_mlm_full.csv`
+- `results/tables/02b_persistence_affect_mlm_conservative.csv`
 
 **Notes:**
-- Correlations are identical to `02_persistence_affect.py` and are not re-run
-- Only the covariate-adjusted models differ (MLM vs OLS)
+- Correlations are identical to the parent OLS script and are not re-run
+- Only covariate-adjusted models differ (MLM vs OLS)
 - Zero-variance covariates (e.g., race dummies with no cases) are automatically dropped
-
----
-
-### Analysis 02: Summary
-
-**File:** `scripts/analysis/02_persistence_affect_summary.py`
-
-Summarizes persistence × affect results, focusing on consistency across analytical methods.
-
-**Inputs:**
-- `results/tables/02_persistence_affect_correlations_full.csv`
-- `results/tables/02_persistence_affect_regressions_full.csv`
-- `results/tables/02_persistence_affect_correlations_conservative.csv`
-- `results/tables/02_persistence_affect_regressions_conservative.csv`
-- `results/tables/02_persistence_affect_mlm_full.csv` (optional)
-- `results/tables/02_persistence_affect_mlm_conservative.csv` (optional)
-
-**Summary Approach:**
-1. Identifies findings significant in BOTH correlations AND regressions (p < 0.05)
-2. Reports findings significant in only ONE method (with non-significant pair for comparison)
-3. Categorizes results as primary (confirmatory) vs sensitivity analyses
-4. Compares OLS vs MLM regression results (agreement rate and disagreements)
-
-**Output:**
-- `results/tables/02_persistence_affect_summary.txt` - Human-readable summary
-
-**Structure:**
-- Sample status (conservative vs full)
-- Analysis categories breakdown
-- Consistent findings (significant in both methods)
-- Single-method findings (significant in one method only)
-- OLS vs MLM comparison (if MLM results available)
+- Directional p-values preserved (one-tailed for persistence; two-tailed for FC)
+- All results tiered (primary/secondary/sensitivity) using `tier_utils.py`
+- Same persistence variable set as parent: amygdala (L, R) + vmPFC (if available), no bilateral
 
 ---
 
@@ -844,7 +889,7 @@ Creates publication-quality figures for persistence × affect associations.
 
 These scripts were run on the Stanford Sherlock HPC cluster. Most are SLURM array jobs that process subjects in parallel. The pipeline order is:
 
-1. Fix orientation → 2. Slice timing correction → 3. FreeSurfer recon-all → 4. fMRIPrep → 5. Motion QC → 6. GLM → 7. Amygdala extraction → 8. Persistence computation → 9. Beta-series connectivity
+1. Fix orientation → 2. Slice timing correction → 3. FreeSurfer recon-all → 4. fMRIPrep → 5. Motion QC → 6. GLM → 7. Feature extraction (amygdala, vmPFC, ROI activations) → 8. Persistence computation → 9. Beta-series connectivity (LSS)
 
 ### fMRI Preprocessing
 
@@ -866,32 +911,50 @@ These scripts were run on the Stanford Sherlock HPC cluster. Most are SLURM arra
 
 | Script | Description |
 |--------|-------------|
-| `runGLM.sh` | SLURM array: Per-run first-level GLM (nilearn, 6 conditions, 24 motion params) |
+| `runGLM.sh` | SLURM array: Per-run first-level GLM (nilearn, 6 conditions, 24 motion params) — primary |
+| `runGLM_aCompCor.sh` | SLURM array: Per-run GLM with 24 motion + 6 aCompCor regressors — preprocessing comparison |
 | `runGLM_concat.sh` | SLURM array: Concatenated all-runs GLM (sensitivity analysis) |
 | `extract_amygdala.sh` | SLURM array: Extract voxelwise amygdala betas from per-run GLM (Harvard-Oxford 50%) |
 | `extract_amygdala_concat.sh` | SLURM array: Extract voxelwise amygdala betas from concatenated GLM |
+| `extract_vmPFC.sh` | SLURM array: Extract voxelwise vmPFC betas (ant/post spheres × 3 image conditions) for vmPFC persistence |
+| `extract_roi_activations.sh` | SLURM array: Extract mean beta per ROI (L/R amygdala, ant/post vmPFC) per condition for task validation |
+| `combineROIActivations.py` | Combine per-subject ROI activation CSVs into group file (`all_subjects_roi_activations.csv`) |
 
 **Persistence computation:**
 
 | Script | Description |
 |--------|-------------|
-| `run_cross_corr.py` | Compute cross-run voxelwise persistence (primary measure) |
+| `run_cross_corr.py` | Compute cross-run voxelwise persistence for amygdala (primary measure) |
 | `run_cross_corr_concat.py` | Compute concatenated persistence (sensitivity measure) |
+| `run_cross_corr_vmPFC.py` | Compute cross-run voxelwise persistence for vmPFC seeds (secondary comparison) |
 
-**Beta-series functional connectivity:**
+**Beta-series functional connectivity (LSS — primary):**
 
 | Script | Description |
 |--------|-------------|
-| `runBStaskFC.sh` | SLURM array: ROI-level beta-series connectivity (amygdala–anterior/posterior vmPFC, neg vs neu; Tashjian et al., 2021 TICS) |
-| `combineBTS.py` | Combine per-subject beta-series ROI CSVs into group file (supports neg_vs_neu and all-conditions modes) |
-| `seedbasedBStaskFC.sh` | SLURM array: Voxelwise seed-based beta-series FC (3-condition GLM: neg, neu, pos; outputs per-condition maps + neg_vs_neu, neg_vs_pos contrasts) |
-| `grouplevelSeedBasedFC.sh` | Group-level TFCE permutation testing (5000 perms) for all 5 map types × 2 seeds × 2 analyses (mean, covariate) |
+| `runBStaskFC_LSS.sh` | SLURM array: ROI-level LSS beta-series FC (amygdala–vmPFC, 3 conditions: neg, neu, pos) — PRIMARY |
+| `combineBTS_LSS.py` | Combine per-subject LSS ROI CSVs into group file (`all_subjects_betaSeries_LSS_all_conditions_M2ID.csv`) |
+| `seedbasedBStaskFC_LSS.sh` | SLURM array: Voxelwise LSS seed-based FC (outputs per-condition maps for neg, neu, pos) |
+| `grouplevelSeedBasedFC.sh` | Group-level TFCE permutation testing (5000 perms) for per-condition maps × 2 seeds × 2 analyses |
+
+**Beta-series functional connectivity (LSA — archived):**
+
+Original LSA scripts are preserved in `archive/` for reference. LSA beta-series is invalid for rapid event-related designs with ISI < 12s; LSS should be used instead.
+
+| Script | Description |
+|--------|-------------|
+| `archive/runBStaskFC_LSA.sh` | (Archived) LSA ROI-level beta-series FC |
+| `archive/combineBTS_LSA.py` | (Archived) Combine per-subject LSA CSVs |
+| `archive/seedbasedBStaskFC_LSA.sh` | (Archived) LSA voxelwise seed-based FC |
+| `archive/grouplevelSeedBasedFC_LSA.sh` | (Archived) Group-level TFCE for LSA maps |
 
 **Common GLM parameters across scripts:**
 - TR = 2.0s, HRF = Glover, drift = cosine (1/128 Hz), noise = AR(1)
-- 24 motion regressors (6 params + temporal derivatives + quadratic terms)
+- 24 motion regressors (6 params + temporal derivatives + quadratic terms; primary)
+- Optional: + 6 aCompCor components (a_comp_cor_00 through a_comp_cor_05; preprocessing comparison)
 - First 4 dummy scans removed
 - Amygdala mask: Harvard-Oxford atlas, 50% probability threshold, 2mm
+- vmPFC seeds: anterior vmPFC (10mm sphere at [-2, 46, -10]), posterior vmPFC (10mm sphere at [0, 26, -12])
 
 ---
 
