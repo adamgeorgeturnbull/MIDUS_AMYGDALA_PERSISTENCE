@@ -502,68 +502,52 @@ Merges fMRI-derived participant-level measures into the cleaned MIDUS master dat
 
 **File:** `scripts/analysis/01_affect_age.py`
 
-Replicates age-related differences in affect in MIDUS 3.
+Replicates age-related differences in daily life affect in MIDUS 3. Tests the expected pattern that older age is associated with higher positive affect and lower negative affect.
 
 **Input:**
 - `data/processed/midus_merged_clean.csv`
 
 **Samples:**
-1. **Daily diary full sample**
-   - Filter: PA_score not missing
-   - Outcomes: PA_score, NA_score, NA_score_log
-   - Predictor: C2PAGE (age at P2)
+1. **Full diary sample** — all participants with diary affect data; predictor: C2PAGE (age at diary wave)
+2. **Neuroscience subsample** — participants with both diary and fMRI visit data; predictor: C5PAGE (age at neuroscience visit)
 
-2. **Neuroscience sample**
-   - Filter: C5PAGE not missing
-   - Outcomes: PA_score, NA_score, NA_score_log, C5SPGP, C5SPGN
-   - Predictors:
-     - Daily diary outcomes: C2PAGE and C5PAGE
-     - PANAS outcomes: C5PAGE only
+**Outcomes:** PA_score, NA_score, NA_score_log
 
-**Covariates:**
-- Sex, education, race dummies, twin pair dummies
+**Covariates:** sex, race dummies, twin pair dummies, n_days_complete
 
 **Analyses:**
-1. Zero-order Pearson correlations between age and affect outcomes
+1. Zero-order Pearson correlations (age × affect); one-tailed tests in pre-specified directions
 2. OLS regressions: `outcome ~ age + covariates`
+3. MLM (random intercept for family): same fixed effects, twin pair dummies replaced by family grouping
 
 **Outputs:**
-- `results/tables/01_affect_age_correlations.csv` - Correlation results
-- `results/tables/01_affect_age_regressions.csv` - Regression results
-
-**Notes:**
-- All analyses use complete cases for outcome and covariates
-- Minimum N: 10 for correlations, 20 for regressions
+- `results/tables/01_affect_age_correlations.csv`
+- `results/tables/01_affect_age_regressions.csv`
+- `results/tables/01_affect_age_mlm.csv`
+- `results/tables/01_affect_age_methods.txt`
 
 ---
 
-### Analysis Tiering and Statistical Decisions
+### Statistical Decisions and Shared Helpers
 
-All analyses (02-07) assign each result to a **tier** (primary, secondary, or sensitivity) based on the variables involved. This organizes the large number of tests into a clear hierarchy aligned with the pre-registered hypotheses, without requiring formal multiple comparisons correction.
+All analyses (02–07) share infrastructure via `scripts/analysis/analysis_utils.py`, which centralizes sample definitions, covariate lists, outcome lists, model fitting, and output formatting.
 
-**Persistence variable tier:**
-- **Primary:** Left amygdala cross-run negative persistence (`neg_persist_crossrun_mean_z_L`)
-- **Secondary:** Right amygdala cross-run negative persistence (`neg_persist_crossrun_mean_z_R`); vmPFC negative image persistence (`ant_vmPFC_neg_image_mean_z`, `post_vmPFC_neg_image_mean_z`)
-- **Sensitivity:** Positive persistence, concatenated negative persistence
+**Primary variables (confirmatory, no correction):**
+- Persistence predictor: left amygdala cross-run negative persistence (`neg_persist_crossrun_mean_z_L`, Fisher z)
+- FC predictors: left amygdala–anterior vmPFC and left amygdala–posterior vmPFC differential FC (`*_neg_vs_neu`, Fisher z)
+- Affect outcomes: daily diary PA (`PA_score`) and NA (`NA_score`)
 
-**Affect variable tier:**
-- **Primary:** Daily diary PA (`PA_score`) and NA (`NA_score`)
-- **Sensitivity:** `NA_score_log`, PANAS outcomes (`C5SPGP`, `C5SPGN`, `C5SPGN_log`)
+**Sensitivity outcomes** (same construct, alternative operationalization): `NA_score_log`
 
-**FC variable tier (condition-level scripts 04, 05, 07):**
-- **Primary:** Negative condition, left amygdala seed, anterior/posterior vmPFC target
-- **Secondary:** Negative condition, right amygdala seed, anterior/posterior vmPFC target
-- **Sensitivity:** Neutral and positive conditions (neu, pos), safety_vs_threat derived variables
+**Directional p-values:**
+- One-tailed for persistence–affect (scripts 02, 06) and persistence–age (script 03)
+- Two-tailed for all FC analyses (04, 05, 07) and all interaction terms
 
-**Row-level tier** = worst (least primary) tier among its component variables. For example, a primary FC variable paired with a sensitivity affect variable yields a sensitivity-tier result.
+**Samples:**
+- **Conservative (primary):** `qc_conservative == 1` — all 3 runs pass visual QC AND mean FD < 0.5 mm
+- **Full (archived):** `has_neg_persistence == 1` — any imaging data present
 
-**One-tailed p-values** are reported for persistence analyses with directional hypotheses:
-- Scripts 02, 06: Persistence-affect association (p/2 for the observed direction)
-- Script 03: Persistence decreases with age (p/2 if coefficient < 0, else 1 - p/2)
-
-**Two-tailed p-values** are used for all FC analyses (04, 05, 07) and all interaction terms (exploratory).
-
-Tier assignments and shared helpers (sample definitions, covariate lists, outcome lists) are centralized in `scripts/analysis/analysis_utils.py`.
+All analyses report conservative sample results as primary; full sample results are archived for reference.
 
 ---
 
@@ -571,53 +555,27 @@ Tier assignments and shared helpers (sample definitions, covariate lists, outcom
 
 **File:** `scripts/analysis/02_persistence_affect.py`
 
-Tests associations between amygdala persistence to negative images and daily life affect (replication of Puccetti et al., 2021).
+Tests whether left amygdala negative persistence is associated with daily life affect (replication of Puccetti et al., 2021). Expected directions: higher persistence → lower PA, higher NA (one-tailed).
 
 **Input:**
 - `data/processed/midus_with_fmri.csv`
 
-**Samples:**
-1. **Full sample** - All participants with imaging + affect data
-   - Filter: `has_neg_persistence == 1` AND any affect measure present
-2. **Conservative sample** - Strict QC criteria
-   - Filter: `qc_conservative == 1` (all 3 runs pass QC AND mean FD < 0.5 mm)
+**Predictor:** `neg_persist_crossrun_mean_z_L` (left amygdala cross-run negative persistence, Fisher z)
 
-**Persistence Measures (Fisher z-transformed):**
-- **Primary (Confirmatory):**
-  - Cross-run negative persistence (L, R)
-- **Secondary (Comparison ROI):**
-  - vmPFC negative image persistence (ant_vmPFC, post_vmPFC) — if `vmPFC_persistence_wide.csv` present
-- **Sensitivity:**
-  - Cross-run positive persistence (L, R)
-  - Concatenated negative persistence (L, R)
+**Outcomes:** PA_score, NA_score, NA_score_log
 
-**Affect Outcomes:**
-- **Primary:** Daily diary PA (`PA_score`), NA (`NA_score`)
-- **Sensitivity:** `NA_score_log`, PANAS (`C5SPGP`, `C5SPGN`, `C5SPGN_log`)
-
-**Covariates:**
-- Age (C5PAGE)
-- Sex
-- Race (dummy-coded)
-- Twin pairs (dummy-coded)
-- Time between visits (time_P2_P5)
-- Number of diary days completed (n_days_complete)
+**Covariates:** C5PAGE, sex, race dummies, twin pair dummies, time_P2_P5, n_days_complete
 
 **Analyses:**
-1. Zero-order Pearson correlations between persistence and affect
-2. OLS regressions: `affect ~ persistence + covariates`
+1. Zero-order Pearson correlations (one-tailed)
+2. OLS: `affect ~ persistence + covariates`
+3. MLM (random intercept for family): same fixed effects, twin pair dummies replaced by family grouping
 
-**Outputs:**
-- `results/tables/02_persistence_affect_correlations_full.csv`
-- `results/tables/02_persistence_affect_regressions_full.csv`
-- `results/tables/02_persistence_affect_correlations_conservative.csv`
-- `results/tables/02_persistence_affect_regressions_conservative.csv`
-
-**Notes:**
-- Primary analyses use cross-run negative persistence (L, R); vmPFC persistence included as secondary if data available
-- Conservative sample is primary per preregistration
-- One-tailed p-values reported for persistence-affect associations
-- All results tiered (primary/secondary/sensitivity) using `tier_utils.py`
+**Outputs (conservative sample primary; full sample in `full_sample/` subdirectory):**
+- `results/tables/02_persistence_affect_correlations_{conservative,full}.csv`
+- `results/tables/02_persistence_affect_regressions_{conservative,full}.csv`
+- `results/tables/02_persistence_affect_mlm_{conservative,full}.csv`
+- `results/tables/02_persistence_affect_methods.txt`
 
 ---
 
@@ -625,102 +583,87 @@ Tests associations between amygdala persistence to negative images and daily lif
 
 **File:** `scripts/analysis/03_persistence_age.py`
 
-Tests whether amygdala persistence to negative images decreases with age (Extension #1, Confirmatory). The hypothesis is directional: negative persistence should be negatively associated with age.
+Tests whether left amygdala negative persistence decreases with age (Extension #1, Confirmatory). Expected direction: older age → lower persistence (one-tailed).
 
 **Input:**
 - `data/processed/midus_with_fmri.csv`
 
-**Samples:**
-1. **Full sample** - `has_neg_persistence == 1` AND valid `C5PAGE`
-2. **Conservative sample** - Full + `qc_conservative == 1`
-
-**Persistence Outcomes (Fisher z-transformed):**
-- **Primary:** Cross-run negative persistence (L, R)
-- **Secondary:** vmPFC negative image persistence (ant_vmPFC, post_vmPFC) — if data available
-- **Sensitivity:** Cross-run positive persistence, concatenated negative persistence
+**Outcome:** `neg_persist_crossrun_mean_z_L` (left amygdala cross-run negative persistence, Fisher z)
 
 **Predictor:** C5PAGE (age at neuroscience visit)
 
-**Covariates:** sex, race dummies, twin pair dummies, time_P2_P5, n_days_complete
-- Note: C5PAGE is the predictor, not a covariate
+**Covariates:** sex, race dummies, twin pair dummies (no diary-specific covariates — diary data not required)
 
 **Analyses:**
-1. Zero-order Pearson correlations (persistence ~ age)
-2. OLS regressions: `persistence ~ C5PAGE + covariates`
+1. Zero-order Pearson correlations (one-tailed)
+2. OLS: `persistence ~ C5PAGE + covariates`
+3. MLM (random intercept for family): same fixed effects, twin pair dummies replaced by family grouping
 
-**Outputs:**
-- `results/tables/03_persistence_age_correlations_full.csv`
-- `results/tables/03_persistence_age_regressions_full.csv`
-- `results/tables/03_persistence_age_correlations_conservative.csv`
-- `results/tables/03_persistence_age_regressions_conservative.csv`
+**Outputs (conservative sample primary; full sample in `full_sample/` subdirectory):**
+- `results/tables/03_persistence_age_correlations_{conservative,full}.csv`
+- `results/tables/03_persistence_age_regressions_{conservative,full}.csv`
+- `results/tables/03_persistence_age_mlm_{conservative,full}.csv`
+- `results/tables/03_persistence_age_methods.txt`
 
 ---
 
-### Analysis 04: Condition-Level FC × Affect
+### Analysis 04: FC × Affect
 
 **File:** `scripts/analysis/04_fc_affect.py`
 
-Tests whether condition-level amygdala–vmPFC functional connectivity relates to daily-life affect (Exploratory Analysis #1). Uses per-condition FC from a 3-condition GLM (negative, neutral, positive) rather than relying solely on a contrast.
+Tests whether amygdala–vmPFC functional connectivity (negative-vs-neutral differential) relates to daily life affect (Exploratory Analysis #1). Expected directions: higher differential FC → higher PA, lower NA (one-tailed).
 
 **Input:**
 - `data/processed/midus_with_fmri.csv`
-- `data/fMRI/all_subjects_betaSeries_LSS_all_conditions_M2ID.csv` (LSS; preferred)
-  Fallback: `data/fMRI/all_subjects_betaSeries_all_conditions_M2ID.csv` (LSA)
+- `data/fMRI/all_subjects_betaSeries_LSS_all_conditions_M2ID.csv`
 
-**FC Variables:**
-- ROI-level beta-series correlations (Fisher z-transformed) between amygdala seeds (L, R) and vmPFC targets (anterior = safety signaling, posterior = threat signaling), per Tashjian et al. (2021, TICS)
-- 4 seed–target pairs × 3 conditions (neg, neu, pos) = 12 base FC variables
-- 2 derived safety-vs-threat variables per condition (anterior minus posterior) × 3 conditions = 6 derived variables
+**FC Predictors (Fisher z-transformed, LSS beta-series correlations, neg−neu contrast):**
+- `l_amyg-ant_vmPFC_neg_vs_neu` — left amygdala to anterior vmPFC
+- `l_amyg-post_vmPFC_neg_vs_neu` — left amygdala to posterior vmPFC
 
-**Affect Outcomes:** 6 (PA_score, NA_score, NA_score_log, C5SPGP, C5SPGN, C5SPGN_log)
+**Outcomes:** PA_score, NA_score, NA_score_log
+
+**Covariates:** C5PAGE, sex, race dummies, twin pair dummies, time_P2_P5, n_days_complete
 
 **Analyses:**
-1. Bivariate Pearson correlations between all FC × affect pairs
-2. OLS regressions: `affect ~ FC + covariates`
+1. Zero-order Pearson correlations (one-tailed)
+2. OLS: `affect ~ FC + covariates`
+3. MLM (random intercept for family): same fixed effects, twin pair dummies replaced by family grouping
 
-**Samples:**
-- Full: `has_beta_series == 1` AND `has_neg_persistence == 1`
-- Conservative: full + `qc_conservative == 1`
-
-**Outputs:**
-- `results/tables/04_fc_affect_correlations_full.csv`
-- `results/tables/04_fc_affect_correlations_conservative.csv`
-- `results/tables/04_fc_affect_regressions_full.csv`
-- `results/tables/04_fc_affect_regressions_conservative.csv`
+**Outputs (conservative sample primary; full sample in `full_sample/` subdirectory):**
+- `results/tables/04_fc_affect_correlations_{conservative,full}.csv`
+- `results/tables/04_fc_affect_regressions_{conservative,full}.csv`
+- `results/tables/04_fc_affect_mlm_{conservative,full}.csv`
+- `results/tables/04_fc_affect_methods.txt`
 
 ---
 
-### Analysis 05: Condition-Level FC × Persistence
+### Analysis 05: FC × Persistence
 
 **File:** `scripts/analysis/05_fc_persistence.py`
 
-Tests whether condition-level amygdala–vmPFC functional connectivity relates to amygdala (and vmPFC) persistence (Exploratory Analysis #2). Same condition-level approach as Analysis 04.
+Tests whether amygdala–vmPFC FC (negative-vs-neutral) relates to amygdala persistence (Exploratory Analysis #2). Expected direction: higher differential FC → lower persistence (one-tailed).
 
 **Input:**
 - `data/processed/midus_with_fmri.csv`
-- `data/fMRI/all_subjects_betaSeries_LSS_all_conditions_M2ID.csv` (LSS; preferred)
-  Fallback: `data/fMRI/all_subjects_betaSeries_all_conditions_M2ID.csv` (LSA)
+- `data/fMRI/all_subjects_betaSeries_LSS_all_conditions_M2ID.csv`
 
-**FC Variables:** Same 18 FC variables as Analysis 04 (12 base + 6 safety-vs-threat derived).
+**FC Predictors:** Same two as Analysis 04 (`l_amyg-ant_vmPFC_neg_vs_neu`, `l_amyg-post_vmPFC_neg_vs_neu`)
 
-**Persistence Measures (Fisher z-transformed):**
-- **Primary:** Cross-run negative persistence (L, R)
-- **Secondary:** vmPFC negative image persistence (ant_vmPFC, post_vmPFC) — if data available
-- **Sensitivity:** Cross-run positive persistence (L, R), concatenated negative persistence (L, R)
+**Outcome:** `neg_persist_crossrun_mean_z_L`
+
+**Covariates:** C5PAGE, sex, race dummies, twin pair dummies (no diary covariates)
 
 **Analyses:**
-1. Bivariate Pearson correlations between all FC × persistence pairs
-2. OLS regressions: `persistence ~ FC + covariates`
+1. Zero-order Pearson correlations (one-tailed)
+2. OLS: `persistence ~ FC + covariates`
+3. MLM (random intercept for family)
 
-**Samples:**
-- Full: `has_neg_persistence == 1` AND FC data present
-- Conservative: full + `qc_conservative == 1`
-
-**Outputs:**
-- `results/tables/05_fc_persistence_correlations_full.csv`
-- `results/tables/05_fc_persistence_correlations_conservative.csv`
-- `results/tables/05_fc_persistence_regressions_full.csv`
-- `results/tables/05_fc_persistence_regressions_conservative.csv`
+**Outputs (conservative sample primary; full sample in `full_sample/` subdirectory):**
+- `results/tables/05_fc_persistence_correlations_{conservative,full}.csv`
+- `results/tables/05_fc_persistence_regressions_{conservative,full}.csv`
+- `results/tables/05_fc_persistence_mlm_{conservative,full}.csv`
+- `results/tables/05_fc_persistence_methods.txt`
 
 ---
 
@@ -728,29 +671,25 @@ Tests whether condition-level amygdala–vmPFC functional connectivity relates t
 
 **File:** `scripts/analysis/06_persistence_affect_moderation.py`
 
-Tests whether self-reported emotion regulation strategy use moderates the persistence–affect association (Exploratory Analysis #3).
+Tests whether self-reported emotion regulation strategy use moderates the persistence–affect association (Exploratory Analysis #3). Two-tailed tests for all interaction terms.
 
-**Moderators:**
+**Predictor:** `neg_persist_crossrun_mean_z_L` (mean-centered)
+
+**Moderators (mean-centered):**
 - C5SER — ERQ Reappraisal (1–7 scale)
 - C5SES — ERQ Suppression (1–7 scale)
 
-**Model:** `affect ~ persistence + moderator + persistence×moderator + covariates`
+**Model:** `affect ~ persistence_c + moderator_c + persistence_c × moderator_c + covariates`
 
-Both persistence and moderator are mean-centered before creating the interaction term to reduce multicollinearity and aid interpretation. The interaction term is the key test: does the persistence–affect slope change as a function of the moderator?
+**Outcomes:** PA_score, NA_score, NA_score_log
 
-**Variables:**
-- Persistence: amygdala (L, R) + vmPFC (ant, post, if available) cross-run negative persistence, positive persistence (L, R), concatenated negative persistence (L, R) — all Fisher z-transformed
-- Affect: 6 outcomes (PA_score, NA_score, NA_score_log, C5SPGP, C5SPGN, C5SPGN_log)
-- Covariates: C5PAGE, sex, race dummies, twin dummies, time_P2_P5, n_days_complete
-- Diary-specific covariates (time_P2_P5, n_days_complete) only for daily diary outcomes
+**Covariates:** C5PAGE, sex, race dummies, twin pair dummies, time_P2_P5, n_days_complete
 
-**Samples:**
-- Full: all participants with persistence + affect + ER data
-- Conservative: full + strict QC (qc_conservative == 1)
+**Analyses:** OLS and MLM (random intercept for family), separately for each moderator
 
-**Outputs:**
-- `results/tables/06_persistence_affect_moderation_full.csv`
-- `results/tables/06_persistence_affect_moderation_conservative.csv`
+**Outputs (results written to separate subdirectories per moderator):**
+- `results/tables/06_persistence_affect_moderation_{conservative,full}.csv` (OLS)
+- `results/tables/06_persistence_affect_moderation_mlm_{conservative,full}.csv` (MLM)
 
 ---
 
@@ -758,56 +697,35 @@ Both persistence and moderator are mean-centered before creating the interaction
 
 **File:** `scripts/analysis/07_fc_affect_moderation.py`
 
-Tests whether self-reported emotion regulation strategy use moderates the FC-affect association (Exploratory Analysis #3). Same moderation framework as Analysis 06, but with per-condition FC as the predictor instead of persistence.
+Tests whether emotion regulation strategy use moderates the FC–affect association (Exploratory Analysis #3). Same moderation framework as Analysis 06, with FC as the predictor. Two-tailed tests for all interaction terms.
 
-**Input:**
-- `data/processed/midus_with_fmri.csv`
-- `data/fMRI/all_subjects_betaSeries_LSS_all_conditions_M2ID.csv` (LSS; preferred)
-  Fallback: `data/fMRI/all_subjects_betaSeries_all_conditions_M2ID.csv` (LSA)
+**FC Predictors (mean-centered):** `l_amyg-ant_vmPFC_neg_vs_neu`, `l_amyg-post_vmPFC_neg_vs_neu`
 
-**Moderators:**
-- C5SER - ERQ Reappraisal (1-7 scale)
-- C5SES - ERQ Suppression (1-7 scale)
+**Moderators (mean-centered):** C5SER (reappraisal), C5SES (suppression)
 
-**Model:** `affect ~ FC + moderator + FC*moderator + covariates`
+**Model:** `affect ~ FC_c + moderator_c + FC_c × moderator_c + covariates`
 
-**FC Variables:** Same 18 per-condition FC variables as Analyses 04/05 (4 seed-target pairs × 3 conditions + 6 safety-vs-threat derived)
+**Outcomes:** PA_score, NA_score, NA_score_log
 
-**Affect Outcomes:** 6 (PA_score, NA_score, NA_score_log, C5SPGP, C5SPGN, C5SPGN_log)
+**Covariates:** C5PAGE, sex, race dummies, twin pair dummies, time_P2_P5, n_days_complete
 
-**Covariates:** C5PAGE, sex, race dummies, twin dummies; diary-specific covariates (time_P2_P5, n_days_complete) only for daily diary outcomes.
+**Analyses:** OLS and MLM (random intercept for family), separately for each FC predictor and each moderator
 
-**Samples:**
-- Full: FC data present AND `has_neg_persistence == 1`
-- Conservative: full + `qc_conservative == 1`
-
-**Notes:**
-- All results tiered (primary/secondary/sensitivity); negative condition is primary
-- Two-tailed tests for all interaction and FC effects (exploratory)
-
-**Outputs:**
-- `results/tables/07_fc_affect_moderation_full.csv`
-- `results/tables/07_fc_affect_moderation_conservative.csv`
+**Outputs (results written to separate subdirectories per moderator):**
+- `results/tables/07_fc_affect_moderation_{conservative,full}.csv` (OLS)
+- `results/tables/07_fc_affect_moderation_mlm_{conservative,full}.csv` (MLM)
 
 ---
 
-### Sensitivity (MLM) Variants
+### Sensitivity Variants
 
-Each primary OLS analysis (01–07) has a paired sensitivity script (`01_sensitivity.py` through `07_sensitivity.py`). These replace OLS regressions (with twin pair dummies) with linear mixed-effects models, avoiding the degrees-of-freedom cost of per-pair dummies while properly accounting for non-independence within twin families via a random intercept. Sensitivity scripts for 06 and 07 also include right hemisphere/right amygdala specificity checks.
+Each main analysis (01–07) has a paired sensitivity script (`01_sensitivity.py` through `07_sensitivity.py`) that tests robustness of primary findings using alternative operationalizations and instruments (e.g., log-transformed outcomes, PANAS in place of daily diary, concatenated persistence).
 
-**Grouping Variable (`family_id`):**
+MLM is integrated directly into the main scripts (01–07) rather than in separate sensitivity scripts. Each main script runs correlations, OLS, and MLM together and saves all three output tables. The MLM replaces OLS twin-pair dummies with a random intercept for family, using REML estimation with sequential optimizer fallback.
+
+**Family grouping (`family_id`):**
 - Twins (`SAMPLMAJ == 3` AND 2+ members share `M2FAMNUM`): grouped by `M2FAMNUM`
 - Everyone else: own cluster (`M2ID`)
-
-**Model:**
-- Fixed effects: same predictors as paired OLS script, minus twin pair dummies
-- Random effects: random intercept for `family_id`
-- Estimation: REML (optimizer: LBFGS with Powell fallback)
-
-**Notes:**
-- Correlations are identical to the parent OLS script and are not re-run
-- Zero-variance covariates are automatically dropped
-- Directional p-values preserved (one-tailed for persistence; two-tailed for FC)
 
 ---
 
