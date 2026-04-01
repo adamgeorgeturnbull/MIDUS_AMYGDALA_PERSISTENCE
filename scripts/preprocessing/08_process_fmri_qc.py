@@ -7,9 +7,11 @@ Process fMRI quality control (QC) data from manual inspection.
 Creates binary QC flags and criteria for defining conservative analysis samples:
 - All 3 runs pass visual QC
 - Mean FD < 0.5 mm
+- n_pairs = 6 (all 3 runs produced valid task data / cross-run persistence pairs)
 
 Inputs:
 - data/fMRI/task_fMRI_QC.xlsx (manual QC ratings)
+- data/fMRI/negative_persistence_cross_run.csv (to check n_pairs per subject)
 
 Outputs:
 - data/fMRI/fmri_qc_processed.csv (processed QC flags)
@@ -26,8 +28,9 @@ import pandas as pd
 # ============================================================================
 FMRI_DIR = "data/fMRI"
 
-QC_FILE = os.path.join(FMRI_DIR, "task_fMRI_QC.xlsx")
-OUTPUT_FILE = os.path.join(FMRI_DIR, "fmri_qc_processed.csv")
+QC_FILE         = os.path.join(FMRI_DIR, "task_fMRI_QC.xlsx")
+PERSIST_FILE    = os.path.join(FMRI_DIR, "negative_persistence_cross_run.csv")
+OUTPUT_FILE     = os.path.join(FMRI_DIR, "fmri_qc_processed.csv")
 
 # ============================================================================
 # Main Execution
@@ -71,10 +74,17 @@ def main():
     # FD QC: 1 if mean FD < 0.5, 0 otherwise
     qc["fd_pass"] = (qc["mean_fd"] < 0.5).astype(int)
 
-    # Conservative sample: all runs pass AND mean FD < 0.5
+    # Task completeness: n_pairs=6 means all 3 runs produced valid cross-run pairs
+    persist = pd.read_csv(PERSIST_FILE)
+    persist_left = persist[persist["hemisphere"] == "L"][["M2ID", "n_pairs"]]
+    qc = qc.merge(persist_left, on="M2ID", how="left")
+    qc["task_complete"] = (qc["n_pairs"] == 6).astype(int)
+
+    # Conservative sample: all runs pass AND mean FD < 0.5 AND all 3 runs have valid task data
     qc["qc_conservative"] = (
         (qc["all_runs_pass"] == 1) &
-        (qc["fd_pass"] == 1)
+        (qc["fd_pass"] == 1) &
+        (qc["task_complete"] == 1)
     ).astype(int)
 
     # ========================================================================
@@ -95,20 +105,25 @@ def main():
     print(f"  Mean FD ≥ 0.5: {(qc['fd_pass'] == 0).sum()} ({(qc['fd_pass'] == 0).sum()/len(qc)*100:.1f}%)")
     print(f"  Mean FD range: {qc['mean_fd'].min():.3f} - {qc['mean_fd'].max():.3f}")
 
+    print(f"\nTask completeness (n_pairs=6):")
+    print(f"  Complete (3 runs): {qc['task_complete'].sum()} ({qc['task_complete'].sum()/len(qc)*100:.1f}%)")
+    print(f"  Incomplete:        {(qc['task_complete']==0).sum()}")
+
     print(f"\nConservative sample criteria:")
-    print(f"  All runs pass + FD < 0.5: {qc['qc_conservative'].sum()} ({qc['qc_conservative'].sum()/len(qc)*100:.1f}%)")
+    print(f"  All runs pass + FD < 0.5 + task complete: {qc['qc_conservative'].sum()} ({qc['qc_conservative'].sum()/len(qc)*100:.1f}%)")
 
     # Breakdown of exclusions
     excluded = qc[qc["qc_conservative"] == 0]
-    excluded_runs = excluded[excluded["all_runs_pass"] == 0]
-    excluded_fd = excluded[excluded["fd_pass"] == 0]
-    both = excluded[(excluded["all_runs_pass"] == 0) & (excluded["fd_pass"] == 0)]
+    excluded_runs = excluded[(excluded["all_runs_pass"] == 0) & (excluded["fd_pass"] == 1) & (excluded["task_complete"] == 1)]
+    excluded_fd   = excluded[(excluded["fd_pass"] == 0) & (excluded["all_runs_pass"] == 1) & (excluded["task_complete"] == 1)]
+    excluded_task = excluded[(excluded["task_complete"] == 0) & (excluded["all_runs_pass"] == 1) & (excluded["fd_pass"] == 1)]
 
-    print(f"\nExclusion breakdown:")
-    print(f"  Failed runs only: {len(excluded_runs) - len(both)}")
-    print(f"  Failed FD only: {len(excluded_fd) - len(both)}")
-    print(f"  Failed both: {len(both)}")
-    print(f"  Total excluded: {len(excluded)}")
+    print(f"\nExclusion breakdown (mutually exclusive primary reason):")
+    print(f"  Failed visual QC only:    {len(excluded_runs)}")
+    print(f"  Failed FD only:           {len(excluded_fd)}")
+    print(f"  Failed task complete only:{len(excluded_task)}")
+    print(f"  Failed multiple criteria: {len(excluded) - len(excluded_runs) - len(excluded_fd) - len(excluded_task)}")
+    print(f"  Total excluded:           {len(excluded)}")
 
     # ========================================================================
     # Save Processed QC Data
@@ -125,6 +140,8 @@ def main():
         "run3_fd",
         "mean_fd",
         "fd_pass",
+        "n_pairs",
+        "task_complete",
         "qc_conservative",
     ]
 

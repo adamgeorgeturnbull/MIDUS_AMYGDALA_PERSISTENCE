@@ -55,7 +55,8 @@ def construct_race_dummies(df):
         if code == RACE_REF:
             continue  # Skip reference category
         col_name = f"race_{code}"
-        df[col_name] = (df["race"] == code).astype(int)
+        # Preserve NaN when race is unknown so merge_combine can fill from MKE2
+        df[col_name] = (df["race"] == code).astype(float).where(df["race"].notna())
     return df
 
 

@@ -141,8 +141,16 @@ def construct_daily_diary_affect(raw_file, output_file, descriptives_file):
         participant_means
         .merge(n_days_any, on="M2ID")
         .merge(n_days_complete, on="M2ID")
-        .merge(start_date_info, on="M2ID")
+        .merge(start_date_info, on="M2ID", how="left")  # left join: keep all diary participants
     )
+
+    n_missing_start = final_df["StartYear"].isna().sum()
+    if n_missing_start > 0:
+        print(f"WARNING: {n_missing_start} participants have no day-1 date record "
+              f"(StartYear = NaN). C2PAGE and time_P2_P5 will be missing for these participants.")
+        print(f"  Missing StartYear M2IDs: {final_df.loc[final_df['StartYear'].isna(), 'M2ID'].tolist()}")
+    else:
+        print(f"All {len(final_df)} participants have a valid StartYear.")
 
     final_df.to_csv(output_file, index=False)
     print(f"Processed daily diary data saved to: {output_file}")

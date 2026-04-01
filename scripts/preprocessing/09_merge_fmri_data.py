@@ -49,6 +49,10 @@ QC_FILE = os.path.join(FMRI_DIR, "fmri_qc_processed.csv")
 VMRFC_PERSIST_FILE = os.path.join(FMRI_DIR, "vmPFC_persistence_wide.csv")        # from run_cross_corr_vmPFC.py
 ROI_ACTIVATIONS_FILE = os.path.join(FMRI_DIR, "all_subjects_roi_activations.csv") # from extract_roi_activations.sh
 
+# aCompCor preprocessing comparison persistence files
+ACC_NEG_PERSIST_FILE = os.path.join(FMRI_DIR, "aCompCor_persistence_summary", "results_summary_neg_image_vs_neg_face.csv")
+ACC_POS_PERSIST_FILE = os.path.join(FMRI_DIR, "aCompCor_persistence_summary", "results_summary_pos_image_vs_pos_face.csv")
+
 # Output file
 OUT_FILE = os.path.join(PROCESSED_DIR, "midus_with_fmri.csv")
 
@@ -175,6 +179,28 @@ def main():
     merged = merged.merge(qc, on="M2ID", how="left")
 
     # ========================================================================
+    # aCompCor persistence (preprocessing comparison)
+    # ========================================================================
+    def _load_acc_persist(filepath, prefix):
+        df = pd.read_csv(filepath)
+        df["M2ID"] = df["subject"].str.replace("sub-", "", regex=False).astype(int)
+        df = df.drop(columns="subject")
+        return pivot_persistence_long(
+            df=df,
+            value_cols=["mean_r", "median_r", "std_r", "n_pairs"],
+            prefix=prefix,
+        )
+
+    if os.path.exists(ACC_NEG_PERSIST_FILE) and os.path.exists(ACC_POS_PERSIST_FILE):
+        acc_neg_wide = _load_acc_persist(ACC_NEG_PERSIST_FILE, "neg_persist_acc_crossrun")
+        acc_pos_wide = _load_acc_persist(ACC_POS_PERSIST_FILE, "pos_persist_acc_crossrun")
+        merged = merged.merge(acc_neg_wide, on="M2ID", how="left")
+        merged = merged.merge(acc_pos_wide, on="M2ID", how="left")
+        print(f"✓ Merged aCompCor persistence ({acc_neg_wide['M2ID'].notna().sum()} subjects)")
+    else:
+        print(f"  (skipping aCompCor persistence — files not found in {os.path.dirname(ACC_NEG_PERSIST_FILE)})")
+
+    # ========================================================================
     # Optional: vmPFC persistence (from run_cross_corr_vmPFC.py)
     # ========================================================================
     if os.path.exists(VMRFC_PERSIST_FILE):
@@ -211,11 +237,15 @@ def main():
     ].notna().any(axis=1).astype(int)
 
     merged["has_neg_persistence"] = merged.filter(
-        like="neg_persist"
+        regex="^neg_persist_crossrun"
     ).notna().any(axis=1).astype(int)
 
     merged["has_pos_persistence"] = merged.filter(
-        like="pos_persist"
+        regex="^pos_persist_crossrun"
+    ).notna().any(axis=1).astype(int)
+
+    merged["has_acc_persistence"] = merged.filter(
+        regex="^neg_persist_acc_crossrun"
     ).notna().any(axis=1).astype(int)
 
     merged["has_fd_data"] = merged["fd_n_runs"].notna().astype(int)

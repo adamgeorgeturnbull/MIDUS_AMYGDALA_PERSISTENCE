@@ -1,0 +1,51 @@
+MODEL SPECIFICATION
+============================================================
+Analysis  : 01 Age → Affect  [neuro subsample, C5PAGE]
+N         : 137
+Generated : 2026-03-20
+
+VARIABLES
+------------------------------------------------------------
+Predictor(s):
+  C5PAGE                                        age at neuroscience visit (P5)
+Outcome(s):
+  PA_score                                      positive affect (daily diary composite, mean across days)
+  NA_score                                      negative affect (daily diary composite, mean across days)
+  NA_score_log                                  log-transformed negative affect (daily diary)
+
+STATISTICAL MODELS
+------------------------------------------------------------
+1. Pearson correlation
+   Zero-order association; no covariates.
+
+2. OLS regression
+   Formula : outcome ~ predictor + covariates
+   Covariates:
+     - biological sex (0 = male, 1 = female)
+     - number of completed daily diary days
+     - time between diary (P2) and neuroscience (P5) waves (years)
+     - race/ethnicity (5 dummy variables, ref = White)
+     - twin pair membership (334 dummy variables; OLS only)
+
+3. Linear mixed-effects model (MLM)
+   Fixed effects  : outcome ~ predictor + covariates
+                    (twin pair dummies excluded; handled by random effect)
+   Random effects : random intercept | family_id
+   Family grouping: paired twins share family_id (SAMPLMAJ == 3 and
+                    ≥2 members sharing M2FAMNUM); all others grouped by M2ID
+   Estimation     : REML; optimizers tried in order: lbfgs, powell, nm, bfgs
+   Fixed-effect covariates:
+     - biological sex (0 = male, 1 = female)
+     - number of completed daily diary days
+     - time between diary (P2) and neuroscience (P5) waves (years)
+     - race/ethnicity (5 dummy variables, ref = White)
+
+INFERENCE
+------------------------------------------------------------
+Tests: one-tailed (pre-registered directional hypotheses)
+  p_one = p_two / 2        if effect is in predicted direction
+  p_one = 1 - p_two / 2    if effect is in opposite direction
+  Predicted directions:
+    PA_score: positive (positive affect (daily diary composite, mean across days))
+    NA_score: negative (negative affect (daily diary composite, mean across days))
+    NA_score_log: negative (log-transformed negative affect (daily diary))

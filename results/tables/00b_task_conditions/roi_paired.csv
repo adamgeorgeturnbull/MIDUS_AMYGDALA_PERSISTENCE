@@ -1,0 +1,9 @@
+contrast,col1,col2,n,mean_diff,sd_diff,t,df,p,roi,trial_type
+l_amyg_neg_vs_neu_image,l_amyg_neg_image,l_amyg_neu_image,128,0.03816396953644304,0.10797552973241303,3.998832212904966,127,0.0001073620755559579,l_amyg,image
+l_amyg_neg_vs_pos_image,l_amyg_neg_image,l_amyg_pos_image,128,0.007845853636010038,0.08991826689148352,0.9871820713653521,127,0.32543041999551314,l_amyg,image
+r_amyg_neg_vs_neu_image,r_amyg_neg_image,r_amyg_neu_image,128,0.03510237130851157,0.08053372859457533,4.931325092457931,127,2.503524291099155e-06,r_amyg,image
+r_amyg_neg_vs_pos_image,r_amyg_neg_image,r_amyg_pos_image,128,0.01851792968556029,0.07837985113067948,2.672963209866579,127,0.00850558065933025,r_amyg,image
+ant_vmPFC_neg_vs_neu_image,ant_vmPFC_neg_image,ant_vmPFC_neu_image,128,-0.015060001014725872,0.11671776475080117,-1.4597988732803733,127,0.14681457666779604,ant_vmPFC,image
+ant_vmPFC_neg_vs_pos_image,ant_vmPFC_neg_image,ant_vmPFC_pos_image,128,-0.02890817206131129,0.10479326753357561,-3.120988968450499,127,0.0022317420618486444,ant_vmPFC,image
+post_vmPFC_neg_vs_neu_image,post_vmPFC_neg_image,post_vmPFC_neu_image,128,0.001003003367104141,0.13866061390370468,0.08183785863516409,127,0.9349044874449324,post_vmPFC,image
+post_vmPFC_neg_vs_pos_image,post_vmPFC_neg_image,post_vmPFC_pos_image,128,0.0033043408570802555,0.1151945902696544,0.3245321603278414,127,0.746069107937091,post_vmPFC,image

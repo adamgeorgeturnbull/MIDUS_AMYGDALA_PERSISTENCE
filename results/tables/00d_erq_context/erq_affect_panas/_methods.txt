@@ -1,0 +1,44 @@
+MODEL SPECIFICATION
+============================================================
+Analysis  : 00d ERQ → PANAS Affect  [ERQ+PANAS sample, two-tailed]
+N         : 229
+Generated : 2026-03-25
+
+VARIABLES
+------------------------------------------------------------
+Predictor(s):
+  C5SER                                         C5SER
+  C5SES                                         C5SES
+Outcome(s):
+  C5SPGP                                        positive affect (PANAS, neuroscience visit)
+  C5SPGN                                        negative affect (PANAS, neuroscience visit)
+  C5SPGN_log                                    log-transformed negative affect (PANAS)
+
+STATISTICAL MODELS
+------------------------------------------------------------
+1. Pearson correlation
+   Zero-order association; no covariates.
+
+2. OLS regression
+   Formula : outcome ~ predictor + covariates
+   Covariates:
+     - age at neuroscience visit (P5)
+     - biological sex (0 = male, 1 = female)
+     - race/ethnicity (5 dummy variables, ref = White)
+     - twin pair membership (334 dummy variables; OLS only)
+
+3. Linear mixed-effects model (MLM)
+   Fixed effects  : outcome ~ predictor + covariates
+                    (twin pair dummies excluded; handled by random effect)
+   Random effects : random intercept | family_id
+   Family grouping: paired twins share family_id (SAMPLMAJ == 3 and
+                    ≥2 members sharing M2FAMNUM); all others grouped by M2ID
+   Estimation     : REML; optimizers tried in order: lbfgs, powell, nm, bfgs
+   Fixed-effect covariates:
+     - age at neuroscience visit (P5)
+     - biological sex (0 = male, 1 = female)
+     - race/ethnicity (5 dummy variables, ref = White)
+
+INFERENCE
+------------------------------------------------------------
+Tests: two-tailed

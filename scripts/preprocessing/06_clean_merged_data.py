@@ -80,6 +80,16 @@ def main():
     df["time_P2_P5"] = df["time_P2_P5"].abs()  # ensure positive
 
     # =========================
+    # Recode MIDUS missing value codes to NaN for ERQ subscales
+    # 98 = MISSING, 99 = INAPPLICABLE
+    # =========================
+    for var in ["C5SER", "C5SES"]:
+        if var in df.columns:
+            n_missing = (df[var] >= 97).sum()
+            df[var] = df[var].where(df[var] < 97)
+            print(f"Recoded {n_missing} missing-code values to NaN in {var}")
+
+    # =========================
     # Compute skewness and kurtosis for neuroscience PANAS and log-transform C5SPGN
     # =========================
     panas_vars = ["C5SPGP", "C5SPGN"]

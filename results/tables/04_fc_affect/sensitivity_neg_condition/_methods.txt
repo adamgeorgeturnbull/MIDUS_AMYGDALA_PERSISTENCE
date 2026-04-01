@@ -1,0 +1,52 @@
+MODEL SPECIFICATION
+============================================================
+Analysis  : 04 FC (neg only) → Affect  [conservative, one-tailed]
+N         : 80
+Generated : 2026-03-25
+
+VARIABLES
+------------------------------------------------------------
+Predictor(s):
+  l_amyg-ant_vmPFC_neg                          left amygdala – anterior vmPFC FC, negative condition (Fisher z)
+  l_amyg-post_vmPFC_neg                         left amygdala – posterior vmPFC FC, negative condition (Fisher z)
+  l_amyg-ant_minus_post_vmPFC_neg               l_amyg-ant_minus_post_vmPFC_neg
+Outcome(s):
+  PA_score                                      positive affect (daily diary composite, mean across days)
+  NA_score                                      negative affect (daily diary composite, mean across days)
+
+STATISTICAL MODELS
+------------------------------------------------------------
+1. Pearson correlation
+   Zero-order association; no covariates.
+
+2. OLS regression
+   Formula : outcome ~ predictor + covariates
+   Covariates:
+     - age at neuroscience visit (P5)
+     - biological sex (0 = male, 1 = female)
+     - race/ethnicity (5 dummy variables, ref = White)
+     - twin pair membership (334 dummy variables; OLS only)
+
+3. Linear mixed-effects model (MLM)
+   Fixed effects  : outcome ~ predictor + covariates
+                    (twin pair dummies excluded; handled by random effect)
+   Random effects : random intercept | family_id
+   Family grouping: paired twins share family_id (SAMPLMAJ == 3 and
+                    ≥2 members sharing M2FAMNUM); all others grouped by M2ID
+   Estimation     : REML; optimizers tried in order: lbfgs, powell, nm, bfgs
+   Fixed-effect covariates:
+     - age at neuroscience visit (P5)
+     - biological sex (0 = male, 1 = female)
+     - race/ethnicity (5 dummy variables, ref = White)
+
+INFERENCE
+------------------------------------------------------------
+Tests: one-tailed (pre-registered directional hypotheses)
+  p_one = p_two / 2        if effect is in predicted direction
+  p_one = 1 - p_two / 2    if effect is in opposite direction
+  Predicted directions:
+    PA_score: positive (positive affect (daily diary composite, mean across days))
+    NA_score: negative (negative affect (daily diary composite, mean across days))
+    C5SPGP: positive (positive affect (PANAS, neuroscience visit))
+    C5SPGN: negative (negative affect (PANAS, neuroscience visit))
+    C5SPGN_log: negative (log-transformed negative affect (PANAS))

@@ -1,0 +1,49 @@
+MODEL SPECIFICATION
+============================================================
+Analysis  : 02 Persistence (L) → PANAS  [conservative fMRI, one-tailed]
+N         : 128
+Generated : 2026-03-25
+
+VARIABLES
+------------------------------------------------------------
+Predictor(s):
+  neg_persist_crossrun_mean_z_L                 left amygdala negative-affect persistence (cross-run spatial correlation, Fisher z)
+Outcome(s):
+  C5SPGP                                        positive affect (PANAS, neuroscience visit)
+  C5SPGN                                        negative affect (PANAS, neuroscience visit)
+  C5SPGN_log                                    log-transformed negative affect (PANAS)
+
+STATISTICAL MODELS
+------------------------------------------------------------
+1. Pearson correlation
+   Zero-order association; no covariates.
+
+2. OLS regression
+   Formula : outcome ~ predictor + covariates
+   Covariates:
+     - age at neuroscience visit (P5)
+     - biological sex (0 = male, 1 = female)
+     - race/ethnicity (5 dummy variables, ref = White)
+     - twin pair membership (334 dummy variables; OLS only)
+
+3. Linear mixed-effects model (MLM)
+   Fixed effects  : outcome ~ predictor + covariates
+                    (twin pair dummies excluded; handled by random effect)
+   Random effects : random intercept | family_id
+   Family grouping: paired twins share family_id (SAMPLMAJ == 3 and
+                    ≥2 members sharing M2FAMNUM); all others grouped by M2ID
+   Estimation     : REML; optimizers tried in order: lbfgs, powell, nm, bfgs
+   Fixed-effect covariates:
+     - age at neuroscience visit (P5)
+     - biological sex (0 = male, 1 = female)
+     - race/ethnicity (5 dummy variables, ref = White)
+
+INFERENCE
+------------------------------------------------------------
+Tests: one-tailed (pre-registered directional hypotheses)
+  p_one = p_two / 2        if effect is in predicted direction
+  p_one = 1 - p_two / 2    if effect is in opposite direction
+  Predicted directions:
+    C5SPGP: negative (positive affect (PANAS, neuroscience visit))
+    C5SPGN: positive (negative affect (PANAS, neuroscience visit))
+    C5SPGN_log: positive (log-transformed negative affect (PANAS))

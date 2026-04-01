@@ -51,45 +51,31 @@ MIDUS_AMYGDALA_PERSISTENCE/
 │   │   ├── mke2_covariates.csv
 │   │   ├── midus_merged.csv
 │   │   ├── midus_merged_clean.csv
-│   │   ├── midus_with_fmri.csv
-│   │   └── README.md
+│   │   └── midus_with_fmri.csv
 │   └── fMRI/
-│       ├── betaSeries_neg_vs_neu_threat_safety.csv
-│       ├── all_subjects_betaSeries_all_conditions_M2ID.csv   ← LSA (fallback)
-│       ├── all_subjects_betaSeries_LSS_all_conditions_M2ID.csv  ← LSS (primary, if available)
-│       ├── all_subjects_roi_activations.csv                  ← optional, from extract_roi_activations.sh
-│       ├── vmPFC_persistence_wide.csv                        ← optional, from run_cross_corr_vmPFC.py
-│       ├── negative_persistence_concat.csv
+│       ├── all_subjects_betaSeries_LSS_all_conditions_M2ID.csv
+│       ├── all_subjects_roi_activations.csv
 │       ├── negative_persistence_cross_run.csv
 │       ├── positive_persistence_cross_run.csv
 │       └── fd_summary.csv
 ├── results/
 │   ├── tables/
-│   │   ├── sample_descriptives.csv
-│   │   ├── panas_skew_kurtosis.csv
 │   │   ├── 01_affect_age_correlations.csv
 │   │   ├── 01_affect_age_regressions.csv
-│   │   ├── 02_persistence_affect_correlations_full.csv
-│   │   ├── 02_persistence_affect_correlations_conservative.csv
-│   │   ├── 02_persistence_affect_regressions_full.csv
-│   │   ├── 02_persistence_affect_regressions_conservative.csv
-│   │   ├── 02_persistence_affect_mlm_full.csv
-│   │   ├── 02_persistence_affect_mlm_conservative.csv
-│   │   ├── 03_persistence_age_correlations_full.csv
-│   │   ├── 03_persistence_age_regressions_full.csv
-│   │   ├── 03_persistence_age_correlations_conservative.csv
-│   │   ├── 03_persistence_age_regressions_conservative.csv
-│   │   ├── 04_fc_affect_correlations_full.csv
-│   │   ├── 04_fc_affect_correlations_conservative.csv
-│   │   ├── 05_fc_persistence_correlations_full.csv
-│   │   ├── 05_fc_persistence_correlations_conservative.csv
-│   │   ├── 06_persistence_affect_moderation_full.csv
-│   │   ├── 06_persistence_affect_moderation_conservative.csv
-│   │   ├── 07_fc_affect_moderation_full.csv
-│   │   └── 07_fc_affect_moderation_conservative.csv
+│   │   ├── 02_persistence_affect_correlations_{full,conservative}.csv
+│   │   ├── 02_persistence_affect_regressions_{full,conservative}.csv
+│   │   ├── 03_persistence_age_correlations_{full,conservative}.csv
+│   │   ├── 03_persistence_age_regressions_{full,conservative}.csv
+│   │   ├── 04_fc_affect_correlations_{full,conservative}.csv
+│   │   ├── 04_fc_affect_regressions_{full,conservative}.csv
+│   │   ├── 05_fc_persistence_correlations_{full,conservative}.csv
+│   │   ├── 05_fc_persistence_regressions_{full,conservative}.csv
+│   │   ├── 06_persistence_affect_moderation_{full,conservative}.csv
+│   │   └── 07_fc_affect_moderation_{full,conservative}.csv
 │   └── figures/
-│       ├── analysis_01/
-│       └── analysis_02/
+│       ├── figure1_roi.tiff
+│       ├── figure2_persistence_affect.tiff
+│       └── figure3_fc_affect.tiff
 ├── scripts/
 │   ├── preprocessing/
 │   │   ├── 01_harmonize_ids.py
@@ -102,59 +88,66 @@ MIDUS_AMYGDALA_PERSISTENCE/
 │   │   ├── 08_process_fmri_qc.py
 │   │   └── 09_merge_fmri_data.py
 │   ├── analysis/
-│   │   ├── 01_affect_age_replication.py
-│   │   ├── 01b_affect_age_replication_mlm.py
-│   │   ├── 02_persistence_affect.py
-│   │   ├── 02b_persistence_affect_mlm.py
-│   │   ├── 03_persistence_age.py
-│   │   ├── 03b_persistence_age_mlm.py
-│   │   ├── 04_fc_affect.py
-│   │   ├── 04b_fc_affect_mlm.py
-│   │   ├── 05_fc_persistence.py
-│   │   ├── 05b_fc_persistence_mlm.py
-│   │   ├── 06_persistence_affect_moderation.py
-│   │   ├── 06b_persistence_affect_moderation_mlm.py
-│   │   ├── 07_fc_affect_moderation.py
-│   │   ├── 07b_fc_affect_moderation_mlm.py
-│   │   └── tier_utils.py
+│   │   ├── analysis_utils.py              ← shared helpers, sample definitions, tiering
+│   │   ├── 00a_diary_panas_convergence.py ← preliminary: diary–PANAS convergence check
+│   │   ├── 00b_task_condition_differences.py ← preliminary: task activation condition check
+│   │   ├── 00c_vmPFC_convergence.py       ← preliminary: vmPFC persistence convergence
+│   │   ├── 00d_erq_context.py             ← preliminary: ERQ descriptives
+│   │   ├── 01_affect_age.py               ← main: affect–age replication (OLS)
+│   │   ├── 01_sensitivity.py              ← sensitivity: MLM variant
+│   │   ├── 02_persistence_affect.py       ← main: persistence–affect (OLS)
+│   │   ├── 02_sensitivity.py              ← sensitivity: MLM variant
+│   │   ├── 03_persistence_age.py          ← main: persistence–age (OLS)
+│   │   ├── 03_sensitivity.py              ← sensitivity: MLM variant
+│   │   ├── 04_fc_affect.py                ← main: FC–affect (OLS)
+│   │   ├── 04_sensitivity.py              ← sensitivity: MLM variant
+│   │   ├── 04ex_fc_affect_antpost.py      ← exploratory: anterior vs posterior vmPFC
+│   │   ├── 05_fc_persistence.py           ← main: FC–persistence (OLS)
+│   │   ├── 05_sensitivity.py              ← sensitivity: MLM variant
+│   │   ├── 05ex_fc_persistence_antpost.py ← exploratory: anterior vs posterior vmPFC
+│   │   ├── 06_persistence_affect_moderation.py ← main: persistence × ER moderation (OLS)
+│   │   ├── 06_sensitivity.py              ← sensitivity: MLM + right hemisphere
+│   │   ├── 07_fc_affect_moderation.py     ← main: FC × ER moderation (OLS)
+│   │   └── 07_sensitivity.py              ← sensitivity: MLM + right amygdala
 │   ├── fMRI/
 │   │   ├── preprocessing/
-│   │   │   ├── extractSliceTiming.py
 │   │   │   ├── fixOrientation.py
-│   │   │   ├── getMotion.py
-│   │   │   ├── getMotion.sh
+│   │   │   ├── extractSliceTiming.py
 │   │   │   ├── M3_slice_time_correction.sh
 │   │   │   ├── slurm_M3_stc_parallel.sh
 │   │   │   ├── slurm_fmriprep_parallel.sh
 │   │   │   ├── slurm_fmriprep_parallel_pre_fs.sh
-│   │   │   └── slurm_recon_all_parallel.sh
+│   │   │   ├── slurm_recon_all_parallel.sh
+│   │   │   ├── getMotion.py
+│   │   │   └── getMotion.sh
 │   │   └── analysis/
-│   │       ├── runGLM.sh                       ← 24-motion GLM (primary)
-│   │       ├── runGLM_aCompCor.sh              ← 24-motion + 6 aCompCor GLM (comparison)
-│   │       ├── runGLM_concat.sh
-│   │       ├── extract_amygdala.sh
-│   │       ├── extract_amygdala_concat.sh
-│   │       ├── extract_vmPFC.sh                ← vmPFC beta extraction (ant/post × 3 image conditions)
-│   │       ├── extract_roi_activations.sh      ← task validation: mean beta per ROI per condition
-│   │       ├── run_cross_corr.py
-│   │       ├── run_cross_corr_concat.py
-│   │       ├── run_cross_corr_vmPFC.py         ← vmPFC cross-run persistence
-│   │       ├── combineROIActivations.py        ← combine per-subject ROI activation CSVs
-│   │       ├── runBStaskFC_LSS.sh              ← PRIMARY: ROI-level LSS beta-series FC
-│   │       ├── combineBTS_LSS.py               ← combine per-subject LSS ROI CSVs
-│   │       ├── seedbasedBStaskFC_LSS.sh        ← voxelwise LSS seed-based FC maps
-│   │       ├── grouplevelSeedBasedFC.sh        ← group-level TFCE permutation testing
-│   │       └── archive/                        ← LSA scripts (original method, superseded)
-│   │           ├── runBStaskFC_LSA.sh
-│   │           ├── seedbasedBStaskFC_LSA.sh
-│   │           ├── combineBTS_LSA.py
-│   │           └── grouplevelSeedBasedFC_LSA.sh
-│   ├── visualization/
-│   │   ├── 01_affect_age_figures.py
-│   │   └── 02_persistence_affect_figures.py
-│   ├── generate_dummy_data.py
-│   ├── generate_dummy_fmri_data.py
-│   └── compare_outputs.py
+│   │       ├── runGLM.sh                        ← PRIMARY: per-run GLM (24 motion params)
+│   │       ├── runGLM_aCompCor.sh               ← COMPARISON: GLM with aCompCor regressors
+│   │       ├── runGLM_concat.sh                 ← concatenated GLM (sensitivity)
+│   │       ├── extract_amygdala.sh              ← voxelwise amygdala betas (primary)
+│   │       ├── extract_amygdala_aCompCor.sh     ← voxelwise amygdala betas (aCompCor)
+│   │       ├── extract_amygdala_concat.sh       ← concatenated betas (sensitivity)
+│   │       ├── extract_vmPFC.sh                 ← vmPFC betas (primary)
+│   │       ├── extract_vmPFC_aCompCor.sh        ← vmPFC betas (aCompCor)
+│   │       ├── extract_roi_activations.sh       ← mean ROI betas for task validation
+│   │       ├── extract_roi_activations_aCompCor.sh
+│   │       ├── run_cross_corr.py                ← amygdala cross-run persistence (primary)
+│   │       ├── run_cross_corr_aCompCor.py       ← amygdala persistence (aCompCor)
+│   │       ├── run_cross_corr_concat.py         ← concatenated persistence (sensitivity)
+│   │       ├── run_cross_corr_vmPFC.py          ← vmPFC cross-run persistence
+│   │       ├── run_cross_corr_vmPFC_aCompCor.py
+│   │       ├── combineROIActivations.py
+│   │       ├── combineROIActivations_aCompCor.py
+│   │       ├── runBStaskFC_LSS.sh               ← PRIMARY: ROI-level LSS beta-series FC
+│   │       ├── combineBTS_LSS.py
+│   │       ├── runBStaskFC.sh                   ← LSA beta-series FC (archived method)
+│   │       ├── combineBTS.py
+│   │       ├── seedbasedBStaskFC_LSS.sh         ← voxelwise LSS seed-based FC maps
+│   │       ├── seedbasedBStaskFC.sh
+│   │       ├── grouplevelSeedBasedFC.sh         ← group-level TFCE permutation testing
+│   │       └── archive/                         ← superseded LSA scripts
+│   └── visualization/
+│       └── publication_figures.py               ← all 3 publication figures
 ├── README.md
 └── requirements.txt
 ```
@@ -505,9 +498,9 @@ Merges fMRI-derived participant-level measures into the cleaned MIDUS master dat
 
 ## Analysis Scripts
 
-### Analysis 01: Affect-Age Replication
+### Analysis 01: Affect–Age Replication
 
-**File:** `scripts/analysis/01_affect_age_replication.py`
+**File:** `scripts/analysis/01_affect_age.py`
 
 Replicates age-related differences in affect in MIDUS 3.
 
@@ -570,7 +563,7 @@ All analyses (02-07) assign each result to a **tier** (primary, secondary, or se
 
 **Two-tailed p-values** are used for all FC analyses (04, 05, 07) and all interaction terms (exploratory).
 
-Tier assignments are centralized in `scripts/analysis/tier_utils.py` for consistency across all scripts.
+Tier assignments and shared helpers (sample definitions, covariate lists, outcome lists) are centralized in `scripts/analysis/analysis_utils.py`.
 
 ---
 
@@ -800,9 +793,7 @@ Tests whether self-reported emotion regulation strategy use moderates the FC-aff
 
 ### Sensitivity (MLM) Variants
 
-All OLS-based analyses (02–07) have paired mixed-effects model sensitivity scripts (02b–07b). These replace OLS regressions (with twin pair dummies) with linear mixed-effects models, avoiding the degrees-of-freedom cost of per-pair dummies while properly accounting for non-independence within twin families via a random intercept.
-
-**Files:** `scripts/analysis/02b_persistence_affect_mlm.py` through `07b_fc_affect_moderation_mlm.py`
+Each primary OLS analysis (01–07) has a paired sensitivity script (`01_sensitivity.py` through `07_sensitivity.py`). These replace OLS regressions (with twin pair dummies) with linear mixed-effects models, avoiding the degrees-of-freedom cost of per-pair dummies while properly accounting for non-independence within twin families via a random intercept. Sensitivity scripts for 06 and 07 also include right hemisphere/right amygdala specificity checks.
 
 **Grouping Variable (`family_id`):**
 - Twins (`SAMPLMAJ == 3` AND 2+ members share `M2FAMNUM`): grouped by `M2FAMNUM`
@@ -813,75 +804,37 @@ All OLS-based analyses (02–07) have paired mixed-effects model sensitivity scr
 - Random effects: random intercept for `family_id`
 - Estimation: REML (optimizer: LBFGS with Powell fallback)
 
-**Outputs (example for 02b):**
-- `results/tables/02b_persistence_affect_mlm_full.csv`
-- `results/tables/02b_persistence_affect_mlm_conservative.csv`
-
 **Notes:**
 - Correlations are identical to the parent OLS script and are not re-run
-- Only covariate-adjusted models differ (MLM vs OLS)
-- Zero-variance covariates (e.g., race dummies with no cases) are automatically dropped
+- Zero-variance covariates are automatically dropped
 - Directional p-values preserved (one-tailed for persistence; two-tailed for FC)
-- All results tiered (primary/secondary/sensitivity) using `tier_utils.py`
-- Same persistence variable set as parent: amygdala (L, R) + vmPFC (if available), no bilateral
 
 ---
 
 ## Visualization Scripts
 
-### Visualization 01: Affect-Age Figures
+### Publication Figures
 
-**File:** `scripts/visualization/01_affect_age_figures.py`
+**File:** `scripts/visualization/publication_figures.py`
 
-Generates publication-ready figures for the affect-age replication analysis.
-
-**Inputs:**
-- `data/processed/midus_merged_clean.csv` (for scatterplots)
-- `results/tables/01_affect_age_regressions.csv` (for coefficient plot)
-
-**Figures Created:**
-1. **Scatterplots:** Age × affect relationships with regression lines
-2. **Coefficient plot (forest plot):** Summarizes all regression results
-
-**Outputs:**
-- `results/figures/analysis_01/01_affect_age_scatterplots.pdf`
-- `results/figures/analysis_01/01_affect_age_coefficients.pdf`
-
-**Figure Settings:**
-- Format: PDF
-- DPI: 300
-- Color palette distinguishes daily diary vs neuroscience samples
-
----
-
-### Visualization 02: Persistence-Affect Figures
-
-**File:** `scripts/visualization/02_persistence_affect_figures.py`
-
-Creates publication-quality figures for persistence × affect associations.
+Generates all three main publication figures.
 
 **Inputs:**
-- `data/processed/midus_with_fmri.csv` (for scatterplots)
-- `results/tables/02_persistence_affect_regressions_full.csv`
-- `results/tables/02_persistence_affect_regressions_conservative.csv`
+- `data/processed/midus_with_fmri.csv`
+- `data/fMRI/all_subjects_betaSeries_LSS_all_conditions_M2ID.csv`
 
-**Figures Created:**
-1. **Scatterplots:** Individual plots for each persistence × affect relationship
-2. **Forest plots:** Regression coefficients (primary vs sensitivity analyses)
+**Figures:**
+1. **Figure 1 — ROI brain visualization:** Glass brain showing left/right amygdala seeds (yellow shades, Harvard-Oxford atlas) and anterior/posterior vmPFC target spheres (green shades, 10mm radius at MNI [-2,46,-10] and [0,26,-12]). Display mode: left sagittal, axial, right sagittal, coronal.
+2. **Figure 2 — Persistence × Affect:** Two-panel scatterplot (PA and log-NA) for left amygdala negative persistence (Fisher z) in the conservative diary+fMRI sample.
+3. **Figure 3 — FC × Affect:** Two-panel scatterplot (PA and log-NA) for left amygdala–anterior vmPFC FC (neg−neu contrast) in the conservative diary+fMRI sample.
 
 **Outputs:**
-- `results/figures/analysis_02/primary/` - Primary analysis figures
-- `results/figures/analysis_02/sensitivity/` - Sensitivity analysis figures
-
-**Figure Organization:**
-- Separate subdirectories for full sample vs conservative sample
-- Primary analyses (cross-run negative persistence) vs sensitivity analyses
-- Color coding distinguishes persistence types and samples
+- `results/figures/figure1_roi.tiff`
+- `results/figures/figure2_persistence_affect.tiff`
+- `results/figures/figure3_fc_affect.tiff`
 
 **Figure Settings:**
-- Format: PNG
-- DPI: 300
-- Organized by analysis type (primary/sensitivity) and persistence measure
+- Format: TIFF, 300 dpi
 
 ---
 
@@ -960,4 +913,6 @@ Original LSA scripts are preserved in `archive/` for reference. LSA beta-series 
 
 ## Citation and Acknowledgment
 
-Data are provided by the Midlife in the United States (MIDUS) study. Users must comply with all MIDUS data use agreements and citation requirements.
+Data are provided by the Midlife in the United States (MIDUS) study. Users must comply with all MIDUS data use agreements and citation requirements. Original MIDUS data are not included in this repository; access may be requested at [midus.wisc.edu](https://midus.wisc.edu). Data files included in this repository contain synthetic dummy data generated to match the structure and format of the original dataset for reproducibility purposes only.
+
+Script development and initial drafts of the Methods and Results sections were assisted by Claude Code (Anthropic), with all content verified and edited by the authors.
