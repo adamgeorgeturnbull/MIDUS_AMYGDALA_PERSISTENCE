@@ -2,14 +2,13 @@ MODEL SPECIFICATION
 ============================================================
 Analysis  : 04 FC (neg only) → Affect  [conservative, one-tailed]
 N         : 80
-Generated : 2026-03-25
+Generated : 2026-04-03
 
 VARIABLES
 ------------------------------------------------------------
 Predictor(s):
   l_amyg-ant_vmPFC_neg                          left amygdala – anterior vmPFC FC, negative condition (Fisher z)
   l_amyg-post_vmPFC_neg                         left amygdala – posterior vmPFC FC, negative condition (Fisher z)
-  l_amyg-ant_minus_post_vmPFC_neg               l_amyg-ant_minus_post_vmPFC_neg
 Outcome(s):
   PA_score                                      positive affect (daily diary composite, mean across days)
   NA_score                                      negative affect (daily diary composite, mean across days)

@@ -2,14 +2,13 @@ MODEL SPECIFICATION
 ============================================================
 Analysis  : 04 FC-R (neg−neu) → Affect  [conservative, two-tailed]
 N         : 80
-Generated : 2026-03-25
+Generated : 2026-04-03
 
 VARIABLES
 ------------------------------------------------------------
 Predictor(s):
   r_amyg-ant_vmPFC_neg_vs_neu                   r_amyg-ant_vmPFC_neg_vs_neu
   r_amyg-post_vmPFC_neg_vs_neu                  r_amyg-post_vmPFC_neg_vs_neu
-  r_amyg-ant_minus_post_vmPFC_neg_vs_neu        r_amyg-ant_minus_post_vmPFC_neg_vs_neu
 Outcome(s):
   PA_score                                      positive affect (daily diary composite, mean across days)
   NA_score                                      negative affect (daily diary composite, mean across days)

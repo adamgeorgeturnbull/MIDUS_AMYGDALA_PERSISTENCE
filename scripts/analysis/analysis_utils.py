@@ -188,7 +188,13 @@ def run_ols(df, predictor, outcome, covariates, one_tailed=False, expected_posit
     if len(data) < MIN_N:
         return None
 
-    X = sm.add_constant(data[[predictor] + [c for c in cov_list if c in data.columns]])
+    # Drop zero-variance covariates and singleton twin pair dummies (sum < 2
+    # means at most one twin is in this sample — the dummy becomes a person-
+    # specific indicator that absorbs that individual from the regression)
+    cov_list = [c for c in cov_list
+                if data[c].std() > 0
+                and not (c.startswith("twin_pair_") and data[c].sum() < 2)]
+    X = sm.add_constant(data[[predictor] + cov_list])
     y = data[outcome]
 
     try:
@@ -205,6 +211,7 @@ def run_ols(df, predictor, outcome, covariates, one_tailed=False, expected_posit
         "predictor": predictor,
         "outcome": outcome,
         "n": int(model.nobs),
+        "df_resid": int(model.df_resid),
         "beta": beta,
         "se": model.bse[predictor],
         "t": model.tvalues[predictor],

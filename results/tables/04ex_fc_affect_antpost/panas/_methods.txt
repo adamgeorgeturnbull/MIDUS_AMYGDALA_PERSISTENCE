@@ -2,7 +2,7 @@ MODEL SPECIFICATION
 ============================================================
 Analysis  : 04ex FC ant−post (neg−neu) → PANAS  [conservative fMRI, one-tailed]
 N         : 128
-Generated : 2026-03-25
+Generated : 2026-04-03
 
 VARIABLES
 ------------------------------------------------------------

@@ -1,0 +1,3 @@
+predictor,outcome,n,r,p,p_two_tailed
+r_amyg-ant_vmPFC_neg_vs_neu,neg_persist_crossrun_mean_z_L,128,0.017762448128784396,0.8422600150218915,0.8422600150218915
+r_amyg-post_vmPFC_neg_vs_neu,neg_persist_crossrun_mean_z_L,128,-0.05136410897604991,0.5647515952106277,0.5647515952106277

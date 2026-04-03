@@ -1,0 +1,3 @@
+predictor,outcome,n,n_groups,beta,se,z,p,p_two_tailed,re_var,log_likelihood,converged,degenerate_re,optimizer
+l_amyg-ant_vmPFC_neg_vs_neu,neg_persist_crossrun_mean_z_R,128,,-0.06850662519969411,0.03336647969932041,-2.053157115075865,0.04005734211166545,0.04005734211166545,2.1200337432327114e-12,77.7208602906764,True,False,lbfgs
+l_amyg-post_vmPFC_neg_vs_neu,neg_persist_crossrun_mean_z_R,128,,-0.040884595857159506,0.03313637741170032,-1.2338281686375083,0.21726694054941476,0.21726694054941476,9.316790650601504e-12,76.27883816137549,True,False,powell

@@ -67,9 +67,9 @@ def summarize_sample(df_sample, use_age_col):
     summary["Educ_mean"] = f"{educ_series.mean():.1f}"
     summary["Educ_SD"] = f"{educ_series.std():.1f}"
 
-    # Ethnicity (Hispanic/Latino)
+    # Ethnicity (Hispanic/Latino): MIDUS codes C1PF1 as 1=No, 2=Yes
     eth_counts = df_sample["ethnicity"].value_counts(dropna=False)
-    summary["%Hispanic"] = f"{(eth_counts.get(1, 0) / len(df_sample) * 100):.1f}"
+    summary["%Hispanic"] = f"{(eth_counts.get(2, 0) / len(df_sample) * 100):.1f}"
 
     # Race categories
     race_counts = df_sample["race"].value_counts(dropna=False)
@@ -79,6 +79,19 @@ def summarize_sample(df_sample, use_age_col):
     summary["%Asian"] = f"{(race_counts.get(4, 0) / len(df_sample) * 100):.1f}"
     summary["%PacificIslander"] = f"{(race_counts.get(5, 0) / len(df_sample) * 100):.1f}"
     summary["%Other"] = f"{(race_counts.get(6, 0) / len(df_sample) * 100):.1f}"
+
+    # Twin pairs: SAMPLMAJ == 3 and family number appears 2+ times in this sample
+    if "SAMPLMAJ" in df_sample.columns and "M2FAMNUM" in df_sample.columns:
+        twins = df_sample[df_sample["SAMPLMAJ"] == 3].copy()
+        pair_counts = twins["M2FAMNUM"].value_counts()
+        paired_fams = pair_counts[pair_counts >= 2].index
+        n_twin_participants = twins["M2FAMNUM"].isin(paired_fams).sum()
+        n_twin_pairs = len(paired_fams)
+        summary["N_twin_pairs"] = n_twin_pairs
+        summary["N_in_twin_pairs"] = n_twin_participants
+    else:
+        summary["N_twin_pairs"] = "N/A"
+        summary["N_in_twin_pairs"] = "N/A"
 
     return pd.Series(summary)
 
