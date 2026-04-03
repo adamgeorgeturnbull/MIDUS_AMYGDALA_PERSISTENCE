@@ -10,24 +10,19 @@ The study combines daily diary data, survey-based demographics, and neuroimaging
 
 ## Study Goals
 
-### Replication (Confirmatory)
-1. Replicate age-related decreases in daily life negative affect and increases in positive affect
-2. Replicate associations between amygdala persistence to negative images and daily life affect
+### Replications
+1. Can we replicate age-related differences in daily life positive and negative affect?
+2. Can we replicate associations between amygdala persistence to negative images and daily life affect?
 
 ### Extensions (Confirmatory)
-1. Test whether amygdala persistence to negative images decreases with age
-2. Test whether age-related differences in affect are mediated by amygdala persistence
+1. Is amygdala persistence in response to negative images decreased in older adults?
+2. Do differences in amygdala persistence explain age-related differences in daily life affect?
 
-### Extensions (Methodological)
-1. Compare amygdala persistence to vmPFC persistence (same measure, comparison ROI)
-2. Validate task effects via amygdala and vmPFC activation maps and individual-level ROI activations
-3. Compare preprocessing strategies: 24 motion parameters (original) vs. 24 motion + 6 aCompCor (modern standard)
-
-### Novel Analyses (Exploratory)
-1. Examine model-free emotion regulation indexed by task-based amygdala–vmPFC connectivity using Least Squares Separate (LSS) beta-series modeling
-2. Test whether model-free emotion regulation relates to amygdala persistence and daily life affect
-3. Examine moderation by emotion regulation strategy use (reappraisal, suppression)
-4. Test age-related differences in these effects, including analyses restricted to older adults
+### Novel Analyses (Exploratory) — Model-Free Emotion Regulation
+1. Does model-free emotion regulation capacity (vmPFC/sgACC–amygdala connectivity in response to negative images) relate to amygdala persistence?
+2. Does model-free emotion regulation capacity relate to daily life positive and negative affect?
+3. Is the relationship between model-free emotion regulation capacity and daily life affect moderated by the use of reappraisal or suppression?
+4. Do these effects vary by age?
 
 ---
 
@@ -88,27 +83,28 @@ MIDUS_AMYGDALA_PERSISTENCE/
 │   │   ├── 08_process_fmri_qc.py
 │   │   └── 09_merge_fmri_data.py
 │   ├── analysis/
-│   │   ├── analysis_utils.py              ← shared helpers, sample definitions, tiering
-│   │   ├── 00a_diary_panas_convergence.py ← preliminary: diary–PANAS convergence check
-│   │   ├── 00b_task_condition_differences.py ← preliminary: task activation condition check
-│   │   ├── 00c_vmPFC_convergence.py       ← preliminary: vmPFC persistence convergence
-│   │   ├── 00d_erq_context.py             ← preliminary: ERQ descriptives
-│   │   ├── 01_affect_age.py               ← main: affect–age replication (OLS)
-│   │   ├── 01_sensitivity.py              ← sensitivity: MLM variant
-│   │   ├── 02_persistence_affect.py       ← main: persistence–affect (OLS)
-│   │   ├── 02_sensitivity.py              ← sensitivity: MLM variant
-│   │   ├── 03_persistence_age.py          ← main: persistence–age (OLS)
-│   │   ├── 03_sensitivity.py              ← sensitivity: MLM variant
-│   │   ├── 04_fc_affect.py                ← main: FC–affect (OLS)
-│   │   ├── 04_sensitivity.py              ← sensitivity: MLM variant
-│   │   ├── 04ex_fc_affect_antpost.py      ← exploratory: anterior vs posterior vmPFC
-│   │   ├── 05_fc_persistence.py           ← main: FC–persistence (OLS)
-│   │   ├── 05_sensitivity.py              ← sensitivity: MLM variant
-│   │   ├── 05ex_fc_persistence_antpost.py ← exploratory: anterior vs posterior vmPFC
-│   │   ├── 06_persistence_affect_moderation.py ← main: persistence × ER moderation (OLS)
-│   │   ├── 06_sensitivity.py              ← sensitivity: MLM + right hemisphere
-│   │   ├── 07_fc_affect_moderation.py     ← main: FC × ER moderation (OLS)
-│   │   └── 07_sensitivity.py              ← sensitivity: MLM + right amygdala
+│   │   ├── analysis_utils.py
+│   │   ├── 00a_diary_panas_convergence.py
+│   │   ├── 00b_task_condition_differences.py
+│   │   ├── 00c_vmPFC_convergence.py
+│   │   ├── 00d_erq_context.py
+│   │   ├── 00e_motion_check.py
+│   │   ├── 01_affect_age.py
+│   │   ├── 01_sensitivity.py
+│   │   ├── 02_persistence_affect.py
+│   │   ├── 02_sensitivity.py
+│   │   ├── 03_persistence_age.py
+│   │   ├── 03_sensitivity.py
+│   │   ├── 04_fc_affect.py
+│   │   ├── 04_sensitivity.py
+│   │   ├── 04ex_fc_affect_antpost.py
+│   │   ├── 05_fc_persistence.py
+│   │   ├── 05_sensitivity.py
+│   │   ├── 05ex_fc_persistence_antpost.py
+│   │   ├── 06_persistence_affect_moderation.py
+│   │   ├── 06_sensitivity.py
+│   │   ├── 07_fc_affect_moderation.py
+│   │   └── 07_sensitivity.py
 │   ├── fMRI/
 │   │   ├── preprocessing/
 │   │   │   ├── fixOrientation.py
@@ -121,33 +117,33 @@ MIDUS_AMYGDALA_PERSISTENCE/
 │   │   │   ├── getMotion.py
 │   │   │   └── getMotion.sh
 │   │   └── analysis/
-│   │       ├── runGLM.sh                        ← PRIMARY: per-run GLM (24 motion params)
-│   │       ├── runGLM_aCompCor.sh               ← COMPARISON: GLM with aCompCor regressors
-│   │       ├── runGLM_concat.sh                 ← concatenated GLM (sensitivity)
-│   │       ├── extract_amygdala.sh              ← voxelwise amygdala betas (primary)
-│   │       ├── extract_amygdala_aCompCor.sh     ← voxelwise amygdala betas (aCompCor)
-│   │       ├── extract_amygdala_concat.sh       ← concatenated betas (sensitivity)
-│   │       ├── extract_vmPFC.sh                 ← vmPFC betas (primary)
-│   │       ├── extract_vmPFC_aCompCor.sh        ← vmPFC betas (aCompCor)
-│   │       ├── extract_roi_activations.sh       ← mean ROI betas for task validation
+│   │       ├── runGLM.sh
+│   │       ├── runGLM_aCompCor.sh
+│   │       ├── runGLM_concat.sh
+│   │       ├── extract_amygdala.sh
+│   │       ├── extract_amygdala_aCompCor.sh
+│   │       ├── extract_amygdala_concat.sh
+│   │       ├── extract_vmPFC.sh
+│   │       ├── extract_vmPFC_aCompCor.sh
+│   │       ├── extract_roi_activations.sh
 │   │       ├── extract_roi_activations_aCompCor.sh
-│   │       ├── run_cross_corr.py                ← amygdala cross-run persistence (primary)
-│   │       ├── run_cross_corr_aCompCor.py       ← amygdala persistence (aCompCor)
-│   │       ├── run_cross_corr_concat.py         ← concatenated persistence (sensitivity)
-│   │       ├── run_cross_corr_vmPFC.py          ← vmPFC cross-run persistence
+│   │       ├── run_cross_corr.py
+│   │       ├── run_cross_corr_aCompCor.py
+│   │       ├── run_cross_corr_concat.py
+│   │       ├── run_cross_corr_vmPFC.py
 │   │       ├── run_cross_corr_vmPFC_aCompCor.py
 │   │       ├── combineROIActivations.py
 │   │       ├── combineROIActivations_aCompCor.py
-│   │       ├── runBStaskFC_LSS.sh               ← PRIMARY: ROI-level LSS beta-series FC
+│   │       ├── runBStaskFC_LSS.sh
 │   │       ├── combineBTS_LSS.py
-│   │       ├── runBStaskFC.sh                   ← LSA beta-series FC (archived method)
+│   │       ├── runBStaskFC.sh
 │   │       ├── combineBTS.py
-│   │       ├── seedbasedBStaskFC_LSS.sh         ← voxelwise LSS seed-based FC maps
+│   │       ├── seedbasedBStaskFC_LSS.sh
 │   │       ├── seedbasedBStaskFC.sh
-│   │       ├── grouplevelSeedBasedFC.sh         ← group-level TFCE permutation testing
-│   │       └── archive/                         ← superseded LSA scripts
+│   │       ├── grouplevelSeedBasedFC.sh
+│   │       └── archive/
 │   └── visualization/
-│       └── publication_figures.py               ← all 3 publication figures
+│       └── publication_figures.py
 ├── README.md
 └── requirements.txt
 ```
@@ -498,6 +494,107 @@ Merges fMRI-derived participant-level measures into the cleaned MIDUS master dat
 
 ## Analysis Scripts
 
+### Analysis 00a: Diary–PANAS Convergence
+
+**File:** `scripts/analysis/00a_diary_panas_convergence.py`
+
+Tests convergent validity between daily diary affect (P2 wave) and PANAS affect measured at the neuroimaging visit (P5 wave). Establishes that the two instruments are capturing the same underlying constructs before using them interchangeably in sensitivity analyses.
+
+**Input:** `data/processed/midus_merged_clean.csv`
+
+**Predictors:** PA_score, NA_score, NA_score_log (daily diary)
+
+**Outcomes:** C5SPGP, C5SPGN, C5SPGN_log (PANAS)
+
+**Covariates:** sex, race dummies, twin pair dummies, n_days_complete, time_P2_P5
+
+**Analyses:** Pearson correlations, OLS, MLM
+
+**Outputs:** `results/tables/00a_diary_panas/`
+- `correlations.csv`, `regressions.csv`, `mlm.csv`, `_methods.txt`
+
+---
+
+### Analysis 00b: Task Condition Differences
+
+**File:** `scripts/analysis/00b_task_condition_differences.py`
+
+Validates task-evoked effects by testing whether ROI activations and beta-series FC differ significantly across emotional conditions. Confirms that the task is producing expected condition-level differences before using these measures in primary analyses.
+
+**Inputs:**
+- `data/processed/midus_with_fmri.csv`
+- `data/fMRI/all_subjects_roi_activations.csv`
+- `data/fMRI/all_subjects_betaSeries_LSS_all_conditions_M2ID.csv`
+
+**Analyses:**
+- One-sample t-tests against zero for each ROI × condition and FC × condition
+- Paired contrasts: neg vs. neu, neg vs. pos
+
+**Outputs:** `results/tables/00b_task_conditions/`
+- `roi_one_sample.csv`, `roi_paired.csv`
+- `fc_one_sample.csv`, `fc_paired.csv`
+
+---
+
+### Analysis 00c: Anterior vs. Posterior vmPFC Convergence
+
+**File:** `scripts/analysis/00c_vmPFC_convergence.py`
+
+Tests whether anterior and posterior vmPFC are tracking the same or distinct signals across activations, persistence, and FC measures. High correlations would suggest redundancy; low correlations support treating them as separate targets.
+
+**Inputs:**
+- `data/processed/midus_with_fmri.csv`
+- `data/fMRI/all_subjects_roi_activations.csv`
+- `data/fMRI/vmPFC_persistence_wide.csv`
+- `data/fMRI/all_subjects_betaSeries_LSS_all_conditions_M2ID.csv`
+
+**Outputs:** `results/tables/00c_vmPFC_convergence/`
+- `ant_post_correlations.csv`
+
+---
+
+### Analysis 00d: ERQ Context
+
+**File:** `scripts/analysis/00d_erq_context.py`
+
+Provides contextual characterization of emotion regulation strategy use (ERQ reappraisal and suppression) before moderation analyses (scripts 06–07). Tests the reappraisal–suppression relationship, whether ERQ predicts affect, and whether age predicts ERQ use.
+
+**Input:** `data/processed/midus_merged_clean.csv`
+
+**Analyses:** Pearson correlations, OLS, MLM across four sections:
+1. Reappraisal × suppression relationship
+2. ERQ → daily diary affect
+3. ERQ → PANAS affect
+4. Age → ERQ use
+
+**Outputs:** `results/tables/00d_erq_context/`
+- `reappraisal_suppression/` — correlations.csv, regressions.csv, mlm.csv
+- `erq_affect_diary/` — same
+- `erq_affect_panas/` — same
+- `age_erq/` — same
+
+---
+
+### Analysis 00e: Motion Sensitivity Check
+
+**File:** `scripts/analysis/00e_motion_check.py`
+
+Tests whether head motion confounds the primary fMRI findings.
+
+**Part 1 — Motion as predictor:** Correlations + OLS + MLM testing whether mean FD (all runs) and mean FD during negative-condition trials predict amygdala persistence and amygdala–vmPFC FC. Two-tailed tests; conservative sample.
+
+**Part 2 — Motion-controlled replication:** Automatically reads the existing conservative correlation results for scripts 02 and 04, identifies effects with p < .05, and re-runs those predictor–outcome pairs with each motion measure added as an additional covariate. Reports whether effects survive.
+
+**Motion measures:**
+- `fd_mean_across_runs` — mean FD averaged across all three runs
+- `fd_neg_mean` — mean FD during negative-image trials (the persistence window)
+
+**Outputs:** `results/tables/00e_motion_check/`
+- `part1_{motion_var}_correlations.csv`, `_regressions.csv`, `_mlm.csv`
+- `part2_motion_controlled_{motion_var}.csv`
+
+---
+
 ### Analysis 01: Affect–Age Replication
 
 **File:** `scripts/analysis/01_affect_age.py`
@@ -520,11 +617,10 @@ Replicates age-related differences in daily life affect in MIDUS 3. Tests the ex
 2. OLS regressions: `outcome ~ age + covariates`
 3. MLM (random intercept for family): same fixed effects, twin pair dummies replaced by family grouping
 
-**Outputs:**
-- `results/tables/01_affect_age_correlations.csv`
-- `results/tables/01_affect_age_regressions.csv`
-- `results/tables/01_affect_age_mlm.csv`
-- `results/tables/01_affect_age_methods.txt`
+**Outputs:** `results/tables/01_affect_age/`
+- `correlations.csv`, `regressions.csv`, `mlm.csv`, `_methods.txt`
+- `neuro_sample/` — same outputs for the neuroscience subsample (C5PAGE predictor)
+- `sensitivity_panas/` — PANAS outcomes in place of daily diary
 
 ---
 
@@ -535,19 +631,26 @@ All analyses (02–07) share infrastructure via `scripts/analysis/analysis_utils
 **Primary variables (confirmatory, no correction):**
 - Persistence predictor: left amygdala cross-run negative persistence (`neg_persist_crossrun_mean_z_L`, Fisher z)
 - FC predictors: left amygdala–anterior vmPFC and left amygdala–posterior vmPFC differential FC (`*_neg_vs_neu`, Fisher z)
-- Affect outcomes: daily diary PA (`PA_score`) and NA (`NA_score`)
-
-**Sensitivity outcomes** (same construct, alternative operationalization): `NA_score_log`
+- Affect outcomes: daily diary PA (`PA_score`), NA (`NA_score`), and log-transformed NA (`NA_score_log`)
 
 **Directional p-values:**
 - One-tailed for persistence–affect (scripts 02, 06) and persistence–age (script 03)
 - Two-tailed for all FC analyses (04, 05, 07) and all interaction terms
 
 **Samples:**
-- **Conservative (primary):** `qc_conservative == 1` — all 3 runs pass visual QC AND mean FD < 0.5 mm
+- **Conservative (primary):** `qc_conservative == 1` — all 3 runs pass visual QC, mean FD < 0.5 mm, AND n_pairs = 6 (all cross-run pairs available)
 - **Full (archived):** `has_neg_persistence == 1` — any imaging data present
 
-All analyses report conservative sample results as primary; full sample results are archived for reference.
+All analyses report conservative sample results as primary; full sample results are archived in `full_sample/` subdirectories.
+
+**Sensitivity analyses** (run within each main script, results saved to subdirectories):
+- *Right hemisphere:* right amygdala persistence (`neg_persist_crossrun_mean_z_R`) or right amygdala FC seed — tests laterality specificity
+- *vmPFC persistence:* anterior and posterior vmPFC cross-run persistence — tests ROI specificity
+- *Other persistence operationalizations:* positive persistence (`pos_persist_crossrun_mean_z_L`), concatenated persistence (`neg_persist_concat_z_L`)
+- *PANAS:* PANAS positive (`C5SPGP`) and negative affect (`C5SPGN`, `C5SPGN_log`) in place of daily diary — same construct, different instrument
+- *FC condition specificity:* neutral and positive condition FC; neg-vs-neu contrast vs. raw negative condition
+- *ROI activations:* mean amygdala and vmPFC beta per condition as alternative to persistence — task validation
+- *Motion control:* mean FD (all runs) and condition-level FD added as covariates (script 00e)
 
 ---
 
@@ -571,11 +674,15 @@ Tests whether left amygdala negative persistence is associated with daily life a
 2. OLS: `affect ~ persistence + covariates`
 3. MLM (random intercept for family): same fixed effects, twin pair dummies replaced by family grouping
 
-**Outputs (conservative sample primary; full sample in `full_sample/` subdirectory):**
-- `results/tables/02_persistence_affect_correlations_{conservative,full}.csv`
-- `results/tables/02_persistence_affect_regressions_{conservative,full}.csv`
-- `results/tables/02_persistence_affect_mlm_{conservative,full}.csv`
-- `results/tables/02_persistence_affect_methods.txt`
+**Outputs:** `results/tables/02_persistence_affect/`
+- `correlations.csv`, `regressions.csv`, `mlm.csv`, `_methods.txt` (conservative sample)
+- `full_sample/` — same outputs for full sample
+- `sensitivity_right_hemisphere/` — right amygdala persistence
+- `sensitivity_vmpfc_persistence/` — vmPFC persistence (anterior and posterior)
+- `sensitivity_other_persistence/` — positive and concatenated persistence
+- `sensitivity_panas/` — PANAS outcomes
+- `sensitivity_roi_activations/` — mean ROI betas as alternative to persistence
+- `sensitivity_log_transforms/` — log-transformed outcomes
 
 ---
 
@@ -599,11 +706,9 @@ Tests whether left amygdala negative persistence decreases with age (Extension #
 2. OLS: `persistence ~ C5PAGE + covariates`
 3. MLM (random intercept for family): same fixed effects, twin pair dummies replaced by family grouping
 
-**Outputs (conservative sample primary; full sample in `full_sample/` subdirectory):**
-- `results/tables/03_persistence_age_correlations_{conservative,full}.csv`
-- `results/tables/03_persistence_age_regressions_{conservative,full}.csv`
-- `results/tables/03_persistence_age_mlm_{conservative,full}.csv`
-- `results/tables/03_persistence_age_methods.txt`
+**Outputs:** `results/tables/03_persistence_age/`
+- `correlations.csv`, `regressions.csv`, `mlm.csv`, `_methods.txt` (conservative sample)
+- `full_sample/` — same outputs for full sample
 
 ---
 
@@ -630,11 +735,15 @@ Tests whether amygdala–vmPFC functional connectivity (negative-vs-neutral diff
 2. OLS: `affect ~ FC + covariates`
 3. MLM (random intercept for family): same fixed effects, twin pair dummies replaced by family grouping
 
-**Outputs (conservative sample primary; full sample in `full_sample/` subdirectory):**
-- `results/tables/04_fc_affect_correlations_{conservative,full}.csv`
-- `results/tables/04_fc_affect_regressions_{conservative,full}.csv`
-- `results/tables/04_fc_affect_mlm_{conservative,full}.csv`
-- `results/tables/04_fc_affect_methods.txt`
+**Outputs:** `results/tables/04_fc_affect/`
+- `correlations.csv`, `regressions.csv`, `mlm.csv`, `_methods.txt` (conservative sample)
+- `full_sample/` — same outputs for full sample
+- `sensitivity_right_amygdala/` — right amygdala seed
+- `sensitivity_neg_condition/` — raw negative condition FC (not contrast)
+- `sensitivity_neg_vs_neu/` — neg-vs-neu contrast (alternative operationalization)
+- `sensitivity_other_conditions/` — neutral and positive condition FC
+- `sensitivity_pos_vs_neu/` — positive-vs-neutral contrast
+- `sensitivity_panas/` — PANAS outcomes
 
 ---
 
@@ -659,11 +768,9 @@ Tests whether amygdala–vmPFC FC (negative-vs-neutral) relates to amygdala pers
 2. OLS: `persistence ~ FC + covariates`
 3. MLM (random intercept for family)
 
-**Outputs (conservative sample primary; full sample in `full_sample/` subdirectory):**
-- `results/tables/05_fc_persistence_correlations_{conservative,full}.csv`
-- `results/tables/05_fc_persistence_regressions_{conservative,full}.csv`
-- `results/tables/05_fc_persistence_mlm_{conservative,full}.csv`
-- `results/tables/05_fc_persistence_methods.txt`
+**Outputs:** `results/tables/05_fc_persistence/`
+- `correlations.csv`, `regressions.csv`, `mlm.csv`, `_methods.txt` (conservative sample)
+- `full_sample/` — same outputs for full sample
 
 ---
 
@@ -687,9 +794,12 @@ Tests whether self-reported emotion regulation strategy use moderates the persis
 
 **Analyses:** OLS and MLM (random intercept for family), separately for each moderator
 
-**Outputs (results written to separate subdirectories per moderator):**
-- `results/tables/06_persistence_affect_moderation_{conservative,full}.csv` (OLS)
-- `results/tables/06_persistence_affect_moderation_mlm_{conservative,full}.csv` (MLM)
+**Outputs:** `results/tables/06_persistence_affect_moderation/`
+- `reappraisal/moderation_ols.csv`, `reappraisal/moderation_mlm.csv` (conservative sample)
+- `reappraisal/full_sample/` — same for full sample
+- `suppression/` — same structure for suppression moderator
+- `sensitivity_right_hemisphere/` — right amygdala persistence as predictor
+- `sensitivity_panas/` — PANAS outcomes
 
 ---
 
@@ -711,9 +821,12 @@ Tests whether emotion regulation strategy use moderates the FC–affect associat
 
 **Analyses:** OLS and MLM (random intercept for family), separately for each FC predictor and each moderator
 
-**Outputs (results written to separate subdirectories per moderator):**
-- `results/tables/07_fc_affect_moderation_{conservative,full}.csv` (OLS)
-- `results/tables/07_fc_affect_moderation_mlm_{conservative,full}.csv` (MLM)
+**Outputs:** `results/tables/07_fc_affect_moderation/`
+- `reappraisal/moderation_ols.csv`, `reappraisal/moderation_mlm.csv` (conservative sample)
+- `reappraisal/full_sample/` — same for full sample
+- `suppression/` — same structure for suppression moderator
+- `sensitivity_right_amygdala/` — right amygdala FC predictors
+- `sensitivity_panas/` — PANAS outcomes
 
 ---
 

@@ -1,0 +1,4 @@
+predictor,outcome,n,r,p,p_two_tailed
+fd_mean_across_runs,neg_persist_crossrun_mean_z_L,128,-0.05411855195416451,0.5440367144959212,0.5440367144959212
+fd_mean_across_runs,l_amyg-ant_vmPFC_neg_vs_neu,128,-0.030305261540434572,0.7341732315759018,0.7341732315759018
+fd_mean_across_runs,l_amyg-post_vmPFC_neg_vs_neu,128,-0.03082405264499326,0.7297971096593282,0.7297971096593282

@@ -46,8 +46,9 @@ FD_FILE = os.path.join(FMRI_DIR, "fd_summary.csv")
 QC_FILE = os.path.join(FMRI_DIR, "fmri_qc_processed.csv")
 
 # Optional new data sources (merged when available)
-VMRFC_PERSIST_FILE = os.path.join(FMRI_DIR, "vmPFC_persistence_wide.csv")        # from run_cross_corr_vmPFC.py
-ROI_ACTIVATIONS_FILE = os.path.join(FMRI_DIR, "all_subjects_roi_activations.csv") # from extract_roi_activations.sh
+VMRFC_PERSIST_FILE   = os.path.join(FMRI_DIR, "vmPFC_persistence_wide.csv")        # from run_cross_corr_vmPFC.py
+ROI_ACTIVATIONS_FILE = os.path.join(FMRI_DIR, "all_subjects_roi_activations.csv")  # from extract_roi_activations.sh
+COND_FD_FILE         = os.path.join(FMRI_DIR, "condition_fd_wide.csv")             # from combine_condition_fd.py
 
 # aCompCor preprocessing comparison persistence files
 ACC_NEG_PERSIST_FILE = os.path.join(FMRI_DIR, "aCompCor_persistence_summary", "results_summary_neg_image_vs_neg_face.csv")
@@ -227,6 +228,16 @@ def main():
         print(f"✓ Merged ROI activations ({len(roi_act)} subjects)")
     else:
         print(f"  (skipping ROI activations — {ROI_ACTIVATIONS_FILE} not found)")
+
+    # ========================================================================
+    # Optional: condition-level FD (from combine_condition_fd.py)
+    # ========================================================================
+    if os.path.exists(COND_FD_FILE):
+        cond_fd = pd.read_csv(COND_FD_FILE)
+        merged = merged.merge(cond_fd, on="M2ID", how="left")
+        print(f"✓ Merged condition FD ({cond_fd['M2ID'].notna().sum()} subjects)")
+    else:
+        print(f"  (skipping condition FD — {COND_FD_FILE} not found)")
 
     # ========================================================================
     # Create Availability Flags

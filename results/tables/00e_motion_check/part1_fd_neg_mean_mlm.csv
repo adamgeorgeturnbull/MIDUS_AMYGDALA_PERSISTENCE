@@ -1,0 +1,2 @@
+predictor,outcome,n,n_groups,beta,se,z,p,p_two_tailed,re_var,log_likelihood,converged,degenerate_re,optimizer
+fd_neg_mean,neg_persist_crossrun_mean_z_L,128,,-0.10498629273245465,0.11884857217088768,-0.8833618344316244,0.3770408045998952,0.3770408045998952,5.755071901231084e-12,58.38164873724688,True,False,powell
