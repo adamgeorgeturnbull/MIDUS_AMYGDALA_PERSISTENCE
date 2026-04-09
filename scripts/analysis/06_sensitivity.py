@@ -116,12 +116,16 @@ def run_moderation_mlm(df, predictor, outcome, moderator, base_covs):
 
     covariates = _covariates_for(df, outcome, base_covs)
     cov_list = [c for c in covariates
-                if c in df.columns and not c.startswith("twin_pair_")]
+                if c in df.columns]
 
     cols = [outcome, predictor, moderator, "_family_id"] + cov_list
     data = df[cols].dropna()
     if len(data) < MIN_N:
         return None
+
+    # Drop singleton twin pair dummies (only one twin in analytic sample)
+    cov_list = [c for c in cov_list
+                if not (c.startswith("twin_pair_") and data[c].sum() < 2)]
 
     pred_safe = predictor.replace("-", "_").replace(".", "_") + "_c"
     mod_safe  = moderator + "_c"
