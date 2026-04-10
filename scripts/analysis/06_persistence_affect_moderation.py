@@ -82,7 +82,10 @@ def run_moderation_ols(df, predictor, outcome, moderator, base_covs):
     mod_c   = data[moderator] - data[moderator].mean()
     int_col = f"{predictor}_x_{moderator}"
 
-    cov_cols = {c: data[c] for c in covariates if c in data.columns}
+    cov_cols = {c: data[c] for c in covariates
+                if c in data.columns
+                and data[c].std() > 0
+                and not (c.startswith("twin_pair_") and data[c].sum() < 2)}
     X = pd.concat([
         pd.DataFrame({predictor: pred_c, moderator: mod_c, int_col: pred_c * mod_c},
                      index=data.index),
@@ -132,17 +135,14 @@ def run_moderation_mlm(df, predictor, outcome, moderator, base_covs):
         df["_family_id"] = df["M2ID"].astype(str)
 
     covariates = _covariates_for(df, outcome, base_covs)
+    # Twin pair dummies replaced by random effect — exclude from MLM fixed effects
     cov_list = [c for c in covariates
-                if c in df.columns]
+                if c in df.columns and not c.startswith("twin_pair_")]
 
     cols = [outcome, predictor, moderator, "_family_id"] + cov_list
     data = df[cols].dropna()
     if len(data) < MIN_N:
         return None
-
-    # Drop singleton twin pair dummies (only one twin in analytic sample)
-    cov_list = [c for c in cov_list
-                if not (c.startswith("twin_pair_") and data[c].sum() < 2)]
 
     pred_safe = predictor.replace("-", "_").replace(".", "_") + "_c"
     mod_safe  = moderator + "_c"

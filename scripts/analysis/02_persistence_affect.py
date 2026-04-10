@@ -8,7 +8,7 @@ Primary analysis (conservative fMRI sample):
   Predictors : neg_persist_crossrun_mean_z_L  (Fisher z, left hemisphere)
   Outcomes   : PA_score, NA_score  (daily diary)
   Methods    : Pearson correlation, OLS regression, MLM (random intercept for family)
-  Tests      : Two-tailed (confirmatory replication)
+  Tests      : One-tailed (confirmatory replication, pre-registered directional hypothesis)
 
 Full sample results saved to full_sample/.
 Sensitivity analyses (right hemisphere, PANAS, other persistence) in 02_sensitivity.py.
