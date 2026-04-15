@@ -2,7 +2,7 @@ MODEL SPECIFICATION
 ============================================================
 Analysis  : 04ex FC ant−post (neg−neu) → PANAS  [conservative fMRI, one-tailed]
 N         : 128
-Generated : 2026-04-03
+Generated : 2026-04-15
 
 VARIABLES
 ------------------------------------------------------------
@@ -47,6 +47,7 @@ Tests: one-tailed (pre-registered directional hypotheses)
   Predicted directions:
     PA_score: positive (positive affect (daily diary composite, mean across days))
     NA_score: negative (negative affect (daily diary composite, mean across days))
+    NA_score_log: negative (log-transformed negative affect (daily diary))
     C5SPGP: positive (positive affect (PANAS, neuroscience visit))
     C5SPGN: negative (negative affect (PANAS, neuroscience visit))
     C5SPGN_log: negative (log-transformed negative affect (PANAS))

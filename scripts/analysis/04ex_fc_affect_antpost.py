@@ -39,17 +39,18 @@ from analysis_utils import (
 )
 
 OUT_DIR = RESULTS_DIR / "04ex_fc_affect_antpost"
-OUTCOMES_DIARY = ["PA_score", "NA_score"]
+OUTCOMES_DIARY = ["PA_score", "NA_score", "NA_score_log"]
 OUTCOMES_PANAS = ["C5SPGP", "C5SPGN", "C5SPGN_log"]
 
 # Directional hypothesis: safety-biased connectivity (ant > post) →
 # higher PA and lower NA
 EXPECTED_DIRECTIONS = {
-    "PA_score":   +1,
-    "NA_score":   -1,
-    "C5SPGP":     +1,
-    "C5SPGN":     -1,
-    "C5SPGN_log": -1,
+    "PA_score":    +1,
+    "NA_score":    -1,
+    "NA_score_log": -1,
+    "C5SPGP":      +1,
+    "C5SPGN":      -1,
+    "C5SPGN_log":  -1,
 }
 
 

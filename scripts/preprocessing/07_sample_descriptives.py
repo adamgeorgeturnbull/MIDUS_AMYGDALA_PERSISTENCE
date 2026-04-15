@@ -2,132 +2,145 @@
 """
 07_sample_descriptives.py
 
-Compute sample descriptives for 5 MIDUS analytic samples and generate
-publication-ready summary table.
+Sample descriptives (N, age, sex) for the five analytic samples used in the
+MIDUS Amygdala Persistence paper.
 
-Samples:
-1) Full daily diary sample
-2) Full neuroscience sample
-3) Daily diary + neuroscience overlap
-4) Neuroimaging completers (C5IC == 1)
-5) Imaging + diary overlap
+Samples
+-------
+1. daily_diary          – Daily diary completers with ≥1 affect measure (N~1,174)
+                          Source: midus_merged_clean.csv
+                          Age col: C2PAGE (MIDUS II age)
 
-Inputs:
-- data/processed/midus_merged_clean.csv (cleaned master dataset)
+2. neuro_behavioral     – Neuroscience subsample (PANAS administered), no fMRI
+                          QC applied (N~231)
+                          Source: midus_merged_clean.csv
+                          Age col: C5PAGE
 
-Outputs:
-- results/tables/sample_descriptives.csv (N, age, sex, education, ethnicity, race)
+3. neuro_diary_behavioral – Diary ∩ Neuroscience overlap, no fMRI QC (N~137)
+                          Used for Analysis 01 neuro subsample and PANAS
+                          sensitivity (Analyses 06/07).
+                          Source: midus_merged_clean.csv
+                          Age col: C5PAGE
+
+4. neuro_fmri_conservative – Conservative fMRI QC (N~134); no diary requirement.
+                          Used for Analysis 03 (age → persistence).
+                          Source: midus_with_fmri.csv
+                          Age col: C5PAGE
+
+5. primary              – Diary + conservative fMRI QC + FC data (N~80).
+                          Primary analytic sample for Analyses 02, 04, 05, 06, 07.
+                          Source: midus_with_fmri.csv
+                          Age col: C5PAGE
+
+Outputs
+-------
+results/tables/sample_descriptives.csv
 
 Run from project root directory.
 """
 
-import os
+import sys
+from pathlib import Path
 
 import pandas as pd
 
-# ============================================================================
-# Paths and Constants
-# ============================================================================
-PROCESSED_DIR = "data/processed"
-RESULTS_DIR = "results/tables"
+sys.path.insert(0, str(Path(__file__).resolve().parent.parent / "analysis"))
+from analysis_utils import (
+    PROCESSED_DIR, MASTER_FILE, FC_FILE,
+    load_master, prepare_persistence_vars, get_samples,
+)
 
-CLEAN_FILE = os.path.join(PROCESSED_DIR, "midus_merged_clean.csv")
-OUTPUT_FILE = os.path.join(RESULTS_DIR, "sample_descriptives.csv")
-
-# ============================================================================
-# Helper Functions
-# ============================================================================
-def summarize_sample(df_sample, use_age_col):
-    """
-    Compute descriptive statistics for a sample.
-
-    Args:
-        df_sample: DataFrame subset representing the sample
-        use_age_col: Column name to use for age (C2PAGE or C5PAGE)
-
-    Returns:
-        Series with N, age stats, sex %, education, ethnicity %, and race %s
-    """
-    summary = {}
-
-    # Age statistics (N based on non-missing age)
-    age_series = df_sample[use_age_col].dropna()
-    summary["N"] = len(age_series)
-    summary["Age_mean"] = f"{age_series.mean():.1f}"
-    summary["Age_SD"] = f"{age_series.std():.1f}"
-    summary["Age_range"] = f"{age_series.min():.0f}-{age_series.max():.0f}"
-
-    # Sex (1 = Male, 2 = Female)
-    sex_counts = df_sample["sex"].value_counts(dropna=False)
-    n_total = len(df_sample)
-    summary["%Female"] = f"{(sex_counts.get(2, 0) / n_total * 100):.1f}"
-
-    # Education (1-12 scale)
-    educ_series = df_sample["educ"].dropna()
-    summary["Educ_mean"] = f"{educ_series.mean():.1f}"
-    summary["Educ_SD"] = f"{educ_series.std():.1f}"
-
-    # Ethnicity (Hispanic/Latino): MIDUS codes C1PF1 as 1=No, 2=Yes
-    eth_counts = df_sample["ethnicity"].value_counts(dropna=False)
-    summary["%Hispanic"] = f"{(eth_counts.get(2, 0) / len(df_sample) * 100):.1f}"
-
-    # Race categories
-    race_counts = df_sample["race"].value_counts(dropna=False)
-    summary["%White"] = f"{(race_counts.get(1, 0) / len(df_sample) * 100):.1f}"
-    summary["%Black"] = f"{(race_counts.get(2, 0) / len(df_sample) * 100):.1f}"
-    summary["%NativeAmerican"] = f"{(race_counts.get(3, 0) / len(df_sample) * 100):.1f}"
-    summary["%Asian"] = f"{(race_counts.get(4, 0) / len(df_sample) * 100):.1f}"
-    summary["%PacificIslander"] = f"{(race_counts.get(5, 0) / len(df_sample) * 100):.1f}"
-    summary["%Other"] = f"{(race_counts.get(6, 0) / len(df_sample) * 100):.1f}"
-
-    # Twin pairs: SAMPLMAJ == 3 and family number appears 2+ times in this sample
-    if "SAMPLMAJ" in df_sample.columns and "M2FAMNUM" in df_sample.columns:
-        twins = df_sample[df_sample["SAMPLMAJ"] == 3].copy()
-        pair_counts = twins["M2FAMNUM"].value_counts()
-        paired_fams = pair_counts[pair_counts >= 2].index
-        n_twin_participants = twins["M2FAMNUM"].isin(paired_fams).sum()
-        n_twin_pairs = len(paired_fams)
-        summary["N_twin_pairs"] = n_twin_pairs
-        summary["N_in_twin_pairs"] = n_twin_participants
-    else:
-        summary["N_twin_pairs"] = "N/A"
-        summary["N_in_twin_pairs"] = "N/A"
-
-    return pd.Series(summary)
+RESULTS_DIR = Path("results/tables")
+OUTPUT_FILE = RESULTS_DIR / "sample_descriptives.csv"
 
 
-# ============================================================================
-# Main Execution
-# ============================================================================
-def main():
-    """Main execution function."""
-    # Ensure output directory exists
-    os.makedirs(RESULTS_DIR, exist_ok=True)
+# ─────────────────────────────────────────────────────────────────────────────
+# Helpers
+# ─────────────────────────────────────────────────────────────────────────────
+def describe_sample(df, age_col, label):
+    """Return a dict of N, age mean/SD/range, %Female for df."""
+    age = df[age_col].dropna()
+    n   = len(df)
+    n_sex  = df["sex"].notna().sum()
+    # sex coded 1=Male, 2=Female in MIDUS
+    pct_female = (df["sex"] == 2).sum() / n_sex * 100 if n_sex > 0 else float("nan")
 
-    # Load cleaned merged dataset
-    df = pd.read_csv(CLEAN_FILE)
-    print(f"Loaded cleaned merged dataset: {df.shape[0]} rows, {df.shape[1]} columns")
-
-    # Define analytic samples
-    samples = {
-        "daily_diary_full": df[df["StartYear"].notna()],
-        "neuro_full": df[df["C5PDATE_YR"].notna()],
-        "daily_neuro_overlap": df[df["StartYear"].notna() & df["C5PDATE_YR"].notna()],
-        "neuro_imaging": df[df["C5IC"] == 1],
-        "imaging_daily_overlap": df[(df["C5IC"] == 1) & df["StartYear"].notna()]
+    return {
+        "sample":    label,
+        "N":         n,
+        "N_age":     len(age),
+        "age_mean":  round(age.mean(), 1),
+        "age_SD":    round(age.std(),  1),
+        "age_min":   int(age.min()),
+        "age_max":   int(age.max()),
+        "pct_female": round(pct_female, 1),
     }
 
-    # Compute descriptives for each sample
-    rows = []
-    for name, sample_df in samples.items():
-        # Use C2PAGE for diary-only sample, C5PAGE for neuroscience samples
-        age_col = "C2PAGE" if name == "daily_diary_full" else "C5PAGE"
-        rows.append(summarize_sample(sample_df, age_col).rename(name))
 
-    # Create and save table
-    descriptives_table = pd.DataFrame(rows).T
-    descriptives_table.to_csv(OUTPUT_FILE)
-    print(f"✓ Sample descriptives saved to: {OUTPUT_FILE}")
+def has_diary(df):
+    """Boolean mask: participant has ≥1 non-missing daily affect measure."""
+    return df[["PA_score", "NA_score"]].notna().any(axis=1)
+
+
+# ─────────────────────────────────────────────────────────────────────────────
+# Main
+# ─────────────────────────────────────────────────────────────────────────────
+def main():
+    RESULTS_DIR.mkdir(parents=True, exist_ok=True)
+
+    # ── Load behavioral data (midus_merged_clean) ─────────────────────────────
+    beh_file = PROCESSED_DIR / "midus_merged_clean.csv"
+    beh = pd.read_csv(beh_file)
+    beh["M2ID"] = beh["M2ID"].astype(str)
+    print(f"Loaded behavioral data: {beh.shape[0]} rows")
+
+    rows = []
+
+    # 1. Daily diary (≥1 affect measure; C2PAGE for age)
+    mask_diary = has_diary(beh)
+    diary = beh[mask_diary].copy()
+    rows.append(describe_sample(diary, "C2PAGE", "1_daily_diary"))
+    print(f"  1. Daily diary: N={len(diary)}")
+
+    # 2. Neuroscience behavioral (C5PAGE present; no fMRI QC)
+    mask_neuro = beh["C5PAGE"].notna()
+    neuro = beh[mask_neuro].copy()
+    rows.append(describe_sample(neuro, "C5PAGE", "2_neuro_behavioral"))
+    print(f"  2. Neuro behavioral: N={len(neuro)}")
+
+    # 3. Diary ∩ Neuroscience behavioral overlap (no fMRI QC)
+    overlap_beh = beh[mask_diary & mask_neuro].copy()
+    rows.append(describe_sample(overlap_beh, "C5PAGE", "3_neuro_diary_behavioral"))
+    print(f"  3. Neuro+Diary behavioral: N={len(overlap_beh)}")
+
+    # ── Load fMRI master data ─────────────────────────────────────────────────
+    # load_master(fc=True) merges the LSS beta-series FC file, which is needed
+    # to define the N=80 primary sample (FC data availability).
+    df_fc = load_master(fc=True)
+    prepare_persistence_vars(df_fc)
+
+    # qc_conservative flag defined in midus_with_fmri.csv:
+    #   visual QC pass on all 3 runs + mean FD < 0.5 mm + ≥6 valid image–face pairs
+    qc_cons = df_fc.get("qc_conservative", pd.Series(0, index=df_fc.index)) == 1
+
+    # 4. Conservative fMRI sample — no diary requirement (Analysis 03)
+    #    Use get_samples with require_diary=False
+    _, cons_fmri = get_samples(df_fc, require_diary=False)
+    rows.append(describe_sample(cons_fmri, "C5PAGE", "4_neuro_fmri_conservative"))
+    print(f"  4. Conservative fMRI (no diary): N={len(cons_fmri)}")
+
+    # 5. Primary analytic sample — diary + conservative fMRI + FC (N~80)
+    #    get_samples with check_fc_col requires FC data present
+    PRIMARY_FC = "l_amyg-ant_vmPFC_neg_vs_neu"
+    _, primary = get_samples(df_fc, check_fc_col=PRIMARY_FC)
+    rows.append(describe_sample(primary, "C5PAGE", "5_primary"))
+    print(f"  5. Primary (diary+fMRI+FC): N={len(primary)}")
+
+    # ── Save ─────────────────────────────────────────────────────────────────
+    out = pd.DataFrame(rows).set_index("sample")
+    out.to_csv(OUTPUT_FILE)
+    print(f"\nSaved: {OUTPUT_FILE}")
+    print(out.to_string())
 
 
 if __name__ == "__main__":
