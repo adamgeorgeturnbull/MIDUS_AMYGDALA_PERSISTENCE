@@ -5,8 +5,8 @@ publication_figures.py
 Generate all three main publication figures for the MIDUS Amygdala Persistence paper.
 
 Figure 1: ROI brain visualization (amygdala seeds + vmPFC target spheres)
-Figure 2: Persistence × Affect (2-panel: PA and log-NA, conservative diary+fMRI sample)
-Figure 3: Anterior vmPFC FC × Affect (2-panel: PA and log-NA, conservative diary+fMRI sample)
+Figure 2: Persistence × Affect (2-panel: PA and NA, conservative diary+fMRI sample, residualized)
+Figure 3: Anterior vmPFC FC × Affect (2-panel: PA and NA, conservative diary+fMRI sample, residualized)
 
 Run from project root directory.
 """
@@ -22,6 +22,7 @@ import seaborn as sns
 from nilearn import datasets, image, plotting, surface
 from nilearn.image import new_img_like
 from scipy import stats
+from sklearn.linear_model import LinearRegression
 
 # ============================================================================
 # Paths and constants
@@ -167,16 +168,43 @@ def make_figure1():
 
 
 # ============================================================================
+# Residualization helper
+# ============================================================================
+COVARIATES = ["C5PAGE", "sex", "n_days_complete", "time_P2_P5"]
+
+def residualize(series, cov_df):
+    """Partial out covariates from series via OLS; return residuals."""
+    idx   = series.dropna().index.intersection(cov_df.dropna().index)
+    y     = series.loc[idx].values
+    X     = cov_df.loc[idx].values
+    resid = y - LinearRegression().fit(X, y).predict(X)
+    out   = pd.Series(np.nan, index=series.index)
+    out.loc[idx] = resid
+    return out
+
+
+def residualize_pair(data, x_var, y_var):
+    """Return (x_resid, y_resid) arrays after partialling out covariates."""
+    cov_cols = [c for c in COVARIATES if c in data.columns]
+    # add race dummies
+    cov_cols += [c for c in data.columns if c.startswith("race_")]
+    cols_needed = [x_var, y_var] + cov_cols
+    d = data[cols_needed].dropna()
+    cov_df = d[cov_cols]
+    x_resid = residualize(d[x_var], cov_df)
+    y_resid = residualize(d[y_var], cov_df)
+    return x_resid.dropna().values, y_resid.dropna().values
+
+
+# ============================================================================
 # Scatterplot helper
 # ============================================================================
 def scatter_panel(ax, data, x_var, y_var, color, x_label, y_label):
     """
-    Single scatter panel: data points, regression line, 95% CI, r annotation.
-    Uses one-tailed p in the pre-specified direction (EXPECTED_POS dict).
+    Single scatter panel with residualized data: points, regression line,
+    95% CI, and partial r annotation. Covariates partialled out before plotting.
     """
-    plot_data = data[[x_var, y_var]].dropna()
-    x = plot_data[x_var].values
-    y = plot_data[y_var].values
+    x, y = residualize_pair(data, x_var, y_var)
     n = len(x)
 
     slope, intercept, r, _, _ = stats.linregress(x, y)
@@ -195,12 +223,12 @@ def scatter_panel(ax, data, x_var, y_var, color, x_label, y_label):
                     alpha=0.18, color=color, zorder=1)
 
     ax.text(0.05, 0.95,
-            f"r = {r:.2f}\nn = {n}",
+            f"partial r = {r:.2f}\nn = {n}",
             transform=ax.transAxes, fontsize=9, va="top",
             bbox=dict(boxstyle="round,pad=0.3", fc="white", ec="none", alpha=0.75))
 
-    ax.set_xlabel(x_label, fontsize=10)
-    ax.set_ylabel(y_label, fontsize=10)
+    ax.set_xlabel(f"{x_label}\n(residualized)", fontsize=10)
+    ax.set_ylabel(f"{y_label}\n(residualized)", fontsize=10)
     sns.despine(ax=ax)
     ax.grid(True, alpha=0.25, linestyle="--", linewidth=0.5)
     ax.set_axisbelow(True)
@@ -210,14 +238,14 @@ def scatter_panel(ax, data, x_var, y_var, color, x_label, y_label):
 # Figure 2: Persistence × Affect
 # ============================================================================
 def make_figure2(sample):
-    """Two-panel: left amygdala persistence → PA and log-NA."""
+    """Two-panel: left amygdala persistence → PA and NA (residualized)."""
     print("\nFigure 2: Persistence × Affect...")
 
     fig, axes = plt.subplots(1, 2, figsize=(9, 4), facecolor="white")
 
     panels = [
         ("PA_score",     "Positive Affect (Daily Diary)"),
-        ("NA_score_log", "Negative Affect — log (Daily Diary)"),
+        ("NA_score", "Negative Affect (Daily Diary)"),
     ]
 
     for ax, (y_var, y_label) in zip(axes, panels):
@@ -238,14 +266,14 @@ def make_figure2(sample):
 # Figure 3: FC × Affect
 # ============================================================================
 def make_figure3(sample):
-    """Two-panel: left anterior vmPFC FC → PA and log-NA."""
+    """Two-panel: left anterior vmPFC FC → PA and NA (residualized)."""
     print("\nFigure 3: FC × Affect...")
 
     fig, axes = plt.subplots(1, 2, figsize=(9, 4), facecolor="white")
 
     panels = [
         ("PA_score",     "Positive Affect (Daily Diary)"),
-        ("NA_score_log", "Negative Affect — log (Daily Diary)"),
+        ("NA_score", "Negative Affect (Daily Diary)"),
     ]
 
     for ax, (y_var, y_label) in zip(axes, panels):
