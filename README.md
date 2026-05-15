@@ -747,6 +747,18 @@ Tests whether amygdala–vmPFC functional connectivity (negative-vs-neutral diff
 
 ---
 
+### Analysis 04ex: FC Anterior–Posterior Contrast → Affect
+
+**File:** `scripts/analysis/04ex_fc_affect_antpost.py`
+
+Exploratory follow-up to Analysis 04. Tests whether an anterior-minus-posterior vmPFC connectivity contrast (neg−neu) predicts daily diary affect and PANAS affect. The contrast captures safety-biased connectivity (relatively greater coupling with anterior vs. posterior vmPFC during negative stimuli). Not pre-registered; interpret with caution.
+
+**Predictor:** `l_amyg-ant_minus_post_vmPFC_neg_vs_neu` (computed; right hemisphere if available)
+
+**Outputs:** `results/tables/04ex_fc_affect_antpost/diary/`, `results/tables/04ex_fc_affect_antpost/panas/`
+
+---
+
 ### Analysis 05: FC × Persistence
 
 **File:** `scripts/analysis/05_fc_persistence.py`
@@ -771,6 +783,16 @@ Tests whether amygdala–vmPFC FC (negative-vs-neutral) relates to amygdala pers
 **Outputs:** `results/tables/05_fc_persistence/`
 - `correlations.csv`, `regressions.csv`, `mlm.csv`, `_methods.txt` (conservative sample)
 - `full_sample/` — same outputs for full sample
+
+---
+
+### Analysis 05ex: FC Anterior–Posterior Contrast → Persistence
+
+**File:** `scripts/analysis/05ex_fc_persistence_antpost.py`
+
+Exploratory follow-up to Analysis 05. Tests whether the anterior-minus-posterior vmPFC connectivity contrast predicts amygdala persistence. Parallel to 04ex but with persistence as the outcome.
+
+**Outputs:** `results/tables/05ex_fc_persistence_antpost/`
 
 ---
 
@@ -856,8 +878,8 @@ Generates all three main publication figures.
 
 **Figures:**
 1. **Figure 1 — ROI brain visualization:** Glass brain showing left/right amygdala seeds (yellow shades, Harvard-Oxford atlas) and anterior/posterior vmPFC target spheres (green shades, 10mm radius at MNI [-2,46,-10] and [0,26,-12]). Display mode: left sagittal, axial, right sagittal, coronal.
-2. **Figure 2 — Persistence × Affect:** Two-panel scatterplot (PA and log-NA) for left amygdala negative persistence (Fisher z) in the conservative diary+fMRI sample.
-3. **Figure 3 — FC × Affect:** Two-panel scatterplot (PA and log-NA) for left amygdala–anterior vmPFC FC (neg−neu contrast) in the conservative diary+fMRI sample.
+2. **Figure 2 — Persistence × Affect:** Two-panel residualized scatterplot (PA and NA) for left amygdala negative persistence in the conservative diary+fMRI sample. Both axes residualized on age, sex, race, diary days, and time between visits.
+3. **Figure 3 — FC × Affect:** Two-panel residualized scatterplot (PA and NA) for left amygdala–anterior vmPFC FC (neg−neu contrast) in the conservative diary+fMRI sample.
 
 **Outputs:**
 - `results/figures/figure1_roi.tiff`
@@ -866,6 +888,56 @@ Generates all three main publication figures.
 
 **Figure Settings:**
 - Format: TIFF, 300 dpi
+
+---
+
+### Simple Slopes: Suppression × Posterior vmPFC FC
+
+**File:** `scripts/visualization/simple_slopes_07_suppression_vmPFC.py`
+
+Simple slopes plot for the significant MLM interaction: suppression × posterior vmPFC–amygdala FC → PANAS negative affect. Predicted values computed from MLM fixed effects at −1 SD, mean, and +1 SD suppression. Confidence bands via delta method.
+
+**Output:** `results/figures/simple_slopes_07_suppression_vmPFC.png`
+
+---
+
+### Simple Slopes: Reappraisal × Anterior vmPFC FC
+
+**File:** `scripts/visualization/simple_slopes_07_reappraisal_antFC.py`
+
+Simple slopes plot for the pre-registered reappraisal × anterior vmPFC FC → PA interaction. Uses OLS for slope estimation. Shows positive FC–PA slope at low reappraisal attenuating at high reappraisal, consistent with the hypothesis that model-free amygdala–vmPFC coupling is less relevant for individuals who rely on explicit reappraisal.
+
+**Output:** `results/figures/simple_slopes_07_reappraisal_antFC.png`
+
+---
+
+### Suppression × vmPFC Moderation: Residualized Scatter
+
+**File:** `scripts/visualization/suppression_vmPFC_moderation_residualized.py`
+
+Residualized median-split scatterplot for the suppression × posterior vmPFC FC interaction predicting PANAS negative affect. Covariates partialled from FC, suppression, and outcome before plotting.
+
+**Output:** `results/figures/suppression_vmPFC_moderation_residualized.png`
+
+---
+
+### Supplementary Tables
+
+**Files:**
+- `scripts/visualization/supplementary_tables.py` — reads primary analysis results (01–05) and writes a combined CSV with correlation, OLS, and MLM results side by side
+- `scripts/visualization/supplementary_tables_docx.py` — formats the CSV into a publication-ready Word table (landscape, styled headers, significant p-values bolded)
+
+**Outputs:**
+- `results/tables/supplementary/supp_all_methods.csv`
+- `results/tables/supplementary/supp_all_methods.docx`
+
+---
+
+### Participant Flowchart
+
+**File:** `scripts/visualization/participant_flowchart.py` (run `participant_flowchart.py`, assemble boxes externally)
+
+Generates individual transparent PNG boxes for the participant flowchart, one per analytic sample. Sample sizes and descriptives loaded from `results/tables/sample_descriptives.csv`. Boxes are saved to `results/figures/flowchart_boxes/` for assembly in PowerPoint or Keynote.
 
 ---
 
@@ -898,19 +970,25 @@ These scripts were run on the Stanford Sherlock HPC cluster. Most are SLURM arra
 | `runGLM.sh` | SLURM array: Per-run first-level GLM (nilearn, 6 conditions, 24 motion params) — primary |
 | `runGLM_aCompCor.sh` | SLURM array: Per-run GLM with 24 motion + 6 aCompCor regressors — preprocessing comparison |
 | `runGLM_concat.sh` | SLURM array: Concatenated all-runs GLM (sensitivity analysis) |
-| `extract_amygdala.sh` | SLURM array: Extract voxelwise amygdala betas from per-run GLM (Harvard-Oxford 50%) |
+| `extract_amygdala.sh` | SLURM array: Extract voxelwise amygdala betas from per-run GLM (Harvard-Oxford 50%) — primary |
+| `extract_amygdala_aCompCor.sh` | SLURM array: Extract amygdala betas from aCompCor GLM — prepared for preprocessing comparison, not used in primary analyses |
 | `extract_amygdala_concat.sh` | SLURM array: Extract voxelwise amygdala betas from concatenated GLM |
-| `extract_vmPFC.sh` | SLURM array: Extract voxelwise vmPFC betas (ant/post spheres × 3 image conditions) for vmPFC persistence |
-| `extract_roi_activations.sh` | SLURM array: Extract mean beta per ROI (L/R amygdala, ant/post vmPFC) per condition for task validation |
+| `extract_vmPFC.sh` | SLURM array: Extract voxelwise vmPFC betas (ant/post spheres × 3 image conditions) for vmPFC persistence — primary |
+| `extract_vmPFC_aCompCor.sh` | SLURM array: Extract vmPFC betas from aCompCor GLM — prepared for preprocessing comparison, not used in primary analyses |
+| `extract_roi_activations.sh` | SLURM array: Extract mean beta per ROI (L/R amygdala, ant/post vmPFC) per condition for task validation — primary |
+| `extract_roi_activations_aCompCor.sh` | SLURM array: Extract mean ROI betas from aCompCor GLM — prepared for preprocessing comparison, not used in primary analyses |
 | `combineROIActivations.py` | Combine per-subject ROI activation CSVs into group file (`all_subjects_roi_activations.csv`) |
+| `combineROIActivations_aCompCor.py` | Same as above for aCompCor GLM output |
 
 **Persistence computation:**
 
 | Script | Description |
 |--------|-------------|
 | `run_cross_corr.py` | Compute cross-run voxelwise persistence for amygdala (primary measure) |
+| `run_cross_corr_aCompCor.py` | Same as above using aCompCor GLM output — prepared for preprocessing comparison, not used in primary analyses |
 | `run_cross_corr_concat.py` | Compute concatenated persistence (sensitivity measure) |
 | `run_cross_corr_vmPFC.py` | Compute cross-run voxelwise persistence for vmPFC seeds (secondary comparison) |
+| `run_cross_corr_vmPFC_aCompCor.py` | Same as above using aCompCor GLM output — prepared for preprocessing comparison, not used in primary analyses |
 
 **Beta-series functional connectivity (LSS — primary):**
 
@@ -918,7 +996,10 @@ These scripts were run on the Stanford Sherlock HPC cluster. Most are SLURM arra
 |--------|-------------|
 | `runBStaskFC_LSS.sh` | SLURM array: ROI-level LSS beta-series FC (amygdala–vmPFC, 3 conditions: neg, neu, pos) — PRIMARY |
 | `combineBTS_LSS.py` | Combine per-subject LSS ROI CSVs into group file (`all_subjects_betaSeries_LSS_all_conditions_M2ID.csv`) |
+| `runBStaskFC.sh` | SLURM array: ROI-level beta-series FC using standard LSA estimation — prepared for method comparison; LSS preferred and used in all primary analyses |
+| `combineBTS.py` | Combine per-subject LSA ROI CSVs — companion to `runBStaskFC.sh` |
 | `seedbasedBStaskFC_LSS.sh` | SLURM array: Voxelwise LSS seed-based FC (outputs per-condition maps for neg, neu, pos) |
+| `seedbasedBStaskFC.sh` | SLURM array: Voxelwise LSA seed-based FC — prepared for method comparison; not used in primary analyses |
 | `grouplevelSeedBasedFC.sh` | Group-level TFCE permutation testing (5000 perms) for per-condition maps × 2 seeds × 2 analyses |
 
 **Beta-series functional connectivity (LSA — archived):**
