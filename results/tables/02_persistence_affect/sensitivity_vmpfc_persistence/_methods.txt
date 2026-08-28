@@ -1,14 +1,14 @@
 MODEL SPECIFICATION
 ============================================================
 Analysis  : 02 vmPFC Persistence → Affect  [conservative, two-tailed]
-N         : 80
-Generated : 2026-04-03
+N         : 81
+Generated : 2026-08-26
 
 VARIABLES
 ------------------------------------------------------------
 Predictor(s):
-  ant_vmPFC_neg_image_mean_r                    ant_vmPFC_neg_image_mean_r
-  post_vmPFC_neg_image_mean_r                   post_vmPFC_neg_image_mean_r
+  ant_vmPFC_neg_image_mean_z                    ant_vmPFC_neg_image_mean_z
+  post_vmPFC_neg_image_mean_z                   post_vmPFC_neg_image_mean_z
 Outcome(s):
   PA_score                                      positive affect (daily diary composite, mean across days)
   NA_score                                      negative affect (daily diary composite, mean across days)
@@ -22,8 +22,8 @@ STATISTICAL MODELS
    Formula : outcome ~ predictor + covariates
    Covariates:
      - age at neuroscience visit (P5)
-     - biological sex (0 = male, 1 = female)
-     - race/ethnicity (5 dummy variables, ref = White)
+     - biological sex (1 = male, 2 = female)
+     - race (5 dummy variables, ref = White)
      - twin pair membership (334 dummy variables; OLS only)
 
 3. Linear mixed-effects model (MLM)
@@ -35,8 +35,8 @@ STATISTICAL MODELS
    Estimation     : REML; optimizers tried in order: lbfgs, powell, nm, bfgs
    Fixed-effect covariates:
      - age at neuroscience visit (P5)
-     - biological sex (0 = male, 1 = female)
-     - race/ethnicity (5 dummy variables, ref = White)
+     - biological sex (1 = male, 2 = female)
+     - race (5 dummy variables, ref = White)
 
 INFERENCE
 ------------------------------------------------------------

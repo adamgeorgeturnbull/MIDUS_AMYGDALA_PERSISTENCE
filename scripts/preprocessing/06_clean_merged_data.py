@@ -10,10 +10,12 @@ Clean merged MIDUS dataset:
 4) Compute skewness and kurtosis for neuroscience PANAS variables and create log-transformed C5SPGN.
 """
 
-import pandas as pd
 import os
+import sys
+
 import numpy as np
-from scipy.stats import skew, kurtosis
+import pandas as pd
+from scipy.stats import kurtosis, skew
 
 PROCESSED_DIR = "data/processed"
 TABLE_DIR = "results/tables"
@@ -23,7 +25,8 @@ os.makedirs(PROCESSED_DIR, exist_ok=True)
 os.makedirs(TABLE_DIR, exist_ok=True)
 MERGED_FILE = os.path.join(PROCESSED_DIR, "midus_merged.csv")
 OUTPUT_FILE = os.path.join(PROCESSED_DIR, "midus_merged_clean.csv")
-STATS_OUTPUT = os.path.join(TABLE_DIR, "panas_skew_kurtosis.csv")
+STATS_OUTPUT        = os.path.join(TABLE_DIR, "panas_skew_kurtosis.csv")
+PANAS_AUDIT_OUTPUT  = os.path.join(TABLE_DIR, "panas_missing_code_recode.csv")
 
 
 
@@ -90,9 +93,83 @@ def main():
             print(f"Recoded {n_missing} missing-code values to NaN in {var}")
 
     # =========================
-    # Compute skewness and kurtosis for neuroscience PANAS and log-transform C5SPGN
+    # Recode PANAS missing-value codes to NaN (MIDUS 3 codebook: 8, 98, 99)
+    # Must occur before skewness/kurtosis and log-transform calculations.
     # =========================
     panas_vars = ["C5SPGP", "C5SPGN"]
+    PANAS_MISSING_CODES = [8, 98, 99]
+    # C5SPGP and C5SPGN are mean item scores on the 1-5 PANAS response scale,
+    # not summed scale scores.
+    PANAS_VALID_MIN, PANAS_VALID_MAX = 1, 5
+
+    for var in panas_vars:
+        if var not in df.columns:
+            raise ValueError(f"Required PANAS variable {var} not found in dataset")
+
+    print(f"\nRecoding PANAS missing-value codes {PANAS_MISSING_CODES} to NaN...")
+    audit_rows = []
+    for var in panas_vars:
+        # Preserve the raw series so numeric-conversion losses can be detected
+        raw = df[var].copy()
+        n_missing_before = int(raw.isna().sum())
+
+        numeric = pd.to_numeric(raw, errors="coerce")
+
+        # Nonmissing raw values that fail numeric conversion must not be silently
+        # absorbed into the missing category.
+        unparseable = raw[raw.notna() & numeric.isna()]
+        if len(unparseable) > 0:
+            print(f"ERROR: {var} has {len(unparseable)} nonmissing value(s) that could not "
+                  f"be converted to numeric:")
+            print(unparseable.value_counts().sort_index().to_string())
+            raise ValueError(
+                f"{var}: {len(unparseable)} nonmissing value(s) lost during numeric "
+                f"conversion; inspect and correct the source data before proceeding"
+            )
+
+        df[var] = numeric
+
+        counts = {code: int((df[var] == code).sum()) for code in PANAS_MISSING_CODES}
+        for code in PANAS_MISSING_CODES:
+            df.loc[df[var] == code, var] = np.nan
+
+        n_missing_after = int(df[var].isna().sum())
+        n_total_recoded = sum(counts.values())
+        valid = df[var].dropna()
+
+        if len(valid) == 0:
+            raise ValueError(f"{var}: no valid observations remain after recoding")
+
+        out_of_range = valid[(valid < PANAS_VALID_MIN) | (valid > PANAS_VALID_MAX)]
+        if len(out_of_range) > 0:
+            print(f"ERROR: {var} has {len(out_of_range)} value(s) outside valid range "
+                  f"{PANAS_VALID_MIN}–{PANAS_VALID_MAX} after recoding:")
+            print(out_of_range.value_counts().sort_index().to_string())
+            sys.exit(1)
+
+        audit_rows.append({
+            "variable":         var,
+            "n_code_8":         counts[8],
+            "n_code_98":        counts[98],
+            "n_code_99":        counts[99],
+            "n_total_recoded":  n_total_recoded,
+            "n_missing_before": n_missing_before,
+            "n_missing_after":  n_missing_after,
+            "n_valid":          len(valid),
+            "valid_min":        float(valid.min()),
+            "valid_max":        float(valid.max()),
+        })
+        print(f"  {var}: code 8={counts[8]}, code 98={counts[98]}, code 99={counts[99]}, "
+              f"total recoded={n_total_recoded}, valid N={len(valid)}, "
+              f"range=[{valid.min():.2f}, {valid.max():.2f}]")
+
+    audit_df = pd.DataFrame(audit_rows)
+    audit_df.to_csv(PANAS_AUDIT_OUTPUT, index=False)
+    print(f"PANAS missing-code audit saved to {PANAS_AUDIT_OUTPUT}")
+
+    # =========================
+    # Compute skewness and kurtosis for neuroscience PANAS and log-transform C5SPGN
+    # =========================
     stats_list = []
 
     for var in panas_vars:

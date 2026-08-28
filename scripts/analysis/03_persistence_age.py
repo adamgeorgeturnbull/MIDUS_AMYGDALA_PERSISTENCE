@@ -8,7 +8,7 @@ Primary analysis (conservative fMRI sample):
   Predictor  : C5PAGE (age at neuroscience visit)
   Outcome    : neg_persist_crossrun_mean_z_L  (Fisher z, left hemisphere)
   Methods    : Pearson correlation, OLS regression, MLM (random intercept for family)
-  Tests      : Two-tailed (confirmatory extension)
+  Tests      : One-tailed (older age → lower persistence; prespecified direction)
 
 Full sample results saved to full_sample/.
 Sensitivity analyses (right hemisphere, other persistence types) in 03_sensitivity.py.

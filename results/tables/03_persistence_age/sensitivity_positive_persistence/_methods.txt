@@ -1,8 +1,8 @@
 MODEL SPECIFICATION
 ============================================================
 Analysis  : 03 Age → Positive Persistence  [conservative]
-N         : 128
-Generated : 2026-04-03
+N         : 127
+Generated : 2026-08-26
 
 VARIABLES
 ------------------------------------------------------------
@@ -21,8 +21,8 @@ STATISTICAL MODELS
    Formula : outcome ~ predictor + covariates
    Covariates:
      - age at neuroscience visit (P5)
-     - biological sex (0 = male, 1 = female)
-     - race/ethnicity (5 dummy variables, ref = White)
+     - biological sex (1 = male, 2 = female)
+     - race (5 dummy variables, ref = White)
      - twin pair membership (334 dummy variables; OLS only)
 
 3. Linear mixed-effects model (MLM)
@@ -34,8 +34,8 @@ STATISTICAL MODELS
    Estimation     : REML; optimizers tried in order: lbfgs, powell, nm, bfgs
    Fixed-effect covariates:
      - age at neuroscience visit (P5)
-     - biological sex (0 = male, 1 = female)
-     - race/ethnicity (5 dummy variables, ref = White)
+     - biological sex (1 = male, 2 = female)
+     - race (5 dummy variables, ref = White)
 
 INFERENCE
 ------------------------------------------------------------

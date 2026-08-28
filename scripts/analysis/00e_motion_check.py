@@ -11,10 +11,13 @@ Part 1 — Motion as predictor:
   Two-tailed tests (no directional prior for motion–signal relationships).
 
 Part 2 — Motion-controlled replication:
-  For each primary effect that was significant (p < .05) in the existing
-  correlation results for scripts 02 (persistence) and 04 (FC), re-run
-  correlation + OLS + MLM with each motion measure added as an extra covariate.
-  Reports whether effects survive motion control.
+  Candidate effects are selected from the existing conservative correlation
+  results for scripts 02 (persistence) and 04 (FC): any pair significant at
+  p < .05 in those unadjusted correlations is carried forward. Each selected
+  pair is then re-tested with OLS and MLM, with each motion measure added as an
+  extra covariate, to report whether the effect survives motion control.
+  Correlations are not re-run here: run_correlation() cannot adjust for
+  covariates, so there is no motion-controlled correlation to report.
 
 Motion measures:
   fd_mean_across_runs  — mean FD averaged across all three task runs
@@ -32,7 +35,7 @@ import pandas as pd
 sys.path.insert(0, str(Path(__file__).parent))
 from analysis_utils import (
     load_master, get_samples, get_covariates, prepare_persistence_vars,
-    run_correlation, run_ols, run_mlm,
+    run_ols, run_mlm,
     run_analysis_set, RESULTS_DIR, FMRI_DIR, DIARY_OUTCOMES,
 )
 
@@ -135,8 +138,12 @@ def part1_motion_as_predictor(df):
 # ============================================================================
 def get_significant_pairs():
     """
-    Read existing conservative correlation results for scripts 02 and 04.
-    Return list of (predictor, outcome, expected_positive) for p < P_THRESH.
+    Select the candidate effects to re-test under motion control.
+
+    Reads the existing conservative correlation results for scripts 02 and 04 and
+    returns every (predictor, outcome, expected_positive) with p < P_THRESH.
+    Selection is therefore based on the unadjusted primary correlations; the
+    motion-controlled tests themselves are OLS and MLM (part2_motion_controlled).
     """
     result_files = [
         RESULTS_DIR / "02_persistence_affect" / "correlations.csv",
@@ -169,14 +176,15 @@ def get_significant_pairs():
 
 def part2_motion_controlled(df, sig_pairs):
     print("\n" + "=" * 60)
-    print("Part 2: Motion-controlled replication of significant effects")
+    print("Part 2: Motion-controlled replication (OLS + MLM only)")
     print("=" * 60)
 
     if not sig_pairs:
         print("  No significant primary effects found — nothing to rerun.")
         return
 
-    print(f"\n  Significant pairs (p < {P_THRESH}) to be re-tested:")
+    print(f"\n  Pairs significant at p < {P_THRESH} in the primary (unadjusted)")
+    print(f"  correlations, to be re-tested with motion as a covariate:")
     for pred, out, exp_pos in sig_pairs:
         dirn = "positive" if exp_pos else "negative"
         print(f"    {pred}  →  {out}  (expected {dirn})")
@@ -203,11 +211,10 @@ def part2_motion_controlled(df, sig_pairs):
             diary_covs = [c for c in ["time_P2_P5", "n_days_complete"] if c in sub.columns]
             covs = base_covs + [motion_var] + (diary_covs if out in DIARY_OUTCOMES else [])
 
-            c = run_correlation(sub, pred, out, one_tailed=True, expected_positive=exp_pos)
             o = run_ols(sub, pred, out, covs, one_tailed=True, expected_positive=exp_pos)
             m = run_mlm(sub, pred, out, covs, one_tailed=True, expected_positive=exp_pos)
 
-            for res, atype in [(c, "correlation"), (o, "ols"), (m, "mlm")]:
+            for res, atype in [(o, "ols"), (m, "mlm")]:
                 if res:
                     res["analysis_type"] = atype
                     res["motion_covariate"] = motion_var
@@ -222,11 +229,11 @@ def part2_motion_controlled(df, sig_pairs):
         res_df.to_csv(out_path, index=False)
         print(f"  Saved: {out_path.name}")
 
-        # Summary table
-        print(f"\n  {'Analysis':<14} {'Predictor':<40} {'Outcome':<16} {'stat':>7} {'p':>7} {'sig'}")
+        # Summary table — Part 2 contains only OLS and MLM, so beta is the statistic
+        print(f"\n  {'Analysis':<14} {'Predictor':<40} {'Outcome':<16} {'beta':>7} {'p':>7} {'sig'}")
         print("  " + "-" * 90)
         for (pred, out, _) in sig_pairs:
-            for atype in ["correlation", "ols", "mlm"]:
+            for atype in ["ols", "mlm"]:
                 row = res_df[(res_df["predictor"] == pred) &
                              (res_df["outcome"]   == out)  &
                              (res_df["analysis_type"] == atype)]
@@ -234,9 +241,9 @@ def part2_motion_controlled(df, sig_pairs):
                     continue
                 r   = row.iloc[0]
                 p   = r["p"]
-                stat_val = r.get("r", r.get("beta", np.nan))
+                beta = r.get("beta", np.nan)
                 sig = "✓" if p < P_THRESH else "✗"
-                print(f"  {atype:<14} {pred:<40} {out:<16} {stat_val:>7.3f} {p:>7.3f}  {sig}")
+                print(f"  {atype:<14} {pred:<40} {out:<16} {beta:>7.3f} {p:>7.3f}  {sig}")
 
 
 # ============================================================================

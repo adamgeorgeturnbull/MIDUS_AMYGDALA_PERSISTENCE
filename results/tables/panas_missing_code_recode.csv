@@ -1,0 +1,3 @@
+variable,n_code_8,n_code_98,n_code_99,n_total_recoded,n_missing_before,n_missing_after,n_valid,valid_min,valid_max
+C5SPGP,1,0,0,1,3452,3453,230,1.6,5.0
+C5SPGN,1,0,0,1,3452,3453,230,1.0,4.0

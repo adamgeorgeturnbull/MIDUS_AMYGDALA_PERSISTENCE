@@ -39,8 +39,10 @@ FONT_NAME   = "Times New Roman"
 FONT_SIZE   = Pt(10)
 HEADER_SIZE = Pt(10)
 
-# Columns that are right-aligned (numeric)
-RIGHT_COLS = {"N", "r", "r p", "OLS t", "OLS p", "MLM z", "MLM p"}
+# Columns that are right-aligned (numeric).  Correlation, OLS, and MLM each
+# carry their own complete-case N.
+RIGHT_COLS = {"N correlation", "N OLS", "N MLM",
+              "r", "r p", "OLS t", "OLS p", "MLM z", "MLM p"}
 
 
 def set_cell_bg(cell, hex_color):
@@ -106,12 +108,16 @@ def main():
     table.style = "Table Grid"
 
     # Set column widths
-    # Analysis ~2.2in, Predictor ~1.6in, Outcome ~1.4in, N ~0.4in, rest ~0.7in each
+    # Analysis ~2.2in, Predictor ~1.6in, Outcome ~1.4in, each N ~0.5in,
+    # rest ~0.75in each.  The three N columns are kept compact; their headers
+    # wrap onto two lines.
     col_widths = {
-        "Analysis":  Inches(2.2),
-        "Predictor": Inches(1.6),
-        "Outcome":   Inches(1.4),
-        "N":         Inches(0.4),
+        "Analysis":       Inches(2.2),
+        "Predictor":      Inches(1.6),
+        "Outcome":        Inches(1.4),
+        "N correlation":  Inches(0.5),
+        "N OLS":          Inches(0.5),
+        "N MLM":          Inches(0.5),
     }
     default_w = Inches(0.75)
 

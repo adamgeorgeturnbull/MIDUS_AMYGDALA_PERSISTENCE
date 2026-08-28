@@ -1,17 +1,16 @@
 MODEL SPECIFICATION
 ============================================================
-Analysis  : 05 FC (L, neg−neu) → Other Persistence  [conservative, two-tailed]
-N         : 128
-Generated : 2026-04-03
+Analysis  : 03 Age → vmPFC Persistence  [conservative]
+N         : 127
+Generated : 2026-08-26
 
 VARIABLES
 ------------------------------------------------------------
 Predictor(s):
-  l_amyg-ant_vmPFC_neg_vs_neu                   l_amyg-ant_vmPFC_neg_vs_neu
-  l_amyg-post_vmPFC_neg_vs_neu                  l_amyg-post_vmPFC_neg_vs_neu
+  C5PAGE                                        age at neuroscience visit (P5)
 Outcome(s):
-  pos_persist_crossrun_mean_z_L                 left amygdala positive-affect persistence (cross-run spatial correlation, Fisher z)
-  neg_persist_concat_z_L                        left amygdala negative-affect persistence (concatenated runs, Fisher z)
+  ant_vmPFC_neg_image_mean_z                    ant_vmPFC_neg_image_mean_z
+  post_vmPFC_neg_image_mean_z                   post_vmPFC_neg_image_mean_z
 
 STATISTICAL MODELS
 ------------------------------------------------------------
@@ -22,8 +21,8 @@ STATISTICAL MODELS
    Formula : outcome ~ predictor + covariates
    Covariates:
      - age at neuroscience visit (P5)
-     - biological sex (0 = male, 1 = female)
-     - race/ethnicity (5 dummy variables, ref = White)
+     - biological sex (1 = male, 2 = female)
+     - race (5 dummy variables, ref = White)
      - twin pair membership (334 dummy variables; OLS only)
 
 3. Linear mixed-effects model (MLM)
@@ -35,8 +34,8 @@ STATISTICAL MODELS
    Estimation     : REML; optimizers tried in order: lbfgs, powell, nm, bfgs
    Fixed-effect covariates:
      - age at neuroscience visit (P5)
-     - biological sex (0 = male, 1 = female)
-     - race/ethnicity (5 dummy variables, ref = White)
+     - biological sex (1 = male, 2 = female)
+     - race (5 dummy variables, ref = White)
 
 INFERENCE
 ------------------------------------------------------------

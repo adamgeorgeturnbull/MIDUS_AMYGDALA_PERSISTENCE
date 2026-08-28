@@ -1,16 +1,16 @@
-Analysis,Predictor,Outcome,N,r,r p,OLS t,OLS p,MLM z,MLM p
-Analysis 01: Age -> Daily Affect,Age (Project 2),Positive affect (diary),1174,0.145,0.000***,4.79,0.000***,4.91,0.000***
-Analysis 01: Age -> Daily Affect,Age (Project 2),Negative affect (diary),1174,-0.111,0.000***,-4.24,0.000***,-4.07,0.000***
-Analysis 01: Age -> Daily Affect,Age (Project 2),"Negative affect, log (diary)",1174,-0.147,0.000***,-5.33,0.000***,-5.28,0.000***
-Analysis 02: Persistence -> Daily Affect,"Neg. persistence, left amygdala",Positive affect (diary),80,-0.276,0.007**,-2.37,0.010*,-1.75,0.040*
-Analysis 02: Persistence -> Daily Affect,"Neg. persistence, left amygdala",Negative affect (diary),80,0.234,0.019*,2.77,0.004**,2.29,0.011*
-Analysis 02: Persistence -> Daily Affect,"Neg. persistence, left amygdala","Negative affect, log (diary)",80,0.134,0.118,1.71,0.046*,1.36,0.088
-Analysis 03: Age -> Persistence,Age (Project 5),"Neg. persistence, left amygdala",128,-0.114,0.100,-0.37,0.357,-1.23,0.110
-Analysis 04: FC -> Daily Affect,Left amygdala-ant. vmPFC FC,Positive affect (diary),80,0.157,0.083,2.17,0.017*,1.51,0.066
-Analysis 04: FC -> Daily Affect,Left amygdala-ant. vmPFC FC,Negative affect (diary),80,-0.186,0.050*,-1.68,0.049*,-2.89,0.002**
-Analysis 04: FC -> Daily Affect,Left amygdala-ant. vmPFC FC,"Negative affect, log (diary)",80,-0.204,0.034*,-1.73,0.045*,-1.94,0.026*
-Analysis 04: FC -> Daily Affect,Left amygdala-post. vmPFC FC,Positive affect (diary),80,0.112,0.162,0.79,0.215,-0.79,0.784
-Analysis 04: FC -> Daily Affect,Left amygdala-post. vmPFC FC,Negative affect (diary),80,-0.164,0.073,-0.82,0.206,-1.18,0.119
-Analysis 04: FC -> Daily Affect,Left amygdala-post. vmPFC FC,"Negative affect, log (diary)",80,-0.207,0.033*,-1.11,0.137,-1.53,0.063
-Analysis 05: FC -> Persistence,Left amygdala-ant. vmPFC FC,"Neg. persistence, left amygdala",128,0.103,0.876,0.93,0.823,1.19,0.882
-Analysis 05: FC -> Persistence,Left amygdala-post. vmPFC FC,"Neg. persistence, left amygdala",128,0.011,0.551,0.21,0.582,0.24,0.595
+Analysis,Predictor,Outcome,N correlation,r,r p,N OLS,OLS t,OLS p,N MLM,MLM z,MLM p
+Analysis 01: Age -> Daily Affect,Age (Project 2),Positive affect (diary),1174,0.145,0.000***,1168,4.79,0.000***,1168,4.91,0.000***
+Analysis 01: Age -> Daily Affect,Age (Project 2),Negative affect (diary),1174,-0.111,0.000***,1168,-4.24,0.000***,1168,-4.07,0.000***
+Analysis 01: Age -> Daily Affect,Age (Project 2),"Negative affect, log (diary)",1174,-0.147,0.000***,1168,-5.33,0.000***,1168,-5.28,0.000***
+Analysis 02: Persistence -> Daily Affect,"Neg. persistence, left amygdala",Positive affect (diary),81,-0.293,0.004**,81,-2.60,0.006**,81,-1.47,0.071
+Analysis 02: Persistence -> Daily Affect,"Neg. persistence, left amygdala",Negative affect (diary),81,0.217,0.026*,81,2.54,0.007**,81,2.05,0.020*
+Analysis 02: Persistence -> Daily Affect,"Neg. persistence, left amygdala","Negative affect, log (diary)",81,0.189,0.046*,81,1.99,0.025*,81,1.53,0.063
+Analysis 03: Age -> Persistence,Age (Project 5),"Neg. persistence, left amygdala",127,-0.176,0.024*,127,-1.40,0.082,127,-2.09,0.018*
+Analysis 04: FC -> Daily Affect,Left amygdala-ant. vmPFC FC,Positive affect (diary),81,-0.022,0.578,81,0.63,0.264,81,-0.08,0.532
+Analysis 04: FC -> Daily Affect,Left amygdala-ant. vmPFC FC,Negative affect (diary),81,-0.149,0.093,81,-1.39,0.085,81,-1.76,0.039*
+Analysis 04: FC -> Daily Affect,Left amygdala-ant. vmPFC FC,"Negative affect, log (diary)",81,-0.189,0.045*,81,-1.92,0.030*,81,-2.19,0.014*
+Analysis 04: FC -> Daily Affect,Left amygdala-post. vmPFC FC,Positive affect (diary),81,0.032,0.388,81,0.23,0.410,81,-2.33,0.990
+Analysis 04: FC -> Daily Affect,Left amygdala-post. vmPFC FC,Negative affect (diary),81,-0.106,0.173,81,-0.89,0.189,81,-1.07,0.143
+Analysis 04: FC -> Daily Affect,Left amygdala-post. vmPFC FC,"Negative affect, log (diary)",81,-0.147,0.095,81,-0.77,0.221,81,-1.12,0.132
+Analysis 05: FC -> Persistence,Left amygdala-ant. vmPFC FC,"Neg. persistence, left amygdala",127,-0.031,0.363,127,-0.43,0.333,127,-0.53,0.299
+Analysis 05: FC -> Persistence,Left amygdala-post. vmPFC FC,"Neg. persistence, left amygdala",127,0.009,0.539,127,0.59,0.722,127,0.32,0.626

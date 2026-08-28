@@ -6,6 +6,20 @@ Collects correlation, OLS regression, and MLM results for primary analyses
 (01-05) and writes a single publication-ready supplementary table with all
 three methods side by side for easy comparison.
 
+Sample sizes
+------------
+Correlation, OLS, and MLM have their own complete-case Ns: each method drops
+different rows depending on which covariates it includes and, for MLM, on
+family structure.  The table therefore reports three separate N columns
+("N correlation", "N OLS", "N MLM"), each read from that method's own result
+file.  A method's N is never copied from another method.  When a method has no
+row for a given predictor x outcome pair, its N and its statistics are left
+blank.
+
+The predictor x outcome pairs are the union of pairs found across the
+correlation, OLS, and MLM files, so a pair present in only one file is still
+reported.
+
 Output
 ------
 results/tables/supplementary/supp_all_methods.csv
@@ -13,8 +27,9 @@ results/tables/supplementary/supp_all_methods.csv
 Run from project root directory.
 """
 
+import sys
 from pathlib import Path
-import numpy as np
+
 import pandas as pd
 
 RESULTS_DIR = Path("results/tables")
@@ -75,6 +90,18 @@ ANALYSES = [
      "05_fc_persistence/mlm.csv"),
 ]
 
+# ── Method specifications ─────────────────────────────────────────────────────
+# Each method contributes its own N column plus its statistic and p-value.
+# "stat" is the statistic column expected in that method's result file.
+METHODS = [
+    {"key": "corr", "label": "correlation", "stat": "r", "decimals": 3,
+     "n_col": "N correlation", "stat_col": "r",     "p_col": "r p"},
+    {"key": "ols",  "label": "OLS",         "stat": "t", "decimals": 2,
+     "n_col": "N OLS",         "stat_col": "OLS t", "p_col": "OLS p"},
+    {"key": "mlm",  "label": "MLM",         "stat": "z", "decimals": 2,
+     "n_col": "N MLM",         "stat_col": "MLM z", "p_col": "MLM p"},
+]
+
 
 # ── Helpers ───────────────────────────────────────────────────────────────────
 def stars(p):
@@ -90,6 +117,20 @@ def fmt(val, decimals=3):
     if pd.isna(val):
         return ""
     return f"{val:.{decimals}f}"
+
+
+def fmt_p(p):
+    """Format a p-value with its significance stars appended; blank if missing."""
+    if pd.isna(p):
+        return ""
+    return f"{p:.3f}{stars(p)}"
+
+
+def fmt_n(val):
+    """Format a complete-case N as an integer string; blank if missing."""
+    if pd.isna(val):
+        return ""
+    return str(int(val))
 
 
 def label_pred(p):
@@ -108,62 +149,85 @@ def load(path):
     return pd.read_csv(p)
 
 
+def build_lookup(df, path, stat_col, label):
+    """
+    Validate one method's result file and return {(predictor, outcome): row}.
+
+    Aborts if the identifier, N, statistic, or p-value column is missing, or if
+    any predictor x outcome pair appears more than once.  Silently taking the
+    first of several duplicate rows would misreport which model produced the
+    statistic and its N, so duplicates are a hard error.
+    """
+    required = ["predictor", "outcome", "n", stat_col, "p"]
+    missing = [c for c in required if c not in df.columns]
+    if missing:
+        print(f"ERROR: {path} ({label}) is missing required column(s): {missing}")
+        print(f"  Available columns: {list(df.columns)}")
+        sys.exit(1)
+
+    dup_mask = df.duplicated(subset=["predictor", "outcome"], keep=False)
+    if dup_mask.any():
+        dup_pairs = df.loc[dup_mask, ["predictor", "outcome"]].drop_duplicates()
+        print(f"ERROR: {path} ({label}) has {len(dup_pairs)} duplicated "
+              f"predictor x outcome pair(s):")
+        for pred, out in dup_pairs.itertuples(index=False, name=None):
+            print(f"    {pred} -> {out}")
+        sys.exit(1)
+
+    return {(row["predictor"], row["outcome"]): row for _, row in df.iterrows()}
+
+
 # ── Build combined table ──────────────────────────────────────────────────────
 def build_table():
     rows = []
 
     for section, corr_path, reg_path, mlm_path in ANALYSES:
-        corr_df = load(corr_path)
-        reg_df  = load(reg_path)
-        mlm_df  = load(mlm_path)
+        paths = {"corr": corr_path, "ols": reg_path, "mlm": mlm_path}
 
-        # Use correlation rows as the index of predictor × outcome pairs
-        if corr_df is None:
+        # Validate each available method file and index it by (predictor, outcome)
+        lookups = {}
+        for spec in METHODS:
+            df = load(paths[spec["key"]])
+            lookups[spec["key"]] = (
+                None if df is None
+                else build_lookup(df, paths[spec["key"]], spec["stat"], spec["label"])
+            )
+
+        # Index of predictor × outcome pairs = union across all three methods,
+        # in first-seen order (correlation, then OLS, then MLM).  A pair present
+        # in only one method's file is still reported.
+        pairs = []
+        for spec in METHODS:
+            lut = lookups[spec["key"]]
+            if lut is None:
+                continue
+            for pair in lut:
+                if pair not in pairs:
+                    pairs.append(pair)
+
+        if not pairs:
             continue
 
-        for _, c in corr_df.iterrows():
-            pred = c["predictor"]
-            out  = c["outcome"]
-
-            def fmt_p(p):
-                if pd.isna(p):
-                    return ""
-                s = stars(p)
-                return f"{p:.3f}{s}"
-
+        for pred, out in pairs:
             row = {
                 "Analysis":  section,
                 "Predictor": label_pred(pred),
                 "Outcome":   label_out(out),
-                "N":         int(c["n"]),
-                # Correlation
-                "r":   fmt(c["r"], 3),
-                "r p": fmt_p(c.get("p", np.nan)),
             }
 
-            # OLS
-            if reg_df is not None:
-                m = reg_df[(reg_df["predictor"] == pred) & (reg_df["outcome"] == out)]
-                if len(m):
-                    r = m.iloc[0]
-                    row.update({
-                        "OLS t": fmt(r["t"], 2),
-                        "OLS p": fmt_p(r.get("p", np.nan)),
-                    })
+            for spec in METHODS:
+                lut = lookups[spec["key"]]
+                res = None if lut is None else lut.get((pred, out))
+                if res is None:
+                    # This method has no row for the pair: leave its N and its
+                    # statistics blank.  Never substitute another method's N.
+                    row[spec["n_col"]]    = ""
+                    row[spec["stat_col"]] = ""
+                    row[spec["p_col"]]    = ""
                 else:
-                    row.update({"OLS t": "", "OLS p": ""})
-
-            # MLM
-            if mlm_df is not None:
-                m = mlm_df[(mlm_df["predictor"] == pred) & (mlm_df["outcome"] == out)]
-                if len(m):
-                    r = m.iloc[0]
-                    row.update({
-                        "MLM z": fmt(r["z"], 2),
-                        "MLM p": fmt_p(r.get("p", np.nan)),
-                    })
-                else:
-                    row.update({"MLM z": "", "MLM p": ""})
+                    row[spec["n_col"]]    = fmt_n(res["n"])
+                    row[spec["stat_col"]] = fmt(res[spec["stat"]], spec["decimals"])
+                    row[spec["p_col"]]    = fmt_p(res["p"])
 
             rows.append(row)
 
@@ -178,10 +242,13 @@ def main():
     df.to_csv(out, index=False)
     print(f"  Saved: {out}  ({len(df)} rows, {len(df.columns)} columns)")
     print("\nColumn groups:")
-    print("  Identification: Analysis, Predictor, Outcome, N")
-    print("  Correlation:    r, r p")
-    print("  OLS:            OLS t, OLS p")
-    print("  MLM:            MLM z, MLM p")
+    print("  Identification: Analysis, Predictor, Outcome")
+    print("  Correlation:    N correlation, r, r p")
+    print("  OLS:            N OLS, OLS t, OLS p")
+    print("  MLM:            N MLM, MLM z, MLM p")
+    print("  (each N is the complete-case N from that method's own result file;")
+    print("   Ns can differ across methods and are never copied between them)")
+    print("  (a blank N and blank statistics mean that method has no row for the pair)")
     print("  (p-values are one-tailed for directional analyses, two-tailed otherwise)")
     print("  (significance appended to p: * p<.05, ** p<.01, *** p<.001)")
 

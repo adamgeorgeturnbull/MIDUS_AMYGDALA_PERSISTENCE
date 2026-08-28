@@ -1,5 +1,0 @@
-predictor,outcome,n,r,p,p_two_tailed
-l_amyg-ant_vmPFC_neg_vs_neu,pos_persist_crossrun_mean_z_L,128,-0.11010945599795104,0.21597876775286462,0.21597876775286462
-l_amyg-ant_vmPFC_neg_vs_neu,neg_persist_concat_z_L,127,0.0022716195883014795,0.9797783703047825,0.9797783703047825
-l_amyg-post_vmPFC_neg_vs_neu,pos_persist_crossrun_mean_z_L,128,0.057356388145995585,0.5201738371027075,0.5201738371027075
-l_amyg-post_vmPFC_neg_vs_neu,neg_persist_concat_z_L,127,-0.03640791206915696,0.6844675587158924,0.6844675587158924

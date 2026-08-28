@@ -85,11 +85,13 @@ def main():
 
     # -------------------------------------------------------------------------
     # 3. vmPFC persistence (two-tailed — direction not pre-specified)
+    #    Fisher z-transformed by prepare_persistence_vars() from the raw
+    #    *_image_mean_r columns, matching the amygdala persistence predictors.
     # -------------------------------------------------------------------------
     print("\n--- Sensitivity: vmPFC Persistence ---")
     vmpfc_persist_vars = [v for v in [
-        "ant_vmPFC_neg_image_mean_r",
-        "post_vmPFC_neg_image_mean_r",
+        "ant_vmPFC_neg_image_mean_z",
+        "post_vmPFC_neg_image_mean_z",
     ] if v in cons.columns]
 
     if vmpfc_persist_vars:

@@ -84,11 +84,40 @@ def load_master(fc=False):
 
 def prepare_persistence_vars(df):
     """
-    Fisher z-transform all *_r_* persistence columns in-place.
-    Returns list of z-transformed variable names that are present.
+    Fisher z-transform persistence correlation columns in-place.
+
+    Two naming conventions are recognized:
+
+    1. Amygdala persistence — from negative/positive_persistence_cross_run.csv,
+       pivoted by 09_merge_fmri_data.py.  Any column containing "_persist_" and
+       ending in _r_L / _r_R / _mean_r_L / _mean_r_R / _mean_r is transformed:
+           neg_persist_crossrun_mean_r_L  →  neg_persist_crossrun_mean_z_L
+           pos_persist_crossrun_mean_r_R  →  pos_persist_crossrun_mean_z_R
+
+    2. vmPFC persistence — from vmPFC_persistence_wide.csv.  These columns do
+       not contain "_persist_", so they are matched separately by prefix and
+       suffix: {ant,post}_vmPFC_<condition>_image_mean_r (conditions neg/neu/pos):
+           ant_vmPFC_neg_image_mean_r     →  ant_vmPFC_neg_image_mean_z
+           post_vmPFC_neg_image_mean_r    →  post_vmPFC_neg_image_mean_z
+
+    Raw *_mean_r columns are preserved.  A z column is created only when it is
+    not already present.
+
+    Returns
+    -------
+    list of str
+        Names of the z-transformed columns available in df.
     """
     r_vars = [c for c in df.columns if "_persist_" in c and c.endswith(("_r_L", "_r_R",
               "_mean_r_L", "_mean_r_R", "_mean_r"))]
+
+    # vmPFC persistence uses a different naming convention (no "_persist_" token)
+    vmpfc_r_vars = [
+        c for c in df.columns
+        if c.startswith(("ant_vmPFC_", "post_vmPFC_")) and c.endswith("_image_mean_r")
+    ]
+    r_vars += [c for c in vmpfc_r_vars if c not in r_vars]
+
     z_vars = []
     for var in r_vars:
         z_var = var.replace("_mean_r", "_mean_z").replace("_r_L", "_z_L").replace("_r_R", "_z_R")
@@ -394,9 +423,9 @@ VAR_LABELS = {
     "C5SPGN":      "negative affect (PANAS, neuroscience visit)",
     "C5SPGN_log":  "log-transformed negative affect (PANAS)",
     # Covariates
-    "sex":             "biological sex (0 = male, 1 = female)",
+    "sex":             "biological sex (1 = male, 2 = female)",
     "n_days_complete": "number of completed daily diary days",
-    "time_P2_P5":      "time between diary (P2) and neuroscience (P5) waves (years)",
+    "time_P2_P5":      "time between diary (P2) and neuroscience (P5) waves (months)",
     # Amygdala persistence (cross-run, Fisher z)
     "neg_persist_crossrun_mean_z_L": "left amygdala negative-affect persistence (cross-run spatial correlation, Fisher z)",
     "neg_persist_crossrun_mean_z_R": "right amygdala negative-affect persistence (cross-run spatial correlation, Fisher z)",
@@ -425,7 +454,7 @@ def _var_label(v):
     if v in VAR_LABELS:
         return VAR_LABELS[v]
     if v.startswith("race_"):
-        return f"race/ethnicity dummy: {v.replace('race_', '')}"
+        return f"race dummy: {v.replace('race_', '')}"
     if v.startswith("twin_pair_"):
         return f"twin pair dummy: {v.replace('twin_pair_', '')}"
     return v
@@ -449,7 +478,7 @@ def write_methods_note(out_dir, label, predictors, outcomes, covariates, n,
     def _fmt_cov_list(covs, race, twin, mlm=False):
         parts = [_var_label(c) for c in covs]
         if race:
-            parts.append(f"race/ethnicity ({len(race)} dummy variables, ref = White)")
+            parts.append(f"race ({len(race)} dummy variables, ref = White)")
         if twin and not mlm:
             parts.append(f"twin pair membership ({len(twin)} dummy variables; OLS only)")
         return parts

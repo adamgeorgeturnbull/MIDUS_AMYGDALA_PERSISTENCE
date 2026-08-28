@@ -1,9 +1,9 @@
 contrast,col1,col2,n,mean_diff,sd_diff,t,df,p,connection
-l_amyg-ant_vmPFC_neg_vs_neu,l_amyg-ant_vmPFC_neg,l_amyg-ant_vmPFC_neu,128,-0.05356786844969598,0.3208648107759583,-1.8888055910094617,127,0.061198471584671676,l_amyg-ant_vmPFC
-l_amyg-ant_vmPFC_neg_vs_pos,l_amyg-ant_vmPFC_neg,l_amyg-ant_vmPFC_pos,128,-0.05293724847113978,0.3321414863651572,-1.8031971991669586,127,0.07372814985184672,l_amyg-ant_vmPFC
-l_amyg-post_vmPFC_neg_vs_neu,l_amyg-post_vmPFC_neg,l_amyg-post_vmPFC_neu,128,-0.026755866948306603,0.325374716135982,-0.9303368217592322,127,0.3539617703867989,l_amyg-post_vmPFC
-l_amyg-post_vmPFC_neg_vs_pos,l_amyg-post_vmPFC_neg,l_amyg-post_vmPFC_pos,128,-0.05997876853167664,0.3308775073121912,-2.050856550533701,127,0.04233774300603466,l_amyg-post_vmPFC
-r_amyg-ant_vmPFC_neg_vs_neu,r_amyg-ant_vmPFC_neg,r_amyg-ant_vmPFC_neu,128,-0.03381973434986595,0.27643020123031253,-1.384170811454474,127,0.1687336741021533,r_amyg-ant_vmPFC
-r_amyg-ant_vmPFC_neg_vs_pos,r_amyg-ant_vmPFC_neg,r_amyg-ant_vmPFC_pos,128,-0.016973004539448375,0.3124249676680384,-0.6146359785025234,127,0.5398947731945319,r_amyg-ant_vmPFC
-r_amyg-post_vmPFC_neg_vs_neu,r_amyg-post_vmPFC_neg,r_amyg-post_vmPFC_neu,128,-0.0006969647689992493,0.28005279678433675,-0.02815632024054393,127,0.97758167173402,r_amyg-post_vmPFC
-r_amyg-post_vmPFC_neg_vs_pos,r_amyg-post_vmPFC_neg,r_amyg-post_vmPFC_pos,128,-0.022031543979076956,0.3315289740720816,-0.7518451956107018,127,0.45353526345084927,r_amyg-post_vmPFC
+l_amyg-ant_vmPFC_neg_vs_neu,l_amyg-ant_vmPFC_neg,l_amyg-ant_vmPFC_neu,127,-0.04381589974199934,0.34930244462360616,-1.4136176843889858,126,0.1599400673019794,l_amyg-ant_vmPFC
+l_amyg-ant_vmPFC_neg_vs_pos,l_amyg-ant_vmPFC_neg,l_amyg-ant_vmPFC_pos,127,-0.051315223471379956,0.3575519036948347,-1.6173685366610535,126,0.10829957760204763,l_amyg-ant_vmPFC
+l_amyg-post_vmPFC_neg_vs_neu,l_amyg-post_vmPFC_neg,l_amyg-post_vmPFC_neu,127,0.004861394762688245,0.3454774905209297,0.15857802072373745,126,0.8742552304619226,l_amyg-post_vmPFC
+l_amyg-post_vmPFC_neg_vs_pos,l_amyg-post_vmPFC_neg,l_amyg-post_vmPFC_pos,127,-0.042605199982602746,0.3631127018796513,-1.3222787775440177,126,0.1884706088971062,l_amyg-post_vmPFC
+r_amyg-ant_vmPFC_neg_vs_neu,r_amyg-ant_vmPFC_neg,r_amyg-ant_vmPFC_neu,127,-0.024494900084587726,0.31738023346411504,-0.8697564487996866,126,0.3860873976485104,r_amyg-ant_vmPFC
+r_amyg-ant_vmPFC_neg_vs_pos,r_amyg-ant_vmPFC_neg,r_amyg-ant_vmPFC_pos,127,-0.03965249952099342,0.33619901712838385,-1.3291561024981609,126,0.1861982039839913,r_amyg-ant_vmPFC
+r_amyg-post_vmPFC_neg_vs_neu,r_amyg-post_vmPFC_neg,r_amyg-post_vmPFC_neu,127,-0.01385682535195176,0.3108193604019223,-0.50240915119302,126,0.6162566752807945,r_amyg-post_vmPFC
+r_amyg-post_vmPFC_neg_vs_pos,r_amyg-post_vmPFC_neg,r_amyg-post_vmPFC_pos,127,-0.04846554832709611,0.32702140780844274,-1.670162803711311,126,0.0973695603610531,r_amyg-post_vmPFC

@@ -2,7 +2,7 @@ MODEL SPECIFICATION
 ============================================================
 Analysis  : 01 Age → PANAS  [neuro subsample, C5PAGE]
 N         : 231
-Generated : 2026-04-03
+Generated : 2026-08-26
 
 VARIABLES
 ------------------------------------------------------------
@@ -21,8 +21,8 @@ STATISTICAL MODELS
 2. OLS regression
    Formula : outcome ~ predictor + covariates
    Covariates:
-     - biological sex (0 = male, 1 = female)
-     - race/ethnicity (5 dummy variables, ref = White)
+     - biological sex (1 = male, 2 = female)
+     - race (5 dummy variables, ref = White)
      - twin pair membership (334 dummy variables; OLS only)
 
 3. Linear mixed-effects model (MLM)
@@ -33,8 +33,8 @@ STATISTICAL MODELS
                     ≥2 members sharing M2FAMNUM); all others grouped by M2ID
    Estimation     : REML; optimizers tried in order: lbfgs, powell, nm, bfgs
    Fixed-effect covariates:
-     - biological sex (0 = male, 1 = female)
-     - race/ethnicity (5 dummy variables, ref = White)
+     - biological sex (1 = male, 2 = female)
+     - race (5 dummy variables, ref = White)
 
 INFERENCE
 ------------------------------------------------------------
