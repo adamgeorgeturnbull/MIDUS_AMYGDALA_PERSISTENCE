@@ -8,6 +8,35 @@ The study combines daily diary data, survey-based demographics, and neuroimaging
 
 ---
 
+## Corrected M3 Analysis
+
+The original FSL custom slice-order file used 0-based indices, which is invalid for
+`slicetimer --ocustom`. The corrected M3 reanalysis (`M3_stc_rerun`) began from untouched raw
+BOLD data, applied a 1-based FSL slice-timing correction via the manual reorientation workflow,
+and reran fMRIPrep with `--ignore slicetiming`. All downstream GLM, persistence, FC, and
+brain–behavior analyses were regenerated from the corrected outputs.
+
+**Final analytic samples (corrected rerun):**
+- Conservative fMRI (no diary): **N = 127** — Analyses 03, 05 and PANAS sensitivities
+- Diary + conservative fMRI: **N = 81** — Analyses 02, 04, 06, 07
+- Moderation complete cases: **N = 80**
+
+See `PREPROCESSING_SUMMARY.md` for the full provenance record and `PUBLICATION_REQUIRED_CHANGES.md`
+for the item-by-item completion status.
+
+**Data versioning:** Raw data (`data/raw/`, `data/processed/`) are not tracked by git and must
+be obtained through authorized MIDUS access. Selected deidentified fMRI summary CSVs under
+`data/fMRI/` and statistical results under `results/tables/` are versioned. Publication figures
+under `results/figures/` are generated from scripts.
+
+---
+
+## MR1 Validation
+
+MR1 validation is a separate subsequent phase and is not part of the frozen corrected-M3 reproduction. Its pipeline and results will be added to version control in a later commit.
+
+---
+
 ## Study Goals
 
 ### Replications
@@ -26,16 +55,17 @@ The study combines daily diary data, survey-based demographics, and neuroimaging
 
 ---
 
-## Project Structure
+## Repository Organization
+
 ```
 MIDUS_AMYGDALA_PERSISTENCE/
 ├── data/
-│   ├── raw/
+│   ├── raw/                        ← not tracked by git; obtain via MIDUS access
 │   │   ├── M3P5_variables.csv
 │   │   ├── M3P2_variables.csv
 │   │   ├── MKE2_variables.csv
 │   │   └── README.md
-│   ├── processed/
+│   ├── processed/                  ← not tracked by git
 │   │   ├── daily_diary_processed.csv
 │   │   ├── daily_diary_descriptives.csv
 │   │   ├── m3p5_ids.csv
@@ -47,27 +77,41 @@ MIDUS_AMYGDALA_PERSISTENCE/
 │   │   ├── midus_merged.csv
 │   │   ├── midus_merged_clean.csv
 │   │   └── midus_with_fmri.csv
-│   └── fMRI/
-│       ├── all_subjects_betaSeries_LSS_all_conditions_M2ID.csv
-│       ├── all_subjects_roi_activations.csv
-│       ├── negative_persistence_cross_run.csv
-│       ├── positive_persistence_cross_run.csv
-│       └── fd_summary.csv
+│   └── fMRI/                       ← corrected M3_stc_rerun canonical outputs (versioned)
+│       ├── task_fMRI_QC.xlsx                                  ← visual QC ratings only
+│       ├── all_subjects_betaSeries_LSS_all_conditions_M2ID.csv ← 156 participants
+│       ├── negative_persistence_cross_run.csv                  ← 156 subj × L/R/BI
+│       ├── positive_persistence_cross_run.csv                  ← 156 subj × L/R/BI
+│       ├── fd_summary.csv                                      ← 469 run records, 158 subj
+│       ├── fmri_qc_processed.csv                              ← derived by script 08
+│       ├── vmPFC_persistence_wide.csv                         ← 151 participants
+│       ├── all_subjects_roi_activations.csv                   ← 148 participants
+│       └── condition_fd_wide.csv                              ← 156 participants
 ├── results/
 │   ├── tables/
-│   │   ├── 01_affect_age_correlations.csv
-│   │   ├── 01_affect_age_regressions.csv
-│   │   ├── 02_persistence_affect_correlations_{full,conservative}.csv
-│   │   ├── 02_persistence_affect_regressions_{full,conservative}.csv
-│   │   ├── 03_persistence_age_correlations_{full,conservative}.csv
-│   │   ├── 03_persistence_age_regressions_{full,conservative}.csv
-│   │   ├── 04_fc_affect_correlations_{full,conservative}.csv
-│   │   ├── 04_fc_affect_regressions_{full,conservative}.csv
-│   │   ├── 05_fc_persistence_correlations_{full,conservative}.csv
-│   │   ├── 05_fc_persistence_regressions_{full,conservative}.csv
-│   │   ├── 06_persistence_affect_moderation_{full,conservative}.csv
-│   │   └── 07_fc_affect_moderation_{full,conservative}.csv
-│   └── figures/
+│   │   ├── sample_descriptives.csv
+│   │   ├── panas_missing_code_recode.csv
+│   │   ├── panas_skew_kurtosis.csv
+│   │   ├── daily_diary_descriptives.csv
+│   │   ├── 00a_diary_panas/          ← correlations.csv, regressions.csv, mlm.csv
+│   │   ├── 00b_task_conditions/      ← roi_one_sample.csv, roi_paired.csv,
+│   │   │                               fc_one_sample.csv, fc_paired.csv
+│   │   ├── 00c_vmPFC_convergence/    ← ant_post_correlations.csv
+│   │   ├── 00d_erq_context/          ← four subdirectories
+│   │   ├── 00e_motion_check/         ← part1 and part2 CSVs
+│   │   ├── 01_affect_age/            ← correlations.csv, regressions.csv, mlm.csv
+│   │   │   ├── neuro_sample/
+│   │   │   └── sensitivity_panas/
+│   │   ├── 02_persistence_affect/    ← and sensitivity subdirectories
+│   │   ├── 03_persistence_age/       ← and sensitivity subdirectories
+│   │   ├── 04_fc_affect/             ← and sensitivity subdirectories
+│   │   ├── 05_fc_persistence/        ← and sensitivity subdirectories
+│   │   ├── 06_persistence_affect_moderation/
+│   │   ├── 07_fc_affect_moderation/
+│   │   └── supplementary/
+│   │       ├── supp_all_methods.csv  ← N correlation, N OLS, N MLM columns
+│   │       └── supp_all_methods.docx
+│   └── figures/                     ← versioned generated outputs; regenerate and review after analysis changes
 │       ├── figure1_roi.tiff
 │       ├── figure2_persistence_affect.tiff
 │       └── figure3_fc_affect.tiff
@@ -148,7 +192,23 @@ MIDUS_AMYGDALA_PERSISTENCE/
 └── requirements.txt
 ```
 
-**Note:** Raw and processed data are not tracked by git and must be obtained through authorized MIDUS access.
+---
+
+## Analysis Run Order
+
+Run all scripts from the **project root directory**.
+
+| Phase | Scripts |
+|-------|---------|
+| 1 — Behavioral preprocessing | `01_harmonize_ids.py` → `06_clean_merged_data.py` (in order) |
+| 2 — fMRI QC and merge | `08_process_fmri_qc.py`, then `09_merge_fmri_data.py` |
+| 3 — Sample descriptives | `07_sample_descriptives.py` |
+| 4 — Context checks | `00a`, `00b`, `00c`, `00d` (order-independent) |
+| 5 — Primary analyses | `01` → `07` (order-independent within phase) |
+| 6 — Sensitivities and motion | `01_sensitivity` → `07_sensitivity`, `00e_motion_check` |
+| 7 — Output | `supplementary_tables.py`, `supplementary_tables_docx.py`, `publication_figures.py` |
+
+Full numbered run order with exact commands: see `PREPROCESSING_SUMMARY.md`, Section 10.
 
 ---
 
@@ -379,18 +439,24 @@ Performs final cleaning and quality checks on the merged dataset.
 
 **Processing Steps:**
 1. Verify twin_pair_ variables are 0 for MKE2 participants
-2. Ensure MIDUS missing codes are set to NaN
-3. Compute PANAS affect statistics:
-   - Skewness and kurtosis for C5SPGP and C5SPGN
-   - Log-transformed negative affect (C5SPGN_log)
-4. Verify variable types and remove redundant columns
-5. Save summary table of PANAS distributions
+2. Compute age at P2 (C2PAGE) and time between P2 and P5 in months (time_P2_P5)
+3. Recode ERQ missing codes (≥97) to NaN for C5SER and C5SES
+4. **Recode PANAS missing codes:** Convert C5SPGP and C5SPGN to numeric, then recode
+   official codebook missing values **8, 98, and 99** to NaN before any distributional
+   statistics or log transformation. C5SPGP and C5SPGN are **mean item scores** (valid
+   range 1–5). An unparseable or out-of-range value causes an immediate exit.
+5. Compute skewness and kurtosis for C5SPGP and C5SPGN (after recoding)
+6. Compute log-transformed negative affect (C5SPGN_log) using half the minimum non-zero value
+   as an offset (after recoding)
+7. Save PANAS missing-code audit and distribution statistics
 
 **Input:**
 - `data/processed/midus_merged.csv`
 
 **Outputs:**
 - `data/processed/midus_merged_clean.csv`
+- `results/tables/panas_missing_code_recode.csv` — one row per variable; n_code_8, n_code_98,
+  n_code_99, n_total_recoded, n_missing_before, n_missing_after, n_valid, valid_min, valid_max
 - `results/tables/panas_skew_kurtosis.csv`
 
 ---
@@ -399,24 +465,30 @@ Performs final cleaning and quality checks on the merged dataset.
 
 **File:** `scripts/preprocessing/07_sample_descriptives.py`
 
-Generates publication-ready sample descriptives for 5 MIDUS analytic samples.
+Generates publication-ready sample descriptives for the analytic samples used in the paper.
 
-**Samples:**
-1. **daily_diary_full** - All participants with diary data (StartYear present)
-2. **neuro_full** - All participants with neuroscience data (C5PDATE_YR present)
-3. **daily_neuro_overlap** - Participants with both diary and neuroscience data
-4. **neuro_imaging** - Participants who completed neuroimaging (C5IC = 1)
-5. **imaging_daily_overlap** - Participants with both imaging and diary data
+**Samples reported:**
+- `daily_diary` — ≥1 of PA_score/NA_score nonmissing; age variable C2PAGE
+- `neuroscience_age` — C5PAGE nonmissing (broader than the Analysis 01 neuro subsample)
+- `diary_neuroscience_age_overlap` — diary AND C5PAGE; the exact Analysis 01 neuro subsample
+- `neuroscience_panas` — ≥1 of C5SPGP/C5SPGN nonmissing; defined from PANAS variables directly
+- `diary_panas_overlap` — diary AND PANAS
+- `fmri_conservative` (N = 127) — conservative fMRI, no diary; Analyses 03 and PANAS sensitivities
+- `fmri_fc_conservative` — conservative + FC, no diary; Analysis 05 and FC PANAS sensitivities
+- `diary_fmri_conservative` (N = 81) — diary + conservative; Analyses 02 and 06
+- `diary_fmri_fc_conservative` — diary + conservative + FC; Analyses 04 and 07
+- `reappraisal_complete_case` / `suppression_complete_case` (N = 80) — moderation complete cases
+- FC moderation versions reported only when M2ID membership differs from persistence versions
 
-**Descriptives Computed:**
-- **Age:** Mean ± SD, range (C2PAGE for diary-only, C5PAGE for neuroscience samples)
-- **Sex:** % Female
-- **Education:** Mean ± SD (1-12 scale)
-- **Ethnicity:** % Hispanic/Latino
-- **Race:** % White, Black, Native American, Asian, Pacific Islander, Other
+**Descriptives computed per sample:** N, N_age, age mean/SD/min/max; sex (n male, n female,
+n missing, % of nonmissing); race (n and % for each of six categories, n missing).
 
-**Input:**
-- `data/processed/midus_merged_clean.csv`
+Sex coding: 1 = male, 2 = female. Percentage denominators are nonmissing sex and nonmissing
+race respectively, named explicitly in column headers. Ethnicity is not reported.
+
+**Inputs:**
+- `data/processed/midus_merged_clean.csv` (behavioral samples)
+- `data/processed/midus_with_fmri.csv` via `load_master()` (fMRI samples)
 
 **Output:**
 - `results/tables/sample_descriptives.csv`
@@ -427,27 +499,33 @@ Generates publication-ready sample descriptives for 5 MIDUS analytic samples.
 
 **File:** `scripts/preprocessing/08_process_fmri_qc.py`
 
-Processes fMRI quality control data from manual inspection.
+Generates `fmri_qc_processed.csv` from three inputs, each serving a distinct role.
 
-**Input:**
-- `data/fMRI/task_fMRI_QC.xlsx` (manual QC ratings from visual inspection)
+**Inputs:**
+- `data/fMRI/task_fMRI_QC.xlsx` — manual visual QC ratings; uses only `subject`, `run1`,
+  `run2`, `run3` columns. Any FD columns present in this file are discarded immediately
+  after reading to prevent merging conflicts with the corrected FD source.
+- `data/fMRI/fd_summary.csv` — **authoritative quantitative FD** from corrected fMRIPrep
+  confounds (469 run records). The `flagged` column is ignored.
+- `data/fMRI/negative_persistence_cross_run.csv` — supplies `n_pairs` for each participant
+  (left-hemisphere row only) to define task completeness.
 
-**Processing Steps:**
-1. Load QC Excel file with run-level pass/fail ratings and framewise displacement
-2. Convert subject IDs to M2ID format
-3. Create binary QC flags:
-   - `run1_pass`, `run2_pass`, `run3_pass` - Individual run QC (1 = Pass, 0 = Fail/NaN)
-   - `all_runs_pass` - All 3 runs pass QC (1 = yes, 0 = no)
-   - `fd_pass` - Mean FD < 0.5 mm (1 = yes, 0 = no)
-   - `qc_conservative` - Both all_runs_pass AND fd_pass (conservative sample criterion)
-4. Generate summary statistics and exclusion breakdown
+**QC flags created:**
+- `run1_pass`, `run2_pass`, `run3_pass` — individual run ratings (1 = Pass)
+- `all_runs_pass` — all three runs pass (1 = yes)
+- `run1_fd`, `run2_fd`, `run3_fd`, `mean_fd` — from fd_summary.csv
+- `fd_pass` — mean FD < 0.5 mm (1 = yes; NaN counts as fail)
+- `n_pairs` — cross-run pairs from left-hemisphere persistence file
+- `task_complete` — n_pairs == 6 (1 = yes)
+- `qc_conservative` — all_runs_pass AND fd_pass AND task_complete
 
 **Output:**
-- `data/fMRI/fmri_qc_processed.csv` (processed QC flags, 1 row per participant)
+- `data/fMRI/fmri_qc_processed.csv` (1 row per participant)
 
-**Conservative Sample Criteria:**
-- All 3 functional runs pass visual QC
-- Mean framewise displacement < 0.5 mm across all runs
+**Conservative sample definition (all three required):**
+- All 3 runs pass visual QC
+- Mean FD < 0.5 mm (from corrected fMRIPrep confounds)
+- n_pairs == 6 (all six directional cross-run pairs available)
 
 ---
 
@@ -455,37 +533,31 @@ Processes fMRI quality control data from manual inspection.
 
 **File:** `scripts/preprocessing/09_merge_fmri_data.py`
 
-Merges fMRI-derived participant-level measures into the cleaned MIDUS master dataset.
+Merges corrected-STC fMRI summary measures into the cleaned MIDUS master dataset.
 
-**Inputs:**
+**Required inputs:**
 - `data/processed/midus_merged_clean.csv`
-- **fMRI data files (required):**
-  - `data/fMRI/betaSeries_neg_vs_neu_threat_safety.csv` - Beta-series connectivity (1 row/participant)
-  - `data/fMRI/negative_persistence_concat.csv` - Negative persistence concatenated (3 rows/participant)
-  - `data/fMRI/negative_persistence_cross_run.csv` - Negative persistence cross-run (3 rows/participant)
-  - `data/fMRI/positive_persistence_cross_run.csv` - Positive persistence cross-run (3 rows/participant)
-  - `data/fMRI/fd_summary.csv` - Framewise displacement (multiple rows/participant)
-  - `data/fMRI/fmri_qc_processed.csv` - Quality control flags (1 row/participant)
-- **fMRI data files (optional — merged when present):**
-  - `data/fMRI/vmPFC_persistence_wide.csv` - vmPFC cross-run persistence (from `run_cross_corr_vmPFC.py`)
-  - `data/fMRI/all_subjects_roi_activations.csv` - ROI activation means (from `extract_roi_activations.sh`)
+- `data/fMRI/all_subjects_betaSeries_LSS_all_conditions_M2ID.csv` — LSS beta-series
+  (used only to set `has_beta_series` flag; FC columns are loaded separately by
+  `analysis_utils.load_master(fc=True)` to avoid duplicate/suffixed columns)
+- `data/fMRI/negative_persistence_cross_run.csv` — cross-run amygdala persistence
+- `data/fMRI/positive_persistence_cross_run.csv`
+- `data/fMRI/fd_summary.csv` — corrected FD, aggregated across runs
+- `data/fMRI/fmri_qc_processed.csv` — QC flags including `qc_conservative`
 
-**Processing Steps:**
-1. Load cleaned master dataset
-2. Load and process fMRI files:
-   - Rename beta-series connectivity columns (e.g., `l_amyg-ant_vmPFC` → `conn_l_amyg_ant_vmPFC_neg_vs_neu`)
-   - Pivot hemisphere-wise persistence data from long to wide format
-   - Aggregate framewise displacement across runs
-3. Merge all fMRI data with master dataset using left joins on M2ID
-4. Optionally merge vmPFC persistence and ROI activations if files are present
-5. Merge QC flags from processed QC file
-6. Create availability flags:
-   - `has_beta_series` - Has beta-series connectivity data
-   - `has_neg_persistence` - Has negative persistence data
-   - `has_pos_persistence` - Has positive persistence data
-   - `has_fd_data` - Has framewise displacement data
-   - `has_imaging_data` - Has any imaging data
-7. No participant exclusions applied (QC flags used for sample definition in analyses)
+**Optional inputs (merged when present):**
+- `data/fMRI/vmPFC_persistence_wide.csv`
+- `data/fMRI/all_subjects_roi_activations.csv`
+- `data/fMRI/condition_fd_wide.csv`
+
+**Processing:**
+1. Load master dataset; all merges are left joins on M2ID; every merge is validated to
+   preserve row count
+2. Pivot persistence files from long (subject × hemisphere) to wide format; Fisher-z
+   transformation of persistence predictors is applied in analyses via `prepare_persistence_vars()`
+3. Aggregate FD across runs (mean, max, n_runs); the `flagged` column is ignored
+4. Create availability flags: `has_beta_series`, `has_neg_persistence`, `has_pos_persistence`,
+   `has_fd_data`, `has_imaging_data`
 
 **Output:**
 - `data/processed/midus_with_fmri.csv`
@@ -498,7 +570,7 @@ Merges fMRI-derived participant-level measures into the cleaned MIDUS master dat
 
 **File:** `scripts/analysis/00a_diary_panas_convergence.py`
 
-Tests convergent validity between daily diary affect (P2 wave) and PANAS affect measured at the neuroimaging visit (P5 wave). Establishes that the two instruments are capturing the same underlying constructs before using them interchangeably in sensitivity analyses.
+Tests convergent validity between daily diary affect (P2 wave) and PANAS affect measured at the neuroimaging visit (P5 wave). Establishes convergent validity between the two instruments. PANAS is subsequently used as a convergent-validity sensitivity outcome, not as an interchangeable replacement for diary affect.
 
 **Input:** `data/processed/midus_merged_clean.csv`
 
@@ -638,19 +710,27 @@ All analyses (02–07) share infrastructure via `scripts/analysis/analysis_utils
 - Two-tailed for all FC analyses (04, 05, 07) and all interaction terms
 
 **Samples:**
-- **Conservative (primary):** `qc_conservative == 1` — all 3 runs pass visual QC, mean FD < 0.5 mm, AND n_pairs = 6 (all cross-run pairs available)
-- **Full (archived):** `has_neg_persistence == 1` — any imaging data present
+- **Conservative (primary, N = 127 / N = 81):** `qc_conservative == 1` — all 3 runs pass
+  visual QC, mean FD < 0.5 mm (from `fd_summary.csv`), AND n_pairs = 6 (all six directional
+  cross-run pairs available). The conservative sample is the inferential sample. Full-sample
+  results are retained for transparency only and must not be used for substantive conclusions.
+- **Full (transparency only):** `has_neg_persistence == 1` — any imaging data present,
+  includes participants with excessive motion
 
-All analyses report conservative sample results as primary; full sample results are archived in `full_sample/` subdirectories.
+All analyses report conservative sample results as primary; full sample results are archived in
+`full_sample/` subdirectories.
 
 **Sensitivity analyses** (run within each main script, results saved to subdirectories):
-- *Right hemisphere:* right amygdala persistence (`neg_persist_crossrun_mean_z_R`) or right amygdala FC seed — tests laterality specificity
-- *vmPFC persistence:* anterior and posterior vmPFC cross-run persistence — tests ROI specificity
-- *Other persistence operationalizations:* positive persistence (`pos_persist_crossrun_mean_z_L`), concatenated persistence (`neg_persist_concat_z_L`)
-- *PANAS:* PANAS positive (`C5SPGP`) and negative affect (`C5SPGN`, `C5SPGN_log`) in place of daily diary — same construct, different instrument
-- *FC condition specificity:* neutral and positive condition FC; neg-vs-neu contrast vs. raw negative condition
-- *ROI activations:* mean amygdala and vmPFC beta per condition as alternative to persistence — task validation
-- *Motion control:* mean FD (all runs) and condition-level FD added as covariates (script 00e)
+- *Right hemisphere:* right amygdala persistence (`neg_persist_crossrun_mean_z_R`) or right amygdala FC seed
+- *vmPFC persistence:* Fisher-z transformed anterior and posterior vmPFC cross-run persistence
+- *Other persistence operationalizations:* positive persistence (`pos_persist_crossrun_mean_z_L`)
+- *PANAS:* `C5SPGP`, `C5SPGN`, `C5SPGN_log` in the conservative fMRI sample (N = 127) —
+  convergent-validity sensitivity using a different measurement instrument; reported as
+  sensitivity only and not as confirmatory evidence for the diary-affect findings
+- *FC condition specificity:* raw negative condition FC; positive-vs-neutral contrast
+- *ROI activations:* mean amygdala and vmPFC beta per condition as alternative to persistence
+- *Motion control:* mean FD (all runs) and condition-level FD added as covariates (script 00e);
+  Part 2 runs OLS and MLM only (correlations cannot adjust for covariates)
 
 ---
 
@@ -679,10 +759,9 @@ Tests whether left amygdala negative persistence is associated with daily life a
 - `full_sample/` — same outputs for full sample
 - `sensitivity_right_hemisphere/` — right amygdala persistence
 - `sensitivity_vmpfc_persistence/` — vmPFC persistence (anterior and posterior)
-- `sensitivity_other_persistence/` — positive and concatenated persistence
+- `sensitivity_other_persistence/` — positive persistence (`pos_persist_crossrun_mean_z_L`)
 - `sensitivity_panas/` — PANAS outcomes
 - `sensitivity_roi_activations/` — mean ROI betas as alternative to persistence
-- `sensitivity_log_transforms/` — log-transformed outcomes
 
 ---
 
@@ -740,8 +819,6 @@ Tests whether amygdala–vmPFC functional connectivity (negative-vs-neutral diff
 - `full_sample/` — same outputs for full sample
 - `sensitivity_right_amygdala/` — right amygdala seed
 - `sensitivity_neg_condition/` — raw negative condition FC (not contrast)
-- `sensitivity_neg_vs_neu/` — neg-vs-neu contrast (alternative operationalization)
-- `sensitivity_other_conditions/` — neutral and positive condition FC
 - `sensitivity_pos_vs_neu/` — positive-vs-neutral contrast
 - `sensitivity_panas/` — PANAS outcomes
 
@@ -854,7 +931,7 @@ Tests whether emotion regulation strategy use moderates the FC–affect associat
 
 ### Sensitivity Variants
 
-Each main analysis (01–07) has a paired sensitivity script (`01_sensitivity.py` through `07_sensitivity.py`) that tests robustness of primary findings using alternative operationalizations and instruments (e.g., log-transformed outcomes, PANAS in place of daily diary, concatenated persistence).
+Sensitivity coverage varies by analysis and should be read from the current result subdirectories under `results/tables/`. Not every analysis has a paired sensitivity script, and not every paired script has been regenerated after the corrected-STC rerun. In particular, Analysis 05 sensitivities were not regenerated because the corrected primary Analysis 05 (FC → persistence) was entirely null.
 
 MLM is integrated directly into the main scripts (01–07) rather than in separate sensitivity scripts. Each main script runs correlations, OLS, and MLM together and saves all three output tables. The MLM replaces OLS twin-pair dummies with a random intercept for family, using REML estimation with sequential optimizer fallback.
 
@@ -905,7 +982,11 @@ Simple slopes plot for the significant MLM interaction: suppression × posterior
 
 **File:** `scripts/visualization/simple_slopes_07_reappraisal_antFC.py`
 
-Simple slopes plot for the pre-registered reappraisal × anterior vmPFC FC → PA interaction. Uses OLS for slope estimation. Shows positive FC–PA slope at low reappraisal attenuating at high reappraisal, consistent with the hypothesis that model-free amygdala–vmPFC coupling is less relevant for individuals who rely on explicit reappraisal.
+**Note:** The reappraisal × anterior vmPFC FC interaction did not reproduce in the corrected
+conservative analysis. This script and its output require review before use; the figure and
+related manuscript prose must be updated or removed based on the corrected moderation results.
+If retained, simple slopes must be calculated from the exact reported MLM (same sample,
+covariates, and family random-intercept structure), not a separate OLS model.
 
 **Output:** `results/figures/simple_slopes_07_reappraisal_antFC.png`
 
@@ -915,7 +996,8 @@ Simple slopes plot for the pre-registered reappraisal × anterior vmPFC FC → P
 
 **File:** `scripts/visualization/suppression_vmPFC_moderation_residualized.py`
 
-Residualized median-split scatterplot for the suppression × posterior vmPFC FC interaction predicting PANAS negative affect. Covariates partialled from FC, suppression, and outcome before plotting.
+Residualized median-split scatterplot for the suppression × posterior vmPFC FC interaction.
+Review whether the underlying interaction reproduces in the corrected results before finalizing.
 
 **Output:** `results/figures/suppression_vmPFC_moderation_residualized.png`
 
@@ -924,8 +1006,15 @@ Residualized median-split scatterplot for the suppression × posterior vmPFC FC 
 ### Supplementary Tables
 
 **Files:**
-- `scripts/visualization/supplementary_tables.py` — reads primary analysis results (01–05) and writes a combined CSV with correlation, OLS, and MLM results side by side
-- `scripts/visualization/supplementary_tables_docx.py` — formats the CSV into a publication-ready Word table (landscape, styled headers, significant p-values bolded)
+- `scripts/visualization/supplementary_tables.py` — reads primary analysis results (01–05) and
+  writes a combined CSV with correlation, OLS, and MLM results side by side. The predictor ×
+  outcome index is the **union** across all three method files. Each method contributes its own
+  N column (`N correlation`, `N OLS`, `N MLM`) read from its own result file; Ns are never
+  copied across methods. A missing N and blank statistics indicate that method has no row for
+  that pair.
+- `scripts/visualization/supplementary_tables_docx.py` — formats the CSV into a
+  publication-ready Word table (landscape, styled headers, all three N columns right-aligned,
+  significant p-values bolded)
 
 **Outputs:**
 - `results/tables/supplementary/supp_all_methods.csv`
@@ -943,9 +1032,14 @@ Generates individual transparent PNG boxes for the participant flowchart, one pe
 
 ## fMRI Processing Pipeline
 
-These scripts were run on the Stanford Sherlock HPC cluster. Most are SLURM array jobs that process subjects in parallel. The pipeline order is:
+These scripts were run on the Stanford Sherlock HPC cluster. Most are SLURM array jobs.
+The corrected M3_stc_rerun pipeline applies a **1-based FSL slice-timing correction**
+via the manual reorientation workflow (fixOrientation → FSL STC → orientation restore)
+before fMRIPrep, which runs with `--ignore slicetiming`.
 
-1. Fix orientation → 2. Slice timing correction → 3. FreeSurfer recon-all → 4. fMRIPrep → 5. Motion QC → 6. GLM → 7. Feature extraction (amygdala, vmPFC, ROI activations) → 8. Persistence computation → 9. Beta-series connectivity (LSS)
+Pipeline order:
+
+1. Fix orientation → 2. Slice timing correction (1-based) → 3. FreeSurfer recon-all → 4. fMRIPrep (`--ignore slicetiming`) → 5. Motion QC from confounds → 6. GLM → 7. Feature extraction (amygdala, vmPFC, ROI activations) → 8. Persistence computation → 9. Beta-series connectivity (LSS)
 
 ### fMRI Preprocessing
 
@@ -1025,6 +1119,14 @@ Original LSA scripts are preserved in `archive/` for reference. LSA beta-series 
 
 ## Citation and Acknowledgment
 
-Data are provided by the Midlife in the United States (MIDUS) study. Users must comply with all MIDUS data use agreements and citation requirements. Original MIDUS data are not included in this repository; access may be requested at [midus.wisc.edu](https://midus.wisc.edu). Data files included in this repository contain synthetic dummy data generated to match the structure and format of the original dataset for reproducibility purposes only.
+Data are provided by the Midlife in the United States (MIDUS) study. Users must comply with all
+MIDUS data use agreements and citation requirements. Original MIDUS data are not included in
+this repository; access may be requested at [midus.wisc.edu](https://midus.wisc.edu).
 
-Script development and initial drafts of the Methods and Results sections were assisted by Claude Code (Anthropic), with all content verified and edited by the authors.
+Deidentified fMRI summary CSVs under `data/fMRI/`, statistical result tables under
+`results/tables/`, and publication figures under `results/figures/` are versioned in this
+repository. Raw behavioral data (`data/raw/`) and processed individual-level data
+(`data/processed/`) are not tracked by git and must be regenerated from authorized MIDUS data.
+
+Script development and initial drafts of the Methods and Results sections were assisted by
+Claude Code (Anthropic), with all content verified and edited by the authors.

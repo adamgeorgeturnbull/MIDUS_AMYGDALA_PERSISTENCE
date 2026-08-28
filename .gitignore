@@ -6,3 +6,12 @@ __pycache__/
 
 # Python virtual environment
 MIDUS/
+
+# Local corrected-STC audit and archival material
+~$*.docx
+/data/fMRI/bad_stc_0based_slice_order/
+/data/fMRI/corrected_stc_import/
+/results/tables/bad_stc_0based_slice_order/
+/results/tables/pre_*_fix/
+/logs/01_harmonize_ids_log_20260626_103658.txt
+/scripts/diagnostics/check_missing_imaging.py
