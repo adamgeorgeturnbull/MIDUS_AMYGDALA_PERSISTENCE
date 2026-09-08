@@ -5,7 +5,9 @@ slice-timing reanalysis, the provenance of all canonical fMRI outputs, QC proced
 construction, and the run order for reproducing the statistical results. It replaces the prior
 code-standardization document.
 
-MR1 validation is a separate subsequent phase and is not described here.
+MR1 validation was completed as a separate pipeline after the corrected M3 freeze and is
+documented under `MR1_validation/`. Both pipelines are computationally frozen for manuscript
+preparation as of September 8, 2026.
 
 ---
 
@@ -291,10 +293,12 @@ python scripts/preprocessing/participant_flowchart.py
 
 ---
 
-## 12. Remaining Reporting-Only Work
+## 12. Remaining Manuscript-Preparation Work
 
 The following items are manuscript and figure changes; no further computational correction
-is required:
+or analysis rerun is required for the frozen scope. Corrected Methods and Results prose has
+been drafted and independently checked against the aggregate CSV outputs. It still requires
+integration into the Word manuscript and manual author review.
 
 - Replace N = 128 with N = 127 (conservative fMRI) and N = 80 with N = 81 (diary+fMRI)
   throughout the manuscript
@@ -304,14 +308,16 @@ is required:
 - Revise Figure 1 persistence definition (negative-image → neutral-face cross-run;
   condition-level GLM betas, not trial-level; averaged in Fisher-z space)
 - Add LSS event duration (6 s = 4-s image + 2-s fixation) to Methods
-- Correct task-activation language: left-amygdala neutral activation is significant but at a
-  lower threshold than the other conditions; read corrected values from
+- Correct task-activation language: left-amygdala neutral activation does not differ
+  significantly from zero (*p* = .070), whereas negative and positive activation do; read
+  corrected values from
   `results/tables/00b_task_conditions/roi_one_sample.csv`
 - Update moderation prose: the reappraisal × anterior FC interaction did not reproduce in
   the corrected conservative analysis; treat moderation as exploratory
 - Update simple slopes if interaction findings change
 - Temper "independent" and "specific" language per independence-testing requirements
 - Add clarification that residualized scatterplots are descriptive; inference from MLM
-- Complete and archive the voxel-size audit before finalizing Methods
+- If normalized/resampled voxel dimensions are retained in the manuscript, verify them against
+  the analyzed images before submission; the replacement Methods draft does not make that claim
 
 See `PUBLICATION_REQUIRED_CHANGES.md` for the full item-by-item tracking record.

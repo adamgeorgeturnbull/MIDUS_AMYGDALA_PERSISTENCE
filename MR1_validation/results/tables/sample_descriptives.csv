@@ -1,0 +1,10 @@
+sample,analyses,age_variable,N,N_age,age_mean,age_SD,age_min,age_max,N_sex_nonmissing,n_male,pct_male_of_nonmissing_sex,n_female,pct_female_of_nonmissing_sex,n_sex_missing,N_race_nonmissing,n_race_missing,n_white,pct_white_of_nonmissing_race,n_black,pct_black_of_nonmissing_race,n_native_american,pct_native_american_of_nonmissing_race,n_asian,pct_asian_of_nonmissing_race,n_pacific_islander,pct_pacific_islander_of_nonmissing_race,n_other,pct_other_of_nonmissing_race
+daily_diary,diary affect availability (PA_score / NA_score),RA2PAGE,779,777,49.3,12.7,27.0,77.0,58,27,46.6,31,53.4,721,775,4,657,84.8,49,6.3,11,1.4,7,0.9,0,0.0,51,6.6
+neuroscience_age,neuroscience-visit age availability (broader than diary overlap),RA5PAGE,138,138,48.8,11.7,26.0,76.0,138,63,45.7,75,54.3,0,138,0,85,61.6,42,30.4,2,1.4,1,0.7,0,0.0,8,5.8
+diary_neuroscience_age_overlap,diary affect AND neuroscience-visit age,RA5PAGE,58,58,46.6,9.8,28.0,70.0,58,27,46.6,31,53.4,0,58,0,52,89.7,1,1.7,0,0.0,0,0.0,0,0.0,5,8.6
+neuroscience_panas,PANAS availability (RA5SPGP / RA5SPGN),RA5PAGE,137,137,48.7,11.8,26.0,76.0,137,62,45.3,75,54.7,0,137,0,85,62.0,41,29.9,2,1.5,1,0.7,0,0.0,8,5.8
+diary_panas_overlap,diary affect AND PANAS availability,RA5PAGE,58,58,46.6,9.8,28.0,70.0,58,27,46.6,31,53.4,0,58,0,52,89.7,1,1.7,0,0.0,0,0.0,0,0.0,5,8.6
+fmri_conservative,03 age → persistence; 02 PANAS sensitivity samples,RA5PAGE,115,115,48.4,11.9,26.0,76.0,115,53,46.1,62,53.9,0,115,0,74,64.3,33,28.7,2,1.7,1,0.9,0,0.0,5,4.3
+fmri_fc_conservative,05 FC → persistence; 04 PANAS sensitivity samples,RA5PAGE,115,115,48.4,11.9,26.0,76.0,115,53,46.1,62,53.9,0,115,0,74,64.3,33,28.7,2,1.7,1,0.9,0,0.0,5,4.3
+diary_fmri_conservative,02 persistence → affect,RA5PAGE,48,48,46.9,9.5,29.0,70.0,48,22,45.8,26,54.2,0,48,0,45,93.8,0,0.0,0,0.0,0,0.0,0,0.0,3,6.2
+diary_fmri_fc_conservative,04 FC → affect,RA5PAGE,48,48,46.9,9.5,29.0,70.0,48,22,45.8,26,54.2,0,48,0,45,93.8,0,0.0,0,0.0,0,0.0,0,0.0,3,6.2

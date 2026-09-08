@@ -1,0 +1,39 @@
+MODEL SPECIFICATION
+============================================================
+Analysis  : 04 FC-R (neg−neu) → Affect  [conservative, two-tailed]
+N         : 48
+Generated : 2026-09-07
+
+VARIABLES
+------------------------------------------------------------
+Predictor(s):
+  r_amyg-ant_vmPFC_neg_vs_neu                   right amygdala – anterior vmPFC FC, negative > neutral contrast (Fisher z)
+  r_amyg-post_vmPFC_neg_vs_neu                  right amygdala – posterior vmPFC FC, negative > neutral contrast (Fisher z)
+Outcome(s):
+  PA_score                                      positive affect (daily diary composite, mean across days)
+  NA_score                                      negative affect (daily diary composite, mean across days)
+
+STATISTICAL MODELS
+------------------------------------------------------------
+1. Pearson correlation
+   Zero-order association; no covariates.
+
+2. OLS regression (participant-level)
+   Formula : outcome ~ predictor + covariates
+   Note    : the available MR1 P5 analytic inputs contain no usable
+             family, household, sibling, twin-pair, or other grouping
+             identifier; participant-level OLS is therefore used.
+   Covariates:
+     - RA5PAGE: age at neuroscience visit (P5)
+     - sex: biological sex (1=Male, 2=Female)
+     - race_2: race dummy (ref = White): category 2
+     - race_3: race dummy (ref = White): category 3
+     - race_4: race dummy (ref = White): category 4
+     - race_5: race dummy (ref = White): category 5
+     - race_6: race dummy (ref = White): category 6
+     - time_P2_P5: time between diary (P2) and neuroscience (P5) waves (months)
+     - n_days_complete: number of completed daily diary days
+
+INFERENCE
+------------------------------------------------------------
+Tests: two-tailed

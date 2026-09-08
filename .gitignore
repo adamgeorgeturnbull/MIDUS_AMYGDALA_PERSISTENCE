@@ -15,3 +15,15 @@ MIDUS/
 /results/tables/pre_*_fix/
 /logs/01_harmonize_ids_log_20260626_103658.txt
 /scripts/diagnostics/check_missing_imaging.py
+
+# MR1 protected and local-only files
+MR1_validation/data/raw/*
+MR1_validation/data/processed/*
+MR1_validation/data/fMRI/*
+MR1_validation/logs/*
+MR1_validation/mr1_state_report.txt
+MR1_validation/results/tables/pre_main_rerun_*/
+MR1_validation/.claude/
+MR1_validation/**/__pycache__/
+MR1_validation/**/*.pyc
+MR1_validation/**/.DS_Store

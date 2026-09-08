@@ -1,0 +1,3 @@
+predictor,outcome,n,r,p,p_two_tailed
+neg_persist_crossrun_mean_z_R,PA_score,48,-0.2597578311385401,0.0745925708504914,0.0745925708504914
+neg_persist_crossrun_mean_z_R,NA_score,48,0.17446316393744474,0.23563157796226822,0.23563157796226822

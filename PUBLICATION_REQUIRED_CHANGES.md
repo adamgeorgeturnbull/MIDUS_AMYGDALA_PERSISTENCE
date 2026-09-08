@@ -4,10 +4,17 @@ This document tracks every factual manuscript and reporting change identified in
 review and corrected-STC reanalysis. For each item, the status is one of:
 
 - **COMPLETED** — computational correction or verification finished; result is in the repository
+- **DRAFTED** — corrected manuscript prose exists and has been checked against aggregate outputs,
+  but has not yet completed Word integration and author review
 - **PENDING** — manuscript/figure/reporting edit still required
-- **SEPARATE PHASE** — MR1 validation (independent cohort; separate subsequent phase, not part of this document)
 
-Ground-truth manuscript: `MAP_manuscript_final.docx`
+**Current phase (September 8, 2026): manuscript preparation.** The corrected M3 analysis and
+targeted MR1 replication are computationally frozen. The replacement Methods and Results in
+`MANUSCRIPT_METHODS_RESULTS_DRAFT.md` passed an independent numerical audit against the final
+aggregate outputs. Remaining unchecked items are document integration, figures/captions, and
+manual author review rather than new statistical analyses.
+
+Authoritative working manuscript: `MAP_manuscript.docx`
 
 ---
 
@@ -34,22 +41,22 @@ Downstream regeneration completed: `midus_merged_clean.csv`, `midus_with_fmri.cs
 `panas_skew_kurtosis.csv`, and all PANAS-dependent analyses (00a, 00d, 01, 02, 04, 06, 07,
 and their sensitivity variants).
 
-**Remaining manuscript update — PENDING:**
+**Manuscript update — DRAFTED; pending Word integration:**
 - Compare corrected vs. prior PANAS sample sizes, coefficients, confidence intervals, and p-values
 - Update every affected manuscript claim; do not assume prior conclusions remain valid
 
-### 1.3 Race wording — PENDING
+### 1.3 Race wording — DRAFTED; pending Word integration
 
 Replace all manuscript references to "race/ethnicity covariates" or "race/ethnicity" with
 **"race"** or **"race dummy variables (reference = White)"**. Do not call the race categories
 themselves "race/ethnicity."
 
-### 1.4 Sex coding — PENDING
+### 1.4 Sex coding — DRAFTED; pending Word integration
 
 Replace "0 = male, 1 = female" in the manuscript with **"1 = male, 2 = female"** (original MIDUS
 coding). No model rerun is required; the sex variable was used as intended.
 
-### 1.5 Final fMRI sample demographics — PENDING
+### 1.5 Final fMRI sample demographics — DRAFTED; pending Word integration
 
 Replace the stale N = 128 demographics with the correct post-rerun values:
 
@@ -71,7 +78,7 @@ Replace the stale N = 128 demographics with the correct post-rerun values:
 
 Full descriptives: `results/tables/sample_descriptives.csv`
 
-### 1.6 PANAS sample wording — PENDING
+### 1.6 PANAS sample wording — DRAFTED; pending Word integration
 
 PANAS sensitivity analyses use the **full conservative fMRI sample (N = 127)**, irrespective of
 diary availability. Replace any wording like "PANAS data only (no diary)" with:
@@ -128,7 +135,7 @@ Revise Figure 1 and its caption to depict persistence as:
 Revise the FC caption to state that beta-series correlations were calculated
 **separately by condition within each run**.
 
-### 2.6 LSS event duration — PENDING
+### 2.6 LSS event duration — DRAFTED; pending Word integration
 
 Add to Methods:
 
@@ -136,22 +143,23 @@ Add to Methods:
 > presentation and the following 2-s fixation interval; the subsequent 0.5-s face was not
 > included."
 
-### 2.7 Task-activation Results correction — PENDING
+### 2.7 Task-activation Results correction — DRAFTED; pending Word integration
 
 Read corrected condition-by-condition values from
 `results/tables/00b_task_conditions/roi_one_sample.csv`.
 
-The key qualitative correction: left-amygdala neutral activation is significant but at a
-notably lower threshold than the other conditions. The manuscript must not claim that all
-amygdala conditions reached the same significance level. Use exact values from the CSV when
-writing the revised Results sentence.
+The key qualitative correction: left-amygdala neutral activation does not differ significantly
+from zero (*p* = .070), whereas negative and positive activation do. The manuscript must not
+claim that all amygdala conditions were significant. Use exact values from the CSV when writing
+the revised Results sentence.
 
-### 2.8 Voxel-size audit — PENDING
+### 2.8 Voxel-size audit — CONDITIONAL PRE-SUBMISSION CHECK
 
-A systematic voxel-size audit of the corrected preprocessed BOLD files has not been
-documented in this repository. The voxel dimensions reported in the manuscript should
-be verified against the actual preprocessed images (e.g., via `fslhd` or `nibabel`) before
-submission. The audit record should be archived.
+A systematic voxel-size audit of the corrected preprocessed BOLD files has not been documented
+in this repository. The replacement Methods draft does not report normalized/resampled voxel
+dimensions. If such a statement is retained or reintroduced during manuscript integration, it
+must be verified against the analyzed images (e.g., via `fslhd` or `nibabel`) before submission
+and the audit record archived. This does not require a model rerun.
 
 ### 2.9 vmPFC Fisher-z correction — COMPLETED
 
@@ -164,7 +172,7 @@ Sensitivity analyses using vmPFC persistence (`02_sensitivity.py`, `03_sensitivi
 
 ## 3. Brain–Behavior Results and Discussion
 
-### 3.1 Analysis 02 — Persistence → Daily Affect (N = 81) — PENDING manuscript update
+### 3.1 Analysis 02 — Persistence → Daily Affect (N = 81) — DRAFTED; pending Word integration
 
 Read exact estimates from `results/tables/02_persistence_affect/` (`mlm.csv`,
 `regressions.csv`, `correlations.csv`).
@@ -175,13 +183,13 @@ Key qualitative corrections:
   by its own method. Do not present all three as equally primary; the MLM is the primary
   adjusted model.
 
-### 3.2 Analysis 03 — Age → Persistence (N = 127) — PENDING manuscript update
+### 3.2 Analysis 03 — Age → Persistence (N = 127) — DRAFTED; pending Word integration
 
 Read exact estimates from `results/tables/03_persistence_age/`. Older age predicts lower left
 negative persistence in the one-tailed correlation and MLM. OLS is not significant.
 Tests are one-tailed (prespecified direction: older age → lower persistence).
 
-### 3.3 Analysis 04 — FC → Daily Affect (N = 81) — PENDING manuscript update
+### 3.3 Analysis 04 — FC → Daily Affect (N = 81) — DRAFTED; pending Word integration
 
 Read exact estimates from `results/tables/04_fc_affect/` (`mlm.csv`, `regressions.csv`,
 `correlations.csv`).
@@ -194,13 +202,13 @@ Key qualitative corrections:
 - Report method-specific evidence accurately; do not conflate OLS or correlation results
   with the MLM, and do not conflate the raw-NA and log-NA findings.
 
-### 3.4 Analysis 05 — FC → Persistence (N = 127) — PENDING manuscript update
+### 3.4 Analysis 05 — FC → Persistence (N = 127) — DRAFTED; pending Word integration
 
 No significant results in correlation, OLS, or MLM for either anterior or posterior FC
 predicting left amygdala persistence. Read exact null results from
 `results/tables/05_fc_persistence/`.
 
-### 3.5 Moderation Analyses 06 and 07 — PENDING manuscript update
+### 3.5 Moderation Analyses 06 and 07 — DRAFTED; pending Word integration
 
 Treat all moderation findings as **exploratory**. Key correction:
 
@@ -228,7 +236,7 @@ If any FC moderation interaction survives to merit reporting:
 If the interaction does not reproduce, remove or substantially revise the simple slopes figure
 and all related manuscript prose.
 
-### 3.7 Independence and specificity claims — PENDING
+### 3.7 Independence and specificity claims — DRAFTED; pending Word integration
 
 - Remove "independently of persistence" unless a joint model containing both FC and persistence
   is reported
@@ -237,7 +245,7 @@ and all related manuscript prose.
   > corresponding right-hemisphere and positive-condition sensitivity analyses were not significant"
 - Do not interpret null sensitivity results as evidence of specificity
 
-### 3.8 PANAS sensitivity wording — PENDING
+### 3.8 PANAS sensitivity wording — DRAFTED; pending Word integration
 
 PANAS analyses are **sensitivity analyses** (same construct, different instrument). Do not
 describe them as replacements for, or confirmations of, diary-outcome effects. Use language such
@@ -300,11 +308,14 @@ exact `get_samples()` calls in each analysis script. Denominators are explicit i
 
 ---
 
-## 6. MR1 Validation — SEPARATE PHASE
+## 6. MR1 Validation — COMPLETED
 
-MR1 is a separate subsequent phase and is not part of the frozen M3 computational reproduction
-described in this document. Its pipeline and results will be added to version control after
-the M3 freeze is complete.
+The targeted MR1 pipeline, four direct analyses, and all predefined sensitivity families are
+complete. The final MR1 interface uses correlations and participant-level OLS only; active result
+directories contain no stale MLM files. None of the four direct tests reached the prespecified
+significance threshold, so the conditional MR1 motion follow-up was not required. The synthetic
+test suite passes all 118 tests. See `MR1_validation/` for the frozen plan, code, tests, and
+aggregate results.
 
 ---
 
@@ -326,7 +337,10 @@ the M3 freeze is complete.
 - [x] Confirm diary date missing codes are correctly recoded (98, 9998) — no change needed
 - [x] Confirm primary FC sample uses neg-vs-neu contrast — no mismatch
 
-### Manuscript and reporting changes — PENDING
+### Manuscript and reporting changes — DRAFTED; integration and author review pending
+
+- [x] Draft corrected Methods and Results from final M3 and MR1 aggregate outputs
+- [x] Independently audit all traceable numerical claims against the aggregate CSVs
 
 - [ ] Replace N = 128 with N = 127, N = 80 with N = 81 throughout
 - [ ] Update conservative-sample demographics table (age, sex, race) to N = 127 values
@@ -335,8 +349,8 @@ the M3 freeze is complete.
 - [ ] Update PANAS sample wording (not "no diary"; instead N = 127 irrespective of diary)
 - [ ] Revise Figure 1 persistence definition and FC caption
 - [ ] Add 6-s LSS event duration to Methods
-- [ ] Correct task-activation language: left-amygdala neutral activation is significant at a
-      lower threshold than the other conditions; use values from
+- [ ] Correct task-activation language: left-amygdala neutral activation is not significant
+      (*p* = .070), whereas negative and positive activation are; use values from
       `results/tables/00b_task_conditions/roi_one_sample.csv`
 - [ ] Update moderation prose: reappraisal × anterior FC interaction did not reproduce;
       treat all moderation as exploratory
@@ -348,11 +362,11 @@ the M3 freeze is complete.
 - [ ] Some Part 1 FC MLM models failed all optimizers — report as estimation failures
 - [ ] Final consistency audit of all manuscript N values, statistics, and figure labels
 
-### Separate subsequent phase
+### MR1 targeted replication
 
-- [ ] MR1 validation (separate subsequent phase; pipeline to be added to version control after M3 freeze)
+- [x] Complete and version the MR1 pipeline, direct analyses, predefined sensitivities, and tests
 
 ### Pending verification
 
-- [ ] Voxel-size audit — document pixdim from analyzed BOLD files; archive evidence before
-      finalizing Methods
+- [ ] If normalized/resampled voxel dimensions are retained in the integrated manuscript,
+      document pixdim from analyzed BOLD files before submission

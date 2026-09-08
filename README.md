@@ -4,6 +4,13 @@ This repository contains analysis code for a preregistered study using the MIDUS
 
 The study combines daily diary data, survey-based demographics, and neuroimaging measures to test confirmatory hypotheses derived from prior work (e.g., Puccetti et al., 2021), alongside preregistered exploratory analyses of task-based functional connectivity.
 
+**Project status (September 8, 2026): computationally frozen for manuscript preparation.**
+The corrected M3 pipeline and targeted MR1 replication pipeline are complete, their final
+aggregate outputs have been verified, and all 118 MR1 synthetic tests pass. No additional
+computational analysis is required for the currently defined manuscript scope. Remaining work
+is manuscript integration, author review, and figure/caption revision; see
+`MANUSCRIPT_PREPARATION_FREEZE.md` for the exact freeze boundary.
+
 **Preregistration** (updated Oct 15, 2025): OSF
 
 ---
@@ -33,7 +40,11 @@ under `results/figures/` are generated from scripts.
 
 ## MR1 Validation
 
-MR1 validation is a separate subsequent phase and is not part of the frozen corrected-M3 reproduction. Its pipeline and results will be added to version control in a later commit.
+The targeted MIDUS Refresher 1 (MR1) replication is complete and versioned under
+`MR1_validation/`. The final primary analyses use participant-level OLS, with conservative
+QC-restricted results as primary and unrestricted results retained as secondary archives.
+None of the four direct MR1 tests reached the prespecified significance threshold. See
+`MR1_validation/MR1_REPLICATION_PLAN.md` and `MR1_validation/README.md`.
 
 ---
 
@@ -706,8 +717,10 @@ All analyses (02–07) share infrastructure via `scripts/analysis/analysis_utils
 - Affect outcomes: daily diary PA (`PA_score`), NA (`NA_score`), and log-transformed NA (`NA_score_log`)
 
 **Directional p-values:**
-- One-tailed for persistence–affect (scripts 02, 06) and persistence–age (script 03)
-- Two-tailed for all FC analyses (04, 05, 07) and all interaction terms
+- One-tailed for prespecified directional main effects, including age–affect,
+  persistence–affect, persistence–age, FC–affect, and FC–persistence
+- Two-tailed for exploratory moderation interactions and nondirectional hemisphere,
+  condition, or other specificity analyses unless an explicit directional prediction was set
 
 **Samples:**
 - **Conservative (primary, N = 127 / N = 81):** `qc_conservative == 1` — all 3 runs pass

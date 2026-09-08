@@ -1,0 +1,38 @@
+MODEL SPECIFICATION
+============================================================
+Analysis  : 03 Age → Persistence  [full sample archive, one-tailed]
+N         : 123
+Generated : 2026-09-07
+
+VARIABLES
+------------------------------------------------------------
+Predictor(s):
+  RA5PAGE                                       age at neuroscience visit (P5)
+Outcome(s):
+  neg_persist_crossrun_mean_z_L                 left amygdala negative-affect persistence (cross-run spatial correlation, Fisher z)
+
+STATISTICAL MODELS
+------------------------------------------------------------
+1. Pearson correlation
+   Zero-order association; no covariates.
+
+2. OLS regression (participant-level)
+   Formula : outcome ~ predictor + covariates
+   Note    : the available MR1 P5 analytic inputs contain no usable
+             family, household, sibling, twin-pair, or other grouping
+             identifier; participant-level OLS is therefore used.
+   Covariates:
+     - sex: biological sex (1=Male, 2=Female)
+     - race_2: race dummy (ref = White): category 2
+     - race_3: race dummy (ref = White): category 3
+     - race_4: race dummy (ref = White): category 4
+     - race_5: race dummy (ref = White): category 5
+     - race_6: race dummy (ref = White): category 6
+
+INFERENCE
+------------------------------------------------------------
+Tests: one-tailed (pre-registered directional hypotheses)
+  p_one = p_two / 2        if effect is in predicted direction
+  p_one = 1 - p_two / 2    if effect is in opposite direction
+  Predicted directions:
+    neg_persist_crossrun_mean_z_L: negative (left amygdala negative-affect persistence (cross-run spatial correlation, Fisher z))
