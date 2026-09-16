@@ -1,0 +1,385 @@
+<?xml version="1.0" encoding="utf-8" standalone="no"?>
+<!DOCTYPE svg PUBLIC "-//W3C//DTD SVG 1.1//EN"
+  "http://www.w3.org/Graphics/SVG/1.1/DTD/svg11.dtd">
+<svg xmlns:xlink="http://www.w3.org/1999/xlink" width="522pt" height="349.92381pt" viewBox="0 0 522 349.92381" xmlns="http://www.w3.org/2000/svg" version="1.1">
+ <metadata>
+  <rdf:RDF xmlns:dc="http://purl.org/dc/elements/1.1/" xmlns:cc="http://creativecommons.org/ns#" xmlns:rdf="http://www.w3.org/1999/02/22-rdf-syntax-ns#">
+   <cc:Work>
+    <dc:type rdf:resource="http://purl.org/dc/dcmitype/StillImage"/>
+    <dc:date>2026-09-16T12:48:45.482197</dc:date>
+    <dc:format>image/svg+xml</dc:format>
+    <dc:creator>
+     <cc:Agent>
+      <dc:title>Matplotlib v3.9.4, https://matplotlib.org/</dc:title>
+     </cc:Agent>
+    </dc:creator>
+   </cc:Work>
+  </rdf:RDF>
+ </metadata>
+ <defs>
+  <style type="text/css">*{stroke-linejoin: round; stroke-linecap: butt}</style>
+ </defs>
+ <g id="figure_1">
+  <g id="patch_1">
+   <path d="M 0 349.92381 
+L 522 349.92381 
+L 522 0 
+L 0 0 
+z
+" style="fill: #ffffff"/>
+  </g>
+  <g id="axes_1">
+   <g id="patch_2">
+    <path d="M 390.195 74.206895 
+Q 390.195 91.563395 390.195 107.913665 
+" clip-path="url(#pa3dffe3578)" style="fill: none; stroke: #4a4a4a; stroke-width: 0.9; stroke-linecap: round"/>
+    <path d="M 391.595 105.113665 
+L 390.195 107.913665 
+L 388.795 105.113665 
+z
+" clip-path="url(#pa3dffe3578)" style="fill: #4a4a4a; stroke: #4a4a4a; stroke-width: 0.9; stroke-linecap: round"/>
+   </g>
+   <g id="line2d_1">
+    <path d="M 142.245 74.206895 
+L 142.245 108.919895 
+" clip-path="url(#pa3dffe3578)" style="fill: none; stroke-dasharray: 2.08,1.36; stroke-dashoffset: 0; stroke: #7c7c7c; stroke-width: 0.8"/>
+   </g>
+   <g id="line2d_2">
+    <path d="M 305.892 74.206895 
+L 241.425 108.919895 
+" clip-path="url(#pa3dffe3578)" style="fill: none; stroke-dasharray: 2.08,1.36; stroke-dashoffset: 0; stroke: #7c7c7c; stroke-width: 0.8"/>
+   </g>
+   <g id="line2d_3">
+    <path d="M 57.942 74.206895 
+L 57.942 187.272095 
+L 147.204 187.272095 
+" clip-path="url(#pa3dffe3578)" style="fill: none; stroke-dasharray: 2.08,1.36; stroke-dashoffset: 0; stroke: #7c7c7c; stroke-width: 0.8"/>
+   </g>
+   <g id="line2d_4">
+    <path d="M 365.4 141.649295 
+L 365.4 169.915595 
+" clip-path="url(#pa3dffe3578)" style="fill: none; stroke-dasharray: 2.08,1.36; stroke-dashoffset: 0; stroke: #7c7c7c; stroke-width: 0.8"/>
+   </g>
+   <g id="text_1">
+    <text style="fill: #1a1a1a; font: 700 10px 'Helvetica', 'Arial', 'DejaVu Sans', sans-serif; text-anchor: start" x="9.3438" y="15.921533" transform="rotate(-0 9.3438 15.921533)">A</text>
+   </g>
+   <g id="text_2">
+    <text style="fill: #1a1a1a; font: 700 8.5px 'Helvetica', 'Arial', 'DejaVu Sans', sans-serif; text-anchor: start" x="33.147" y="14.865439" transform="rotate(-0 33.147 14.865439)">Analytic sample derivation</text>
+   </g>
+   <g id="patch_3">
+    <path d="M 43.5609 74.206895 
+L 240.9291 74.206895 
+Q 246.384 74.206895 246.384 68.751995 
+L 246.384 47.924195 
+Q 246.384 42.469295 240.9291 42.469295 
+L 43.5609 42.469295 
+Q 38.106 42.469295 38.106 47.924195 
+L 38.106 68.751995 
+Q 38.106 74.206895 43.5609 74.206895 
+z
+" clip-path="url(#pa3dffe3578)" style="fill: #e7eef5; stroke: #3d617f; stroke-linejoin: miter"/>
+   </g>
+   <g id="patch_4">
+    <path d="M 291.5109 74.206895 
+L 488.8791 74.206895 
+Q 494.334 74.206895 494.334 68.751995 
+L 494.334 47.924195 
+Q 494.334 42.469295 488.8791 42.469295 
+L 291.5109 42.469295 
+Q 286.056 42.469295 286.056 47.924195 
+L 286.056 68.751995 
+Q 286.056 74.206895 291.5109 74.206895 
+z
+" clip-path="url(#pa3dffe3578)" style="fill: #e7eef5; stroke: #3d617f; stroke-linejoin: miter"/>
+   </g>
+   <g id="patch_5">
+    <path d="M 93.1509 141.649295 
+L 260.7651 141.649295 
+Q 266.22 141.649295 266.22 136.194395 
+L 266.22 114.374795 
+Q 266.22 108.919895 260.7651 108.919895 
+L 93.1509 108.919895 
+Q 87.696 108.919895 87.696 114.374795 
+L 87.696 136.194395 
+Q 87.696 141.649295 93.1509 141.649295 
+z
+" clip-path="url(#pa3dffe3578)" style="fill: #f2eee4; stroke: #877553; stroke-linejoin: miter"/>
+   </g>
+   <g id="patch_6">
+    <path d="M 291.5109 141.649295 
+L 488.8791 141.649295 
+Q 494.334 141.649295 494.334 136.194395 
+L 494.334 114.374795 
+Q 494.334 108.919895 488.8791 108.919895 
+L 291.5109 108.919895 
+Q 286.056 108.919895 286.056 114.374795 
+L 286.056 136.194395 
+Q 286.056 141.649295 291.5109 141.649295 
+z
+" clip-path="url(#pa3dffe3578)" style="fill: #e1edeb; stroke: #2e6d68; stroke-linejoin: miter"/>
+   </g>
+   <g id="patch_7">
+    <path d="M 152.6589 204.628595 
+L 379.7811 204.628595 
+Q 385.236 204.628595 385.236 199.173695 
+L 385.236 175.370495 
+Q 385.236 169.915595 379.7811 169.915595 
+L 152.6589 169.915595 
+Q 147.204 169.915595 147.204 175.370495 
+L 147.204 199.173695 
+Q 147.204 204.628595 152.6589 204.628595 
+z
+" clip-path="url(#pa3dffe3578)" style="fill: #c6dbef; stroke: #1f4e79; stroke-width: 2; stroke-linejoin: miter"/>
+   </g>
+   <g id="text_3">
+    <text style="fill: #1a1a1a; font: 7px 'Helvetica', 'Arial', 'DejaVu Sans', sans-serif; text-anchor: start" x="440.7768" y="184.094267" transform="rotate(-0 440.7768 184.094267)">subset</text>
+   </g>
+   <g id="text_4">
+    <text style="fill: #1a1a1a; font: 7px 'Helvetica', 'Arial', 'DejaVu Sans', sans-serif; text-anchor: start" x="440.7768" y="200.954867" transform="rotate(-0 440.7768 200.954867)">intersection</text>
+   </g>
+   <g id="text_5">
+    <text style="fill: #1a1a1a; font: 700 7.5px 'Helvetica', 'Arial', 'DejaVu Sans', sans-serif; text-anchor: middle" x="142.245" y="51.341651" transform="rotate(-0 142.245 51.341651)">M3 Project 2</text>
+   </g>
+   <g id="text_6">
+    <text style="fill: #1a1a1a; font: 700 7.5px 'Helvetica', 'Arial', 'DejaVu Sans', sans-serif; text-anchor: middle" x="142.245" y="60.277718" transform="rotate(-0 142.245 60.277718)">daily diary</text>
+   </g>
+   <g id="text_7">
+    <text style="fill: #1a1a1a; font: 700 8px 'Helvetica', 'Arial', 'DejaVu Sans', sans-serif; text-anchor: middle" x="142.245" y="69.35859" transform="rotate(-0 142.245 69.35859)">N = 1,174</text>
+   </g>
+   <g id="text_8">
+    <text style="fill: #1a1a1a; font: 700 7.5px 'Helvetica', 'Arial', 'DejaVu Sans', sans-serif; text-anchor: middle" x="390.195" y="51.341651" transform="rotate(-0 390.195 51.341651)">M3 Project 5</text>
+   </g>
+   <g id="text_9">
+    <text style="fill: #1a1a1a; font: 700 7.5px 'Helvetica', 'Arial', 'DejaVu Sans', sans-serif; text-anchor: middle" x="390.195" y="60.291195" transform="rotate(-0 390.195 60.291195)">neuroscience</text>
+   </g>
+   <g id="text_10">
+    <text style="fill: #1a1a1a; font: 700 8px 'Helvetica', 'Arial', 'DejaVu Sans', sans-serif; text-anchor: middle" x="390.195" y="69.35859" transform="rotate(-0 390.195 69.35859)">N = 231</text>
+   </g>
+   <g id="text_11">
+    <!-- Diary $\cap$ neuroscience -->
+    <g style="fill: #1a1a1a" transform="translate(141.0705 120.806241)">
+     <text>
+      <tspan style="font: 7.5px 'Helvetica'" x="0 5.41626 7.08252 11.253662 13.751221 17.501221 25.074463 27.158203 31.329346 35.500488 39.671631 42.169189 46.340332 50.090332 53.840332 55.506592 59.677734 63.848877 67.598877" y="-0.625">Diary  neuroscience</tspan>
+      <tspan style="font: 7.5px 'DejaVu Sans'" x="19.584961" y="-0.625">∩</tspan>
+     </text>
+    </g>
+   </g>
+   <g id="text_12">
+    <text style="fill: #1a1a1a; font: 700 8px 'Helvetica', 'Arial', 'DejaVu Sans', sans-serif; text-anchor: middle" x="176.958" y="133.801925" transform="rotate(-0 176.958 133.801925)">N = 137</text>
+   </g>
+   <g id="text_13">
+    <text style="fill: #1a1a1a; font: 700 7.5px 'Helvetica', 'Arial', 'DejaVu Sans', sans-serif; text-anchor: middle" x="390.195" y="120.877725" transform="rotate(-0 390.195 120.877725)">Final fMRI sample</text>
+   </g>
+   <g id="text_14">
+    <text style="fill: #1a1a1a; font: 700 8px 'Helvetica', 'Arial', 'DejaVu Sans', sans-serif; text-anchor: middle" x="390.195" y="133.801925" transform="rotate(-0 390.195 133.801925)">N = 127</text>
+   </g>
+   <g id="text_15">
+    <text style="fill: #1a1a1a; font: 700 8.1px 'Helvetica', 'Arial', 'DejaVu Sans', sans-serif; text-anchor: middle" x="266.22" y="182.611846" transform="rotate(-0 266.22 182.611846)">Primary diary + fMRI sample</text>
+   </g>
+   <g id="text_16">
+    <text style="fill: #1f4e79; font: 700 9px 'Helvetica', 'Arial', 'DejaVu Sans', sans-serif; text-anchor: middle" x="266.22" y="196.436709" transform="rotate(-0 266.22 196.436709)">N = 81</text>
+   </g>
+   <g id="patch_8">
+    <path d="M 405.072 182.313095 
+Q 419.949 182.313095 433.819769 182.313095 
+" clip-path="url(#pa3dffe3578)" style="fill: none; stroke: #4a4a4a; stroke-width: 0.9; stroke-linecap: round"/>
+    <path d="M 431.019769 180.913095 
+L 433.819769 182.313095 
+L 431.019769 183.713095 
+z
+" clip-path="url(#pa3dffe3578)" style="fill: #4a4a4a; stroke: #4a4a4a; stroke-width: 0.9; stroke-linecap: round"/>
+   </g>
+   <g id="line2d_5">
+    <path d="M 405.072 199.173695 
+L 434.826 199.173695 
+" clip-path="url(#pa3dffe3578)" style="fill: none; stroke-dasharray: 2.08,1.36; stroke-dashoffset: 0; stroke: #7c7c7c; stroke-width: 0.8"/>
+   </g>
+  </g>
+  <g id="axes_2">
+   <g id="line2d_6">
+    <path d="M 18.27 275.781695 
+L 514.17 275.781695 
+" clip-path="url(#peceaf9a215)" style="fill: none; stroke: #c9c9c9; stroke-width: 0.4; stroke-linecap: square"/>
+   </g>
+   <g id="line2d_7">
+    <path d="M 18.27 287.539295 
+L 514.17 287.539295 
+" clip-path="url(#peceaf9a215)" style="fill: none; stroke: #c9c9c9; stroke-width: 0.4; stroke-linecap: square"/>
+   </g>
+   <g id="line2d_8">
+    <path d="M 18.27 299.296895 
+L 514.17 299.296895 
+" clip-path="url(#peceaf9a215)" style="fill: none; stroke: #c9c9c9; stroke-width: 0.4; stroke-linecap: square"/>
+   </g>
+   <g id="patch_9">
+    <path d="M 18.27 322.106639 
+L 514.17 322.106639 
+L 514.17 311.759951 
+L 18.27 311.759951 
+z
+" clip-path="url(#peceaf9a215)" style="fill: #eaf2fa"/>
+   </g>
+   <g id="line2d_9">
+    <path d="M 18.27 262.746095 
+L 514.17 262.746095 
+" clip-path="url(#peceaf9a215)" style="fill: none; stroke: #8c8c8c; stroke-width: 0.9; stroke-linecap: square"/>
+   </g>
+   <g id="line2d_10">
+    <path d="M 18.27 249.454895 
+L 514.17 249.454895 
+" clip-path="url(#peceaf9a215)" style="fill: none; stroke: #8c8c8c; stroke-width: 0.9; stroke-linecap: square"/>
+   </g>
+   <g id="line2d_11">
+    <path d="M 18.27 322.812095 
+L 514.17 322.812095 
+" clip-path="url(#peceaf9a215)" style="fill: none; stroke: #8c8c8c; stroke-width: 0.9; stroke-linecap: square"/>
+   </g>
+   <g id="text_17">
+    <text style="fill: #1a1a1a; font: 700 10px 'Helvetica', 'Arial', 'DejaVu Sans', sans-serif; text-anchor: start" x="9.3438" y="244.359533" transform="rotate(-0 9.3438 244.359533)">B</text>
+   </g>
+   <g id="text_18">
+    <text style="fill: #1a1a1a; font: 700 8.5px 'Helvetica', 'Arial', 'DejaVu Sans', sans-serif; text-anchor: start" x="33.147" y="243.303439" transform="rotate(-0 33.147 243.303439)">Principal-sample demographics</text>
+   </g>
+   <g id="text_19">
+    <text style="fill: #1a1a1a; font: 700 7.4px 'Helvetica', 'Arial', 'DejaVu Sans', sans-serif; text-anchor: start" x="23.229" y="258.566914" transform="rotate(-0 23.229 258.566914)">Sample</text>
+   </g>
+   <g id="text_20">
+    <text style="fill: #1a1a1a; font: 700 7.4px 'Helvetica', 'Arial', 'DejaVu Sans', sans-serif; text-anchor: end" x="176.958" y="258.494648" transform="rotate(-0 176.958 258.494648)">N</text>
+   </g>
+   <g id="text_21">
+    <!-- Age (yr.), mean $\pm$ SD -->
+    <g style="fill: #1a1a1a" transform="translate(210.568 258.498695)">
+     <text>
+      <tspan style="font: 7.4px 'Helvetica'" x="0 4.929489 9.039795 13.150101 15.203445 17.664581 21.359894 23.82103 25.874374 28.33551 30.388855 32.4422 38.598648 42.708954 46.81926 50.929565 59.162354 61.215698 66.145187" y="-0.546875">Age (yr.), mean  SD</tspan>
+      <tspan style="font: 7.4px 'DejaVu Sans'" x="52.98291" y="-0.546875">±</tspan>
+     </text>
+    </g>
+   </g>
+   <g id="text_22">
+    <text style="fill: #1a1a1a; font: 700 7.4px 'Helvetica', 'Arial', 'DejaVu Sans', sans-serif; text-anchor: middle" x="330.687" y="258.490601" transform="rotate(-0 330.687 258.490601)">Age range (yr.)</text>
+   </g>
+   <g id="text_23">
+    <text style="fill: #1a1a1a; font: 700 7.4px 'Helvetica', 'Arial', 'DejaVu Sans', sans-serif; text-anchor: end" x="509.211" y="258.52182" transform="rotate(-0 509.211 258.52182)">Female, n/N (%)</text>
+   </g>
+   <g id="text_24">
+    <text style="fill: #1a1a1a; font: 7.2px 'Helvetica', 'Arial', 'DejaVu Sans', sans-serif; text-anchor: start" x="23.229" y="271.72202" transform="rotate(-0 23.229 271.72202)">Daily diary</text>
+   </g>
+   <g id="text_25">
+    <text style="fill: #1a1a1a; font: 7.2px 'Helvetica', 'Arial', 'DejaVu Sans', sans-serif; text-anchor: end" x="176.958" y="271.734958" transform="rotate(-0 176.958 271.734958)">1,174</text>
+   </g>
+   <g id="text_26">
+    <!-- 67.6 $\pm$ 10.3 -->
+    <g style="fill: #1a1a1a" transform="translate(227.34 271.734958)">
+     <text>
+      <tspan style="font: 7.2px 'Helvetica'" x="0 3.997345 7.99469 9.991608 13.988953 22.060577 24.057495 28.05484 32.052185 34.049103" y="-0.953125">67.6  10.3</tspan>
+      <tspan style="font: 7.2px 'DejaVu Sans'" x="15.98587" y="-0.953125">±</tspan>
+     </text>
+    </g>
+   </g>
+   <g id="text_27">
+    <text style="fill: #1a1a1a; font: 7.2px 'Helvetica', 'Arial', 'DejaVu Sans', sans-serif; text-anchor: middle" x="330.687" y="271.734958" transform="rotate(-0 330.687 271.734958)">47–94</text>
+   </g>
+   <g id="text_28">
+    <text style="fill: #1a1a1a; font: 7.2px 'Helvetica', 'Arial', 'DejaVu Sans', sans-serif; text-anchor: end" x="509.211" y="271.761395" transform="rotate(-0 509.211 271.761395)">673/1,174 (57.3%)</text>
+   </g>
+   <g id="text_29">
+    <text style="fill: #1a1a1a; font: 7.2px 'Helvetica', 'Arial', 'DejaVu Sans', sans-serif; text-anchor: start" x="23.229" y="283.492558" transform="rotate(-0 23.229 283.492558)">Neuroscience</text>
+   </g>
+   <g id="text_30">
+    <text style="fill: #1a1a1a; font: 7.2px 'Helvetica', 'Arial', 'DejaVu Sans', sans-serif; text-anchor: end" x="176.958" y="283.492558" transform="rotate(-0 176.958 283.492558)">231</text>
+   </g>
+   <g id="text_31">
+    <!-- 65.1 $\pm$ 9.3 -->
+    <g style="fill: #1a1a1a" transform="translate(229.356 283.492558)">
+     <text>
+      <tspan style="font: 7.2px 'Helvetica'" x="0 3.997345 7.99469 9.991608 13.988953 22.060577 24.057495 28.05484 30.051758" y="-0.953125">65.1  9.3</tspan>
+      <tspan style="font: 7.2px 'DejaVu Sans'" x="15.98587" y="-0.953125">±</tspan>
+     </text>
+    </g>
+   </g>
+   <g id="text_32">
+    <text style="fill: #1a1a1a; font: 7.2px 'Helvetica', 'Arial', 'DejaVu Sans', sans-serif; text-anchor: middle" x="330.687" y="283.492558" transform="rotate(-0 330.687 283.492558)">48–95</text>
+   </g>
+   <g id="text_33">
+    <text style="fill: #1a1a1a; font: 7.2px 'Helvetica', 'Arial', 'DejaVu Sans', sans-serif; text-anchor: end" x="509.211" y="283.518995" transform="rotate(-0 509.211 283.518995)">127/231 (55.0%)</text>
+   </g>
+   <g id="text_34">
+    <!-- Diary $\cap$ neuroscience -->
+    <g style="fill: #1a1a1a" transform="translate(23.229 295.218095)">
+     <text>
+      <tspan style="font: 7.2px 'Helvetica'" x="0 5.190582 6.787415 10.78476 13.178253 16.772003 24.075439 26.072357 30.069702 34.067047 38.064392 40.457886 44.455231 48.048981 51.642731 53.239563 57.236908 61.234253 64.828003" y="-0.84375">Diary  neuroscience</tspan>
+      <tspan style="font: 7.2px 'DejaVu Sans'" x="18.768921" y="-0.84375">∩</tspan>
+     </text>
+    </g>
+   </g>
+   <g id="text_35">
+    <text style="fill: #1a1a1a; font: 7.2px 'Helvetica', 'Arial', 'DejaVu Sans', sans-serif; text-anchor: end" x="176.958" y="295.250158" transform="rotate(-0 176.958 295.250158)">137</text>
+   </g>
+   <g id="text_36">
+    <!-- 66.4 $\pm$ 9.3 -->
+    <g style="fill: #1a1a1a" transform="translate(229.356 295.250158)">
+     <text>
+      <tspan style="font: 7.2px 'Helvetica'" x="0 3.997345 7.99469 9.991608 13.988953 22.060577 24.057495 28.05484 30.051758" y="-0.953125">66.4  9.3</tspan>
+      <tspan style="font: 7.2px 'DejaVu Sans'" x="15.98587" y="-0.953125">±</tspan>
+     </text>
+    </g>
+   </g>
+   <g id="text_37">
+    <text style="fill: #1a1a1a; font: 7.2px 'Helvetica', 'Arial', 'DejaVu Sans', sans-serif; text-anchor: middle" x="330.687" y="295.250158" transform="rotate(-0 330.687 295.250158)">48–95</text>
+   </g>
+   <g id="text_38">
+    <text style="fill: #1a1a1a; font: 7.2px 'Helvetica', 'Arial', 'DejaVu Sans', sans-serif; text-anchor: end" x="509.211" y="295.276595" transform="rotate(-0 509.211 295.276595)">76/137 (55.5%)</text>
+   </g>
+   <g id="text_39">
+    <text style="fill: #1a1a1a; font: 7.2px 'Helvetica', 'Arial', 'DejaVu Sans', sans-serif; text-anchor: start" x="23.229" y="307.007758" transform="rotate(-0 23.229 307.007758)">Final fMRI</text>
+   </g>
+   <g id="text_40">
+    <text style="fill: #1a1a1a; font: 7.2px 'Helvetica', 'Arial', 'DejaVu Sans', sans-serif; text-anchor: end" x="176.958" y="307.007758" transform="rotate(-0 176.958 307.007758)">127</text>
+   </g>
+   <g id="text_41">
+    <!-- 65.7 $\pm$ 9.5 -->
+    <g style="fill: #1a1a1a" transform="translate(229.356 307.007758)">
+     <text>
+      <tspan style="font: 7.2px 'Helvetica'" x="0 3.997345 7.99469 9.991608 13.988953 22.060577 24.057495 28.05484 30.051758" y="-0.953125">65.7  9.5</tspan>
+      <tspan style="font: 7.2px 'DejaVu Sans'" x="15.98587" y="-0.953125">±</tspan>
+     </text>
+    </g>
+   </g>
+   <g id="text_42">
+    <text style="fill: #1a1a1a; font: 7.2px 'Helvetica', 'Arial', 'DejaVu Sans', sans-serif; text-anchor: middle" x="330.687" y="307.007758" transform="rotate(-0 330.687 307.007758)">48–95</text>
+   </g>
+   <g id="text_43">
+    <text style="fill: #1a1a1a; font: 7.2px 'Helvetica', 'Arial', 'DejaVu Sans', sans-serif; text-anchor: end" x="509.211" y="307.034195" transform="rotate(-0 509.211 307.034195)">76/127 (59.8%)</text>
+   </g>
+   <g id="text_44">
+    <text style="fill: #1a1a1a; font: 700 7.2px 'Helvetica', 'Arial', 'DejaVu Sans', sans-serif; text-anchor: start" x="23.229" y="318.780545" transform="rotate(-0 23.229 318.780545)">Primary diary + fMRI</text>
+   </g>
+   <g id="text_45">
+    <text style="fill: #1a1a1a; font: 700 7.2px 'Helvetica', 'Arial', 'DejaVu Sans', sans-serif; text-anchor: end" x="176.958" y="318.765358" transform="rotate(-0 176.958 318.765358)">81</text>
+   </g>
+   <g id="text_46">
+    <!-- 67.2 $\pm$ 9.8 -->
+    <g style="fill: #1a1a1a" transform="translate(229.356 318.765358)">
+     <text>
+      <tspan style="font: 7.2px 'Helvetica'" x="0 3.997345 7.99469 9.991608 13.988953 22.060577 24.057495 28.05484 30.051758" y="-0.953125">67.2  9.8</tspan>
+      <tspan style="font: 7.2px 'DejaVu Sans'" x="15.98587" y="-0.953125">±</tspan>
+     </text>
+    </g>
+   </g>
+   <g id="text_47">
+    <text style="fill: #1a1a1a; font: 700 7.2px 'Helvetica', 'Arial', 'DejaVu Sans', sans-serif; text-anchor: middle" x="330.687" y="318.765358" transform="rotate(-0 330.687 318.765358)">48–95</text>
+   </g>
+   <g id="text_48">
+    <text style="fill: #1a1a1a; font: 700 7.2px 'Helvetica', 'Arial', 'DejaVu Sans', sans-serif; text-anchor: end" x="509.211" y="318.791795" transform="rotate(-0 509.211 318.791795)">50/81 (61.7%)</text>
+   </g>
+  </g>
+ </g>
+ <defs>
+  <clipPath id="pa3dffe3578">
+   <rect x="18.27" y="8.748095" width="495.9" height="208.278"/>
+  </clipPath>
+  <clipPath id="peceaf9a215">
+   <rect x="18.27" y="237.186095" width="495.9" height="102.24"/>
+  </clipPath>
+ </defs>
+</svg>
