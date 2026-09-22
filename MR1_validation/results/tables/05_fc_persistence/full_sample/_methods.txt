@@ -2,7 +2,7 @@ MODEL SPECIFICATION
 ============================================================
 Analysis  : 05 FC (neg−neu) → Persistence  [full sample archive, one-tailed]
 N         : 122
-Generated : 2026-09-07
+Generated : 2026-09-22
 
 VARIABLES
 ------------------------------------------------------------

@@ -2,7 +2,7 @@ MODEL SPECIFICATION
 ============================================================
 Analysis  : 02 Persistence → Affect  [conservative]
 N         : 48
-Generated : 2026-09-07
+Generated : 2026-09-22
 
 VARIABLES
 ------------------------------------------------------------

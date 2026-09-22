@@ -2,7 +2,7 @@ MODEL SPECIFICATION
 ============================================================
 Analysis  : 02 Persistence → Affect  [full sample archive]
 N         : 50
-Generated : 2026-09-07
+Generated : 2026-09-22
 
 VARIABLES
 ------------------------------------------------------------

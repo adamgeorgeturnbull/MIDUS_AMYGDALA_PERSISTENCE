@@ -23,6 +23,8 @@ import statsmodels.api as sm
 import statsmodels.formula.api as smf
 from scipy import stats
 
+from confidence_intervals import coefficient_ci
+
 sys.path.insert(0, str(Path(__file__).resolve().parent))
 from analysis_utils import (
     RESULTS_DIR, load_master, get_samples, get_covariates,
@@ -85,6 +87,9 @@ def run_moderation_ols(df, predictor, outcome, moderator, base_covs):
         return None
 
     return {
+        **coefficient_ci(model, moderator, prefix="moderator"),
+        **coefficient_ci(model, predictor, prefix="predictor"),
+        **coefficient_ci(model, int_col, prefix="interaction"),
         "predictor":        predictor,
         "moderator":        moderator,
         "outcome":          outcome,
@@ -168,6 +173,9 @@ def run_moderation_mlm(df, predictor, outcome, moderator, base_covs):
         pass
 
     return {
+        **coefficient_ci(result, mod_safe, prefix="moderator"),
+        **coefficient_ci(result, pred_safe, prefix="predictor"),
+        **coefficient_ci(result, int_safe, prefix="interaction"),
         "predictor":        predictor,
         "moderator":        moderator,
         "outcome":          outcome,
@@ -199,11 +207,40 @@ def run_moderation_set(df, predictor, outcomes, moderator, base_covs):
     return pd.DataFrame(ols_rows), pd.DataFrame(mlm_rows)
 
 
+def annotate_mlm_inference(mlm_df):
+    result = mlm_df.copy()
+    notes = []
+    for _, row in result.iterrows():
+        statuses = [row.get(prefix + "_ci_status", "unavailable")
+                    for prefix in ["interaction", "predictor", "moderator"]]
+        if "invalid_variance" in statuses:
+            note = ("Unreliable fitted covariance: affected coefficient SEs, p values, "
+                    "and CIs are unavailable. Do not classify this model as nonsignificant.")
+        elif "nonconverged" in statuses:
+            note = "Model did not converge; inference is unavailable."
+        elif any(status != "ok" for status in statuses):
+            note = "Coefficient uncertainty requires review; inference is unavailable."
+        else:
+            note = ""
+        notes.append(note)
+    result["inference_note"] = notes
+    return result
+
+
 def save_moderation(ols_df, mlm_df, out_dir, label):
     out_dir = Path(out_dir)
     out_dir.mkdir(parents=True, exist_ok=True)
     ols_df.to_csv(out_dir / "moderation_ols.csv", index=False)
+    mlm_df = annotate_mlm_inference(mlm_df)
     mlm_df.to_csv(out_dir / "moderation_mlm.csv", index=False)
+    notes = ["# Mixed-effects fit reporting notes", ""]
+    for _, row in mlm_df.iterrows():
+        if row["inference_note"]:
+            notes.append(f"- {row['predictor']} × {row['moderator']} → {row['outcome']}: "
+                         + row["inference_note"])
+    if len(notes) == 2:
+        notes.append("No coefficient-CI failures were flagged in these exports.")
+    (out_dir / "fit_notes.md").write_text("\n".join(notes) + "\n")
 
     print(f"\n{'=' * 70}")
     print(f"  {label}")
@@ -226,7 +263,7 @@ def save_moderation(ols_df, mlm_df, out_dir, label):
 # ============================================================================
 # Main
 # ============================================================================
-def main():
+def main(panas_reappraisal_only=False):
     print("=" * 70)
     print("Analysis 06 — Sensitivity Analyses")
     print("=" * 70)
@@ -247,7 +284,7 @@ def main():
     panas_outcomes = ["C5SPGP", "C5SPGN", "C5SPGN_log"]
     panas_covs = get_covariates(panas_sample)
 
-    for mod_var, mod_name in MODERATORS:
+    for mod_var, mod_name in (MODERATORS[:1] if panas_reappraisal_only else MODERATORS):
         ols_df, mlm_df = run_moderation_set(
             panas_sample, "neg_persist_crossrun_mean_z_L",
             panas_outcomes, mod_var, panas_covs,
@@ -255,6 +292,9 @@ def main():
         save_moderation(ols_df, mlm_df,
                         BASE_DIR / "sensitivity_panas" / mod_name,
                         f"06 Sensitivity: Persistence × {mod_name} → PANAS  [conservative fMRI, two-tailed]")
+
+    if panas_reappraisal_only:
+        return
 
     # -------------------------------------------------------------------------
     # 2. Right hemisphere persistence (hemisphere specificity)
@@ -277,4 +317,7 @@ def main():
 
 
 if __name__ == "__main__":
-    main()
+    import argparse
+    parser = argparse.ArgumentParser(description=__doc__)
+    parser.add_argument("--panas-reappraisal-only", action="store_true")
+    main(panas_reappraisal_only=parser.parse_args().panas_reappraisal_only)

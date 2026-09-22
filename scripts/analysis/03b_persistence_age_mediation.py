@@ -178,6 +178,8 @@ import pandas as pd
 import statsmodels.formula.api as smf
 from scipy import stats
 
+from confidence_intervals import coefficient_ci
+
 sys.path.insert(0, str(Path(__file__).resolve().parent))
 from analysis_utils import (  # noqa: E402
     DIARY_OUTCOMES,
@@ -753,6 +755,9 @@ def run_specification(spec_name, age_var, cons, base_covs, rng):
 
         observed[outcome] = dict(
             role=role, expected=expected,
+            path_cis={"b": coefficient_ci(res_b, m_safe),
+                      "c_prime": coefficient_ci(res_b, age_var),
+                      "c_total": coefficient_ci(res_c, x_safe_c)},
             b=b, se_b=se_b, z_b=z_b, p_b=p_b, opt_b=opt_b, n_cov_b=len(cov_b),
             cprime=cprime, se_cp=se_cp, z_cp=z_cp, p_cp=p_cp,
             c_tot=c_tot, se_c=se_c, z_c=z_c, p_c=p_c, opt_c=opt_c,
@@ -769,6 +774,7 @@ def run_specification(spec_name, age_var, cons, base_covs, rng):
             outcome_role="mediator_model", path="a", predictor=age_var,
             term=age_var, beta=a, se=se_a, z=z_a, p_two_tailed=p_a, n=n_common,
             n_covariates=len(cov_a), optimizer=opt_a, converged=True,
+            **coefficient_ci(res_a, x_safe),
         )
     ]
     for outcome, o in observed.items():
@@ -786,6 +792,7 @@ def run_specification(spec_name, age_var, cons, base_covs, rng):
                     predictor=M_VAR if nm == "b" else age_var, term=term,
                     beta=bb, se=ss, z=zz, p_two_tailed=pp, n=n_common,
                     n_covariates=ncov, optimizer=opt, converged=True,
+                    **o["path_cis"][nm],
                 )
             )
 

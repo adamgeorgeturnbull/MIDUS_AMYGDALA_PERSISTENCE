@@ -1,2 +1,2 @@
-predictor,outcome,n,r,p,p_two_tailed
-C5PAGE,neg_persist_crossrun_mean_z_L,127,-0.17607035505706198,0.02384665861099192,0.04769331722198384
+ci_low,ci_high,ci_level,ci_sidedness,ci_method,ci_status,predictor,outcome,n,r,p,p_two_tailed
+-0.33986011310597797,-0.0019144402009218836,95.0,two-sided,fisher_z,ok,C5PAGE,neg_persist_crossrun_mean_z_L,127,-0.17607035505706198,0.02384665861099192,0.04769331722198384

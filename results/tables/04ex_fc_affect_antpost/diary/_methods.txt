@@ -2,7 +2,7 @@ MODEL SPECIFICATION
 ============================================================
 Analysis  : 04ex FC ant−post (neg−neu) → Diary Affect  [conservative, one-tailed]
 N         : 81
-Generated : 2026-08-26
+Generated : 2026-09-22
 
 VARIABLES
 ------------------------------------------------------------

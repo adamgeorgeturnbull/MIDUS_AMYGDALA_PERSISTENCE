@@ -18,6 +18,8 @@ import statsmodels.api as sm
 import statsmodels.formula.api as smf
 from scipy import stats
 
+from confidence_intervals import coefficient_ci, pearson_ci
+
 # ============================================================================
 # Paths
 # ============================================================================
@@ -193,9 +195,11 @@ def run_correlation(df, predictor, outcome, one_tailed=False, expected_positive=
     n = len(data)
     if n < MIN_N:
         return None
-    r, p_two = stats.pearsonr(data[predictor], data[outcome])
+    corr_result = stats.pearsonr(data[predictor], data[outcome])
+    r, p_two = corr_result
     p = one_tailed_p(r, p_two, expected_positive) if one_tailed else p_two
     return {
+        **pearson_ci(corr_result),
         "predictor": predictor,
         "outcome": outcome,
         "n": n,
@@ -237,6 +241,7 @@ def run_ols(df, predictor, outcome, covariates, one_tailed=False, expected_posit
     p = one_tailed_p(beta, p_two, expected_positive) if one_tailed else p_two
 
     return {
+        **coefficient_ci(model, predictor),
         "predictor": predictor,
         "outcome": outcome,
         "n": int(model.nobs),
@@ -251,7 +256,8 @@ def run_ols(df, predictor, outcome, covariates, one_tailed=False, expected_posit
     }
 
 
-def run_mlm(df, predictor, outcome, covariates, one_tailed=False, expected_positive=True):
+def run_mlm(df, predictor, outcome, covariates, one_tailed=False, expected_positive=True,
+            maxiter=None):
     """
     Mixed-effects model: outcome ~ predictor + covariates + (1 | family).
 
@@ -302,19 +308,32 @@ def run_mlm(df, predictor, outcome, covariates, one_tailed=False, expected_posit
     result = None
     successful_method = None
     last_error = None
+    fit_attempts = []
     for method in ["lbfgs", "powell", "nm", "bfgs"]:
         try:
             with warnings.catch_warnings():
                 warnings.simplefilter("ignore")
                 mdl = smf.mixedlm(fixed, data=data, groups=data["_family_id"])
-                result = mdl.fit(reml=True, method=method)
+                fit_options = {} if maxiter is None else {"maxiter": maxiter}
+                result = mdl.fit(reml=True, method=method, **fit_options)
+                if maxiter is not None:
+                    status = coefficient_ci(result, pred_safe)["ci_status"]
+                    fit_attempts.append(f"{method}:{status}")
+                    if status != "ok":
+                        result = None
+                        continue
                 successful_method = method
                 break
         except Exception as exc:
             last_error = exc
+            if maxiter is not None:
+                result = None
+                fit_attempts.append(f"{method}:error:{type(exc).__name__}")
             continue
 
     if result is None:
+        if maxiter is not None:
+            print("    Targeted MLM attempts: " + "; ".join(fit_attempts))
         detail = ""
         if last_error is not None:
             detail = f" ({type(last_error).__name__}: {str(last_error).splitlines()[0]})"
@@ -351,6 +370,9 @@ def run_mlm(df, predictor, outcome, covariates, one_tailed=False, expected_posit
         pass
 
     return {
+        **coefficient_ci(result, pred_safe),
+        **({"fit_maxiter": maxiter, "fit_attempts": "; ".join(fit_attempts)}
+           if maxiter is not None else {}),
         "predictor": predictor,
         "outcome": outcome,
         "n": int(result.nobs),
@@ -372,7 +394,7 @@ def run_mlm(df, predictor, outcome, covariates, one_tailed=False, expected_posit
 # Multi-pair loop
 # ============================================================================
 def run_analysis_set(df, predictors, outcomes, base_covariates,
-                     one_tailed=False, expected_directions=None):
+                     one_tailed=False, expected_directions=None, mlm_maxiter_by_predictor=None):
     """
     Run correlations + OLS + MLM for all predictor × outcome combinations.
 
@@ -411,7 +433,11 @@ def run_analysis_set(df, predictors, outcomes, base_covariates,
             if o:
                 ols_rows.append(o)
 
-            m = run_mlm(df, pred, out, covs, one_tailed=one_tailed, expected_positive=exp_pos)
+            fit_options = {}
+            if mlm_maxiter_by_predictor and pred in mlm_maxiter_by_predictor:
+                fit_options["maxiter"] = mlm_maxiter_by_predictor[pred]
+            m = run_mlm(df, pred, out, covs, one_tailed=one_tailed,
+                        expected_positive=exp_pos, **fit_options)
             if m:
                 mlm_rows.append(m)
 

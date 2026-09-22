@@ -27,6 +27,10 @@ import pandas as pd
 import statsmodels.api as sm
 from scipy import stats
 
+# Share the data-free CI helpers with M3; retain MR1 analysis_utils precedence.
+sys.path.append(str(Path(__file__).resolve().parents[3] / "scripts" / "analysis"))
+from confidence_intervals import coefficient_ci, pearson_ci
+
 # ============================================================================
 # Paths and constants
 # ============================================================================
@@ -367,9 +371,11 @@ def run_correlation(df, predictor, outcome, one_tailed=False, expected_positive=
     n = len(data)
     if n < MIN_N:
         return None
-    r, p_two = stats.pearsonr(data[predictor], data[outcome])
+    corr_result = stats.pearsonr(data[predictor], data[outcome])
+    r, p_two = corr_result
     p = one_tailed_p(r, p_two, expected_positive) if one_tailed else p_two
     return {
+        **pearson_ci(corr_result),
         "predictor": predictor, "outcome": outcome,
         "n": n, "r": r, "p": p, "p_two_tailed": p_two,
     }
@@ -411,6 +417,7 @@ def run_ols(df, predictor, outcome, covariates, one_tailed=False, expected_posit
     p     = one_tailed_p(beta, p_two, expected_positive) if one_tailed else p_two
 
     return {
+        **coefficient_ci(model, predictor),
         "predictor":     predictor,
         "outcome":       outcome,
         "n":             int(model.nobs),

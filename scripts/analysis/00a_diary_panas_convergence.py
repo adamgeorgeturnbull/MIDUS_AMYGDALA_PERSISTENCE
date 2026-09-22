@@ -27,6 +27,8 @@ import statsmodels.api as sm
 import statsmodels.formula.api as smf
 from scipy import stats
 
+from confidence_intervals import coefficient_ci, pearson_ci
+
 sys.path.insert(0, str(Path(__file__).resolve().parent))
 from analysis_utils import write_methods_note
 
@@ -79,8 +81,12 @@ def run_correlation(df, predictor, outcome):
     data = df[[predictor, outcome]].dropna()
     if len(data) < MIN_N:
         return None
-    r, p = stats.pearsonr(data[predictor], data[outcome])
-    return {"predictor": predictor, "outcome": outcome, "n": len(data), "r": r, "p": p}
+    corr_result = stats.pearsonr(data[predictor], data[outcome])
+    r, p = corr_result
+    return {
+        **pearson_ci(corr_result),
+        "predictor": predictor, "outcome": outcome, "n": len(data), "r": r, "p": p,
+    }
 
 
 def run_ols(df, predictor, outcome, covariates):
@@ -95,6 +101,7 @@ def run_ols(df, predictor, outcome, covariates):
         print(f"    OLS error ({outcome} ~ {predictor}): {e}")
         return None
     return {
+        **coefficient_ci(model, predictor),
         "predictor":     predictor,
         "outcome":       outcome,
         "n":             int(model.nobs),
@@ -146,6 +153,7 @@ def run_mlm(df, predictor, outcome, covariates):
     z     = beta / se if not np.isnan(se) and se > 0 else np.nan
     p_two = float(2 * (1 - stats.norm.cdf(abs(z)))) if not np.isnan(z) else np.nan
     return {
+        **coefficient_ci(result, predictor),
         "predictor": predictor,
         "outcome":   outcome,
         "n":         int(result.nobs),

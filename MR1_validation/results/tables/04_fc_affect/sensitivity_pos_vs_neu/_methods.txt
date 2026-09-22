@@ -2,7 +2,7 @@ MODEL SPECIFICATION
 ============================================================
 Analysis  : 04 FC (pos−neu) → Affect  [conservative, two-tailed]
 N         : 48
-Generated : 2026-09-07
+Generated : 2026-09-22
 
 VARIABLES
 ------------------------------------------------------------

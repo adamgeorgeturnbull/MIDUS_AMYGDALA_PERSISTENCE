@@ -2,7 +2,7 @@ MODEL SPECIFICATION
 ============================================================
 Analysis  : 01 Age → PANAS  [neuro subsample, C5PAGE]
 N         : 231
-Generated : 2026-08-26
+Generated : 2026-09-22
 
 VARIABLES
 ------------------------------------------------------------

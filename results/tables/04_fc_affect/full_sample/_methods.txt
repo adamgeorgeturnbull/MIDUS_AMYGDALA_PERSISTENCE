@@ -2,7 +2,7 @@ MODEL SPECIFICATION
 ============================================================
 Analysis  : 04 FC (neg−neu) → Affect  [full sample, one-tailed]
 N         : 93
-Generated : 2026-08-21
+Generated : 2026-09-22
 
 VARIABLES
 ------------------------------------------------------------

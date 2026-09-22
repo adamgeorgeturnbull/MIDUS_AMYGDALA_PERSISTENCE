@@ -1,0 +1,3 @@
+ci_low,ci_high,ci_level,ci_sidedness,ci_method,ci_status,predictor,outcome,n,r,p,p_two_tailed
+-0.22782087299273626,0.11955552642753198,95.0,two-sided,fisher_z,ok,r_amyg-ant_vmPFC_neg_vs_neu,neg_persist_crossrun_mean_z_L,127,-0.055821786214213735,0.5330572045314472,0.5330572045314472
+-0.22692620665785246,0.12048537728814915,95.0,two-sided,fisher_z,ok,r_amyg-post_vmPFC_neg_vs_neu,neg_persist_crossrun_mean_z_L,127,-0.054881235673991724,0.5399906750275587,0.5399906750275587

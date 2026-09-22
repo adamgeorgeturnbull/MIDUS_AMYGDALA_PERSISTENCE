@@ -33,6 +33,8 @@ import statsmodels.api as sm
 import statsmodels.formula.api as smf
 from scipy import stats
 
+from confidence_intervals import coefficient_ci
+
 sys.path.insert(0, str(Path(__file__).resolve().parent))
 from analysis_utils import (
     RESULTS_DIR, load_master, get_samples, get_covariates,
@@ -104,6 +106,9 @@ def run_moderation_ols(df, predictor, outcome, moderator, base_covs):
         return None
 
     return {
+        **coefficient_ci(model, moderator, prefix="moderator"),
+        **coefficient_ci(model, predictor, prefix="predictor"),
+        **coefficient_ci(model, int_col, prefix="interaction"),
         "predictor":        predictor,
         "moderator":        moderator,
         "outcome":          outcome,
@@ -188,6 +193,9 @@ def run_moderation_mlm(df, predictor, outcome, moderator, base_covs):
         pass
 
     return {
+        **coefficient_ci(result, mod_safe, prefix="moderator"),
+        **coefficient_ci(result, pred_safe, prefix="predictor"),
+        **coefficient_ci(result, int_safe, prefix="interaction"),
         "predictor":        predictor,
         "moderator":        moderator,
         "outcome":          outcome,

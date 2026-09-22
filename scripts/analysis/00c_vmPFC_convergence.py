@@ -27,6 +27,8 @@ from pathlib import Path
 import pandas as pd
 from scipy import stats
 
+from confidence_intervals import pearson_ci
+
 # ============================================================================
 # Paths
 # ============================================================================
@@ -113,14 +115,18 @@ def main():
         d = df[[ant_col, post_col]].dropna()
         if len(d) < MIN_N:
             continue
-        r, p = stats.pearsonr(d[ant_col], d[post_col])
+        corr_result = stats.pearsonr(d[ant_col], d[post_col])
+        r, p = corr_result
         rows.append({
+            **pearson_ci(corr_result),
             "method":    method,
             "condition": condition,
             "ant_col":   ant_col,
             "post_col":  post_col,
             "n":         len(d),
             "r":         round(float(r), 4),
+            "r_unrounded": float(r),
+            "p_unrounded": float(p),
             "p":         round(float(p), 4),
         })
 

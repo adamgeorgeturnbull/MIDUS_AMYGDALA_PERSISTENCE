@@ -2,7 +2,7 @@ MODEL SPECIFICATION
 ============================================================
 Analysis  : 00d Reappraisal → Suppression  [full sample, two-tailed]
 N         : 229
-Generated : 2026-08-26
+Generated : 2026-09-22
 
 VARIABLES
 ------------------------------------------------------------

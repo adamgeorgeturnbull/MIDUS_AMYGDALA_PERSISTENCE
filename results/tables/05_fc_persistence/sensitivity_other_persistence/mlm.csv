@@ -1,0 +1,3 @@
+ci_low,ci_high,ci_level,ci_sidedness,ci_method,ci_status,predictor,outcome,n,n_groups,beta,se,z,p,p_two_tailed,re_var,log_likelihood,converged,degenerate_re,optimizer
+-0.07769907277017704,0.05749873968494351,95.0,two-sided,wald_normal,ok,l_amyg-ant_vmPFC_neg_vs_neu,pos_persist_crossrun_mean_z_L,127,,-0.010100166542616766,0.03448987163068905,-0.29284442258200954,0.7696410716220514,0.7696410716220514,0.0002826196819639355,61.531370752510156,True,False,powell
+-0.08815213241264923,0.04514455618210646,95.0,two-sided,wald_normal,ok,l_amyg-post_vmPFC_neg_vs_neu,pos_persist_crossrun_mean_z_L,127,,-0.021503788115271382,0.034004882142269696,-0.6323735522829865,0.5271428117413635,0.5271428117413635,0.0003167157558746655,61.67874250482765,True,False,powell

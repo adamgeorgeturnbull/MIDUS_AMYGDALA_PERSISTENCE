@@ -36,6 +36,8 @@ import statsmodels.api as sm
 import statsmodels.formula.api as smf
 from scipy import stats
 
+from confidence_intervals import coefficient_ci, pearson_ci
+
 # ============================================================================
 # Paths
 # ============================================================================
@@ -90,9 +92,13 @@ def run_correlation(df, predictor, outcome, one_tailed=False, expected_positive=
     data = df[[predictor, outcome]].dropna()
     if len(data) < MIN_N:
         return None
-    r, p_two = stats.pearsonr(data[predictor], data[outcome])
+    corr_result = stats.pearsonr(data[predictor], data[outcome])
+    r, p_two = corr_result
     p = one_tailed_p(r, p_two, expected_positive) if one_tailed else p_two
-    row = {"predictor": predictor, "outcome": outcome, "n": len(data), "r": r, "p": p}
+    row = {
+        **pearson_ci(corr_result),
+        "predictor": predictor, "outcome": outcome, "n": len(data), "r": r, "p": p,
+    }
     if one_tailed:
         row["p_two_tailed"] = p_two
     return row
@@ -117,6 +123,7 @@ def run_ols(df, predictor, outcome, covariates, one_tailed=False, expected_posit
     p_two = model.pvalues[predictor]
     p     = one_tailed_p(beta, p_two, expected_positive) if one_tailed else p_two
     row = {
+        **coefficient_ci(model, predictor),
         "predictor":     predictor,
         "outcome":       outcome,
         "n":             int(model.nobs),
@@ -179,6 +186,7 @@ def run_mlm(df, predictor, outcome, covariates, one_tailed=False, expected_posit
     p     = one_tailed_p(beta, p_two, expected_positive) if one_tailed else p_two
 
     row = {
+        **coefficient_ci(result, predictor),
         "predictor": predictor,
         "outcome":   outcome,
         "n":         int(result.nobs),

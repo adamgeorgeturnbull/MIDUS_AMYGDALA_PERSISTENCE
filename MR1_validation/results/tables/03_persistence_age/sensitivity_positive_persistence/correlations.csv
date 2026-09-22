@@ -1,3 +1,3 @@
-predictor,outcome,n,r,p,p_two_tailed
-RA5PAGE,pos_persist_crossrun_mean_z_L,115,-0.08413289153907476,0.3713460431808128,0.3713460431808128
-RA5PAGE,pos_persist_crossrun_mean_z_R,115,-0.030591919822673355,0.7455187046767753,0.7455187046767753
+ci_low,ci_high,ci_level,ci_sidedness,ci_method,ci_status,predictor,outcome,n,r,p,p_two_tailed
+-0.26318878070431834,0.10052625087583449,95.0,two-sided,fisher_z,ok,RA5PAGE,pos_persist_crossrun_mean_z_L,115,-0.08413289153907474,0.3713460431808128,0.3713460431808128
+-0.2125119651825472,0.1533777301855635,95.0,two-sided,fisher_z,ok,RA5PAGE,pos_persist_crossrun_mean_z_R,115,-0.03059191982267334,0.7455187046767753,0.7455187046767753

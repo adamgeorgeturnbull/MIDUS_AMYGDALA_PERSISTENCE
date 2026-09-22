@@ -31,6 +31,8 @@ import numpy as np
 import pandas as pd
 from scipy import stats
 
+from confidence_intervals import mean_ci
+
 # ============================================================================
 # Paths / constants
 # ============================================================================
@@ -64,6 +66,7 @@ def one_sample_t(data, col):
         return None
     t, p = stats.ttest_1samp(x, 0)
     return {
+        **mean_ci(x),
         "variable": col,
         "n":        len(x),
         "mean":     float(x.mean()),
@@ -82,6 +85,7 @@ def paired_t(data, col1, col2, contrast_label):
     diff = d[col1] - d[col2]
     t, p = stats.ttest_rel(d[col1], d[col2])
     return {
+        **mean_ci(diff),
         "contrast":  contrast_label,
         "col1":      col1,
         "col2":      col2,

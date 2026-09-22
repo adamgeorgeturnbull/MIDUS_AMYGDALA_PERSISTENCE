@@ -31,7 +31,44 @@ PRIMARY_PREDS    = ["l_amyg-ant_vmPFC_neg_vs_neu", "l_amyg-post_vmPFC_neg_vs_neu
 EXPECTED_DIRECTIONS = {"neg_persist_crossrun_mean_z_L": -1}
 
 
-def main():
+def run_negative_condition(cons, base_covs):
+    # -------------------------------------------------------------------------
+    # 5. Neg condition only (robustness — original operationalisation)
+    # -------------------------------------------------------------------------
+    print("\n--- Sensitivity: Neg condition only ---")
+    neg_preds = [p for p in [
+        "l_amyg-ant_vmPFC_neg",
+        "l_amyg-post_vmPFC_neg",
+    ] if p in cons.columns]
+
+    if neg_preds:
+        corr, ols, mlm = run_analysis_set(
+            cons, neg_preds, PRIMARY_OUTCOME, base_covs,
+            one_tailed=True, expected_directions=EXPECTED_DIRECTIONS,
+            mlm_maxiter_by_predictor={"l_amyg-ant_vmPFC_neg": 2000},
+        )
+        target = (mlm.loc[mlm["predictor"].eq("l_amyg-ant_vmPFC_neg")]
+                  if "predictor" in mlm else mlm.iloc[:0])
+        if len(target) != 1 or target.iloc[0]["ci_status"] != "ok":
+            raise RuntimeError("Targeted connectivity fit still requires review; outputs not replaced.")
+        save_results(corr, ols, mlm, BASE_DIR / "sensitivity_neg_condition",
+                     label="05 FC (neg only) → Persistence  [conservative, one-tailed]",
+                     predictors=neg_preds, outcomes=PRIMARY_OUTCOME,
+                     covariates=base_covs, n=len(cons),
+                     one_tailed=True, expected_directions=EXPECTED_DIRECTIONS)
+        (BASE_DIR / "sensitivity_neg_condition" / "fit_notes.md").write_text(
+            "Anterior negative-condition connectivity MLM: maxiter=2000; "
+            "model, sample, covariates, REML, optimizer order, and directional test unchanged. "
+            "Optimizers continue in the existing order until a converged fit with a valid "
+            "target-coefficient CI is obtained; no selection by p value. "
+            "Iteration limit approved after separate optimizer diagnostics. "
+            "Posterior model retains its original iteration setting.\n"
+        )
+    else:
+        print("  Neg condition FC variables not found — skipping.")
+
+
+def main(negative_condition_only=False):
     print("=" * 70)
     print("Analysis 05 — Sensitivity Analyses")
     print("=" * 70)
@@ -48,6 +85,9 @@ def main():
                              require_diary=False)
     print(f"  Conservative N = {len(cons)}")
     base_covs = get_covariates(cons)
+    if negative_condition_only:
+        run_negative_condition(cons, base_covs)
+        return
 
     # -------------------------------------------------------------------------
     # 1. Right amygdala neg−neu (hemisphere specificity)
@@ -121,28 +161,11 @@ def main():
     else:
         print("  No alternative persistence variables found — skipping.")
 
-    # -------------------------------------------------------------------------
-    # 5. Neg condition only (robustness — original operationalisation)
-    # -------------------------------------------------------------------------
-    print("\n--- Sensitivity: Neg condition only ---")
-    neg_preds = [p for p in [
-        "l_amyg-ant_vmPFC_neg",
-        "l_amyg-post_vmPFC_neg",
-    ] if p in cons.columns]
-
-    if neg_preds:
-        corr, ols, mlm = run_analysis_set(
-            cons, neg_preds, PRIMARY_OUTCOME, base_covs,
-            one_tailed=True, expected_directions=EXPECTED_DIRECTIONS,
-        )
-        save_results(corr, ols, mlm, BASE_DIR / "sensitivity_neg_condition",
-                     label="05 FC (neg only) → Persistence  [conservative, one-tailed]",
-                     predictors=neg_preds, outcomes=PRIMARY_OUTCOME,
-                     covariates=base_covs, n=len(cons),
-                     one_tailed=True, expected_directions=EXPECTED_DIRECTIONS)
-    else:
-        print("  Neg condition FC variables not found — skipping.")
+    run_negative_condition(cons, base_covs)
 
 
 if __name__ == "__main__":
-    main()
+    import argparse
+    parser = argparse.ArgumentParser(description=__doc__)
+    parser.add_argument("--negative-condition-only", action="store_true")
+    main(negative_condition_only=parser.parse_args().negative_condition_only)

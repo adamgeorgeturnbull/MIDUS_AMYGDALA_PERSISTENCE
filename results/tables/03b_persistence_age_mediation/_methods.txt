@@ -1,6 +1,6 @@
 Analysis 03b - Age -> Persistence -> Affect
 Prespecified confirmatory extension (statistical indirect effects)
-Generated: 2026-09-18 15:34
+Generated: 2026-09-22 15:15
 
 Mediation sample frame: diary + fMRI conservative, N = 81
 

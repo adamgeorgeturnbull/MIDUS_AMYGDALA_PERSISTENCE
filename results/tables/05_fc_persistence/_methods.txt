@@ -2,7 +2,7 @@ MODEL SPECIFICATION
 ============================================================
 Analysis  : 05 FC (neg−neu) → Persistence  [conservative, one-tailed]
 N         : 127
-Generated : 2026-08-21
+Generated : 2026-09-22
 
 VARIABLES
 ------------------------------------------------------------

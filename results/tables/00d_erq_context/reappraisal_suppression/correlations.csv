@@ -1,2 +1,2 @@
-predictor,outcome,n,r,p,p_two_tailed
-C5SER,C5SES,229,-0.03124145119113019,0.6381430912445416,0.6381430912445416
+ci_low,ci_high,ci_level,ci_sidedness,ci_method,ci_status,predictor,outcome,n,r,p,p_two_tailed
+-0.16023364251447558,0.09879987201646186,95.0,two-sided,fisher_z,ok,C5SER,C5SES,229,-0.03124145119113019,0.6381430912445416,0.6381430912445416

@@ -1,2 +1,2 @@
-predictor,outcome,n,n_groups,beta,se,z,p,p_two_tailed,re_var,log_likelihood,converged,degenerate_re,optimizer
-C5SER,C5SES,229,,0.025365121159908344,0.07513696888709755,0.33758510005936665,0.73567587209809,0.73567587209809,0.5530892743891933,-362.0426754108412,True,False,powell
+ci_low,ci_high,ci_level,ci_sidedness,ci_method,ci_status,predictor,outcome,n,n_groups,beta,se,z,p,p_two_tailed,re_var,log_likelihood,converged,degenerate_re,optimizer
+-0.12190063176630943,0.17263087408612612,95.0,two-sided,wald_normal,ok,C5SER,C5SES,229,,0.025365121159908344,0.07513696888709755,0.33758510005936665,0.73567587209809,0.73567587209809,0.5530892743891933,-362.0426754108412,True,False,powell

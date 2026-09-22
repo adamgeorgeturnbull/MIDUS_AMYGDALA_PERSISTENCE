@@ -1,4 +1,4 @@
-predictor,outcome,n,r,p,p_two_tailed
-fd_mean_across_runs,neg_persist_crossrun_mean_z_L,127,-0.025312644476206014,0.7775725512851313,0.7775725512851313
-fd_mean_across_runs,l_amyg-ant_vmPFC_neg_vs_neu,127,0.0053268673605648825,0.9526035515911335,0.9526035515911335
-fd_mean_across_runs,l_amyg-post_vmPFC_neg_vs_neu,127,0.09617205678785408,0.28211360214223036,0.28211360214223036
+ci_low,ci_high,ci_level,ci_sidedness,ci_method,ci_status,predictor,outcome,n,r,p,p_two_tailed
+-0.1986512639943767,0.14956153540746933,95.0,two-sided,fisher_z,ok,fd_mean_across_runs,neg_persist_crossrun_mean_z_L,127,-0.025312644476206014,0.7775725512851313,0.7775725512851313
+-0.1690446476196153,0.17937504250221833,95.0,two-sided,fisher_z,ok,fd_mean_across_runs,l_amyg-ant_vmPFC_neg_vs_neu,127,0.0053268673605648825,0.9526035515911335,0.9526035515911335
+-0.07937243346513351,0.26593113081325076,95.0,two-sided,fisher_z,ok,fd_mean_across_runs,l_amyg-post_vmPFC_neg_vs_neu,127,0.09617205678785408,0.28211360214223036,0.28211360214223036

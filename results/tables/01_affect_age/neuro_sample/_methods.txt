@@ -2,7 +2,7 @@ MODEL SPECIFICATION
 ============================================================
 Analysis  : 01 Age → Affect  [neuro subsample, C5PAGE]
 N         : 137
-Generated : 2026-04-03
+Generated : 2026-09-22
 
 VARIABLES
 ------------------------------------------------------------
@@ -21,10 +21,10 @@ STATISTICAL MODELS
 2. OLS regression
    Formula : outcome ~ predictor + covariates
    Covariates:
-     - biological sex (0 = male, 1 = female)
+     - biological sex (1 = male, 2 = female)
      - number of completed daily diary days
-     - time between diary (P2) and neuroscience (P5) waves (years)
-     - race/ethnicity (5 dummy variables, ref = White)
+     - time between diary (P2) and neuroscience (P5) waves (months)
+     - race (5 dummy variables, ref = White)
      - twin pair membership (334 dummy variables; OLS only)
 
 3. Linear mixed-effects model (MLM)
@@ -35,10 +35,10 @@ STATISTICAL MODELS
                     ≥2 members sharing M2FAMNUM); all others grouped by M2ID
    Estimation     : REML; optimizers tried in order: lbfgs, powell, nm, bfgs
    Fixed-effect covariates:
-     - biological sex (0 = male, 1 = female)
+     - biological sex (1 = male, 2 = female)
      - number of completed daily diary days
-     - time between diary (P2) and neuroscience (P5) waves (years)
-     - race/ethnicity (5 dummy variables, ref = White)
+     - time between diary (P2) and neuroscience (P5) waves (months)
+     - race (5 dummy variables, ref = White)
 
 INFERENCE
 ------------------------------------------------------------
