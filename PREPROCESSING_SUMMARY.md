@@ -288,8 +288,13 @@ python scripts/preprocessing/participant_flowchart.py
   predictors via `prepare_persistence_vars()`.
 - Supplementary table now reports separate N columns (`N correlation`, `N OLS`, `N MLM`)
   populated from each method's own result file.
-- Motion analyses (00e) confirm no significant association between head motion and the
-  primary persistence or FC metrics in correlations or OLS.
+- Motion analyses (00e) confirm no significant mixed-effects association between head motion and
+  the primary persistence or FC metrics (all two-tailed *p*s ≥ .129). A September 9 formula-name
+  correction allowed the four FC-as-outcome MLMs to run; all converged and were nonsignificant.
+  A September 10 coverage correction aligned Part 2 with the significant primary MLM findings.
+  Persistence with raw NA, age with persistence, and anterior connectivity with raw and
+  log-transformed NA all remained significant when controlling separately for both motion
+  measures (one-tailed *p*s = .038/.026, .019/.019, .048/.040, and .018/.015, respectively).
 
 ---
 

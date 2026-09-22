@@ -7,15 +7,16 @@ Motion sensitivity analyses for the MIDUS Amygdala Persistence project.
 Part 1 — Motion as predictor:
   Test whether overall mean FD and condition-window FD (negative trials) predict
   the primary fMRI outcomes (left amygdala persistence and amygdala–vmPFC FC)
-  using correlation, OLS, and MLM in the conservative diary+fMRI sample.
+  using correlation, OLS, and MLM in the conservative fMRI sample.
   Two-tailed tests (no directional prior for motion–signal relationships).
 
 Part 2 — Motion-controlled replication:
-  Candidate effects are selected from the existing conservative correlation
-  results for scripts 02 (persistence) and 04 (FC): any pair significant at
-  p < .05 in those unadjusted correlations is carried forward. Each selected
-  pair is then re-tested with OLS and MLM, with each motion measure added as an
-  extra covariate, to report whether the effect survives motion control.
+  Candidate effects are selected from the existing conservative primary MLM
+  results for scripts 02 (persistence-affect), 03 (age-persistence), and 04
+  (FC-affect): every pair significant at p < .05 is carried forward. Each
+  selected pair is then re-tested with OLS and MLM, with each motion measure
+  added as an extra covariate, to report whether the effect survives motion
+  control.
   Correlations are not re-run here: run_correlation() cannot adjust for
   covariates, so there is no motion-controlled correlation to report.
 
@@ -48,6 +49,7 @@ OUT_DIR.mkdir(parents=True, exist_ok=True)
 P_THRESH = 0.05
 
 PERSIST_VAR = "neg_persist_crossrun_mean_z_L"
+AGE_VAR     = "C5PAGE"
 FC_VARS     = ["l_amyg-ant_vmPFC_neg_vs_neu", "l_amyg-post_vmPFC_neg_vs_neu"]
 OUTCOMES    = ["PA_score", "NA_score", "NA_score_log"]
 
@@ -57,8 +59,18 @@ MOTION_VARS = {
 }
 
 # Expected directions for primary analyses (used in Part 2)
-PERSIST_DIRECTIONS = {"PA_score": False, "NA_score": True, "NA_score_log": True}
-FC_DIRECTIONS      = {"PA_score": True,  "NA_score": False, "NA_score_log": False}
+EXPECTED_DIRECTIONS = {
+    (PERSIST_VAR, "PA_score"): False,
+    (PERSIST_VAR, "NA_score"): True,
+    (PERSIST_VAR, "NA_score_log"): True,
+    (AGE_VAR, PERSIST_VAR): False,
+    (FC_VARS[0], "PA_score"): True,
+    (FC_VARS[0], "NA_score"): False,
+    (FC_VARS[0], "NA_score_log"): False,
+    (FC_VARS[1], "PA_score"): True,
+    (FC_VARS[1], "NA_score"): False,
+    (FC_VARS[1], "NA_score_log"): False,
+}
 
 
 # ============================================================================
@@ -140,14 +152,15 @@ def get_significant_pairs():
     """
     Select the candidate effects to re-test under motion control.
 
-    Reads the existing conservative correlation results for scripts 02 and 04 and
-    returns every (predictor, outcome, expected_positive) with p < P_THRESH.
-    Selection is therefore based on the unadjusted primary correlations; the
-    motion-controlled tests themselves are OLS and MLM (part2_motion_controlled).
+    Reads the existing conservative primary MLM results for scripts 02, 03, and
+    04 and returns every (predictor, outcome, expected_positive) with p <
+    P_THRESH. The motion-controlled tests themselves are OLS and MLM
+    (part2_motion_controlled).
     """
     result_files = [
-        RESULTS_DIR / "02_persistence_affect" / "correlations.csv",
-        RESULTS_DIR / "04_fc_affect"           / "correlations.csv",
+        RESULTS_DIR / "02_persistence_affect" / "mlm.csv",
+        RESULTS_DIR / "03_persistence_age"    / "mlm.csv",
+        RESULTS_DIR / "04_fc_affect"          / "mlm.csv",
     ]
 
     sig_pairs = []
@@ -163,10 +176,13 @@ def get_significant_pairs():
                 continue
             pred = row["predictor"]
             out  = row["outcome"]
-            if pred == PERSIST_VAR:
-                exp_pos = PERSIST_DIRECTIONS.get(out, True)
-            else:
-                exp_pos = FC_DIRECTIONS.get(out, True)
+            direction_key = (pred, out)
+            if direction_key not in EXPECTED_DIRECTIONS:
+                sys.exit(
+                    f"ERROR: no expected direction configured for significant "
+                    f"primary pair {pred} -> {out}"
+                )
+            exp_pos = EXPECTED_DIRECTIONS[direction_key]
             pair = (pred, out, exp_pos)
             if pair not in sig_pairs:
                 sig_pairs.append(pair)
@@ -183,22 +199,24 @@ def part2_motion_controlled(df, sig_pairs):
         print("  No significant primary effects found — nothing to rerun.")
         return
 
-    print(f"\n  Pairs significant at p < {P_THRESH} in the primary (unadjusted)")
-    print(f"  correlations, to be re-tested with motion as a covariate:")
+    print(f"\n  Pairs significant at p < {P_THRESH} in the primary conservative")
+    print(f"  MLMs, to be re-tested with motion as a covariate:")
     for pred, out, exp_pos in sig_pairs:
         dirn = "positive" if exp_pos else "negative"
         print(f"    {pred}  →  {out}  (expected {dirn})")
-
-    # Separate conservative samples for persistence and FC predictors
-    _, cons_persist = get_samples(df)
-    _, cons_fc      = get_samples(df, check_fc_col=FC_VARS[0])
 
     for motion_var, motion_label in MOTION_VARS.items():
         print(f"\n── Adding covariate: {motion_label} ({motion_var}) ──")
 
         rows = []
         for pred, out, exp_pos in sig_pairs:
-            sample = cons_fc if pred in FC_VARS else cons_persist
+            require_diary = out in DIARY_OUTCOMES
+            if pred in FC_VARS:
+                _, sample = get_samples(
+                    df, check_fc_col=FC_VARS[0], require_diary=require_diary
+                )
+            else:
+                _, sample = get_samples(df, require_diary=require_diary)
 
             if motion_var not in sample.columns:
                 print(f"  Skipping {motion_var} — not in data")
@@ -207,7 +225,7 @@ def part2_motion_controlled(df, sig_pairs):
                 continue
 
             sub = sample.dropna(subset=[motion_var])
-            base_covs = get_covariates(sub)
+            base_covs = [c for c in get_covariates(sub) if c != pred]
             diary_covs = [c for c in ["time_P2_P5", "n_days_complete"] if c in sub.columns]
             covs = base_covs + [motion_var] + (diary_covs if out in DIARY_OUTCOMES else [])
 

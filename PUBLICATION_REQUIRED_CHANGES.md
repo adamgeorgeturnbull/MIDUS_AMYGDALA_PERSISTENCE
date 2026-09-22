@@ -253,16 +253,24 @@ as "consistent with the diary findings" or "in the PANAS sensitivity analysis."
 
 ### 3.9 Motion-reporting correction — COMPLETED
 
-`00e_motion_check.py` Part 2 now runs **OLS and MLM only** (not correlations, which cannot
-control for covariates). The Part 2 console summary now reports the beta coefficient rather than
-NaN for those models.
+`00e_motion_check.py` Part 2 now identifies all significant primary MLM predictor–outcome pairs
+from Analyses 02–04 and runs motion-adjusted OLS and MLM models for those pairs. Correlations are
+not used for adjustment because they cannot control for covariates. The Part 2 console summary
+reports the beta coefficient rather than NaN for adjusted models.
 
 Motion was not significantly associated with primary persistence or FC metrics in Part 1
-correlations or OLS. Some Part 1 FC MLM models failed all optimizers; these are estimation
-failures, not null results, and should be reported as such. Read exact values from
-`results/tables/00e_motion_check/`.
+correlations, OLS, or MLM (minimum two-tailed *p*s = .143, .449, and .129, respectively).
+The earlier missing FC MLM rows were caused by unsanitized hyphens in outcome names, which
+prevented formula parsing before optimization. After the formula-name correction, all four FC
+motion models converged. Read exact values from `results/tables/00e_motion_check/`.
 
 Motion-adjusted results: `results/tables/00e_motion_check/`.
+
+The final Part 2 set comprises persistence with raw NA, age with persistence, and anterior
+connectivity with raw and log-transformed NA. All four significant primary MLM findings remained
+significant after separate adjustment for mean FD across runs and mean FD during
+negative-condition trials (one-tailed *p*s = .038/.026, .019/.019, .048/.040, and .018/.015,
+respectively).
 
 ---
 
@@ -359,7 +367,7 @@ aggregate results.
 - [ ] Clarify descriptive status of residualized scatterplots; update Figures 2 and 3
 - [ ] Describe method-specific evidence accurately in Analyses 02 and 04 Results
 - [ ] Update PANAS sensitivity prose to describe as sensitivity, not primary evidence
-- [ ] Some Part 1 FC MLM models failed all optimizers — report as estimation failures
+- [x] Correct Part 1 FC MLM formula parsing, rerun the models, and report the converged null results
 - [ ] Final consistency audit of all manuscript N values, statistics, and figure labels
 
 ### MR1 targeted replication

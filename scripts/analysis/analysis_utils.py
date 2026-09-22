@@ -274,16 +274,22 @@ def run_mlm(df, predictor, outcome, covariates, one_tailed=False, expected_posit
     else:
         df["_family_id"] = df["M2ID"].astype(str)
 
-    # Sanitize predictor name for formula (hyphens not allowed)
+    # Sanitize predictor and outcome names for the statsmodels formula parser.
+    # FC variables contain hyphens; either side of the formula may contain one
+    # (e.g., motion -> FC), so both names must be made formula-safe.
     pred_safe = predictor.replace("-", "_").replace(".", "_")
     if pred_safe != predictor:
         df[pred_safe] = df[predictor]
+
+    outcome_safe = outcome.replace("-", "_").replace(".", "_")
+    if outcome_safe != outcome:
+        df[outcome_safe] = df[outcome]
 
     # Twin pair dummies are replaced by the random effect — exclude from fixed effects
     cov_list = [c for c in covariates
                 if c in df.columns and c != predictor and c != pred_safe
                 and not c.startswith("twin_pair_")]
-    cols = [outcome, pred_safe, "_family_id"] + cov_list
+    cols = [outcome_safe, pred_safe, "_family_id"] + cov_list
     data = df[cols].dropna()
     if len(data) < MIN_N:
         return None
@@ -291,10 +297,11 @@ def run_mlm(df, predictor, outcome, covariates, one_tailed=False, expected_posit
     # Drop zero-variance covariates to avoid rank deficiency / optimizer failures
     cov_list = [c for c in cov_list if data[c].std() > 0]
     cov_terms = " + ".join(c for c in cov_list if c in data.columns)
-    fixed = f"{outcome} ~ {pred_safe}" + (f" + {cov_terms}" if cov_terms else "")
+    fixed = f"{outcome_safe} ~ {pred_safe}" + (f" + {cov_terms}" if cov_terms else "")
 
     result = None
     successful_method = None
+    last_error = None
     for method in ["lbfgs", "powell", "nm", "bfgs"]:
         try:
             with warnings.catch_warnings():
@@ -303,11 +310,15 @@ def run_mlm(df, predictor, outcome, covariates, one_tailed=False, expected_posit
                 result = mdl.fit(reml=True, method=method)
                 successful_method = method
                 break
-        except Exception:
+        except Exception as exc:
+            last_error = exc
             continue
 
     if result is None:
-        print(f"    MLM error ({outcome} ~ {predictor}): all optimizers failed")
+        detail = ""
+        if last_error is not None:
+            detail = f" ({type(last_error).__name__}: {str(last_error).splitlines()[0]})"
+        print(f"    MLM error ({outcome} ~ {predictor}): all optimizers failed{detail}")
         return None
 
     beta = result.fe_params[pred_safe]

@@ -4,6 +4,28 @@
 **State:** Corrected M3 and targeted MR1 analyses are computationally complete and frozen for
 manuscript preparation.
 
+## Post-freeze correction — September 9, 2026
+
+Manuscript review identified a narrow formula-name bug in the M3 motion check: connectivity
+variables contain hyphens, and `run_mlm()` sanitized hyphenated predictors but not hyphenated
+outcomes. The four motion-to-connectivity MLMs therefore failed during formula parsing before
+optimization; they had been incorrectly described as nonconvergent. Outcome names were made
+formula-safe, the complete motion script was rerun from the real Box project, and all four models
+converged. All were nonsignificant (two-tailed *p*s = .987, .237, .606, and .129), so the
+scientific conclusion and all motion-adjusted primary results are unchanged. This correction
+does not expand the frozen analysis scope.
+
+## Post-freeze manuscript-alignment correction — September 10, 2026
+
+The motion follow-up was aligned with the manuscript's primary inferential framework by selecting
+significant primary mixed-effects findings rather than significant zero-order associations. The
+complete motion analysis was rerun from the real Box project and now covers persistence with raw
+NA, age with persistence, and anterior connectivity with raw and log-transformed NA. All four
+findings remained significant after controlling separately for mean FD across runs and mean FD
+during negative-condition trials (one-tailed *p*s = .038/.026, .019/.019, .048/.040, and
+.018/.015, respectively). This was a correction to coverage of the already frozen primary models,
+not an expansion of the analysis scope.
+
 ## Frozen analysis state
 
 - The corrected M3 preprocessing starts from untouched raw BOLD images, uses the corrected
@@ -27,8 +49,7 @@ manuscript preparation.
 - Corrected Methods and Results were drafted from the final M3 and MR1 aggregate outputs.
 - An independent read-only audit checked more than 80 numerical claims against those outputs and
   found no numerical errors.
-- Follow-up checks confirmed the M3 sample demographics, Analysis 01 adjusted N of 1,168, and
-  65 residual degrees of freedom for the reported FC-to-log-NA OLS result.
+- Follow-up checks confirmed the M3 sample demographics and Analysis 01 adjusted N of 1,168.
 - `MAP_manuscript.docx` is the authoritative Box manuscript and will remain untouched while a
   separate revised copy is prepared.
 
@@ -52,4 +73,3 @@ The following are manuscript-preparation tasks, not reasons to alter or rerun th
 The current MR1 right-amygdala results are reported only as nominal exploratory sensitivity
 findings, not as evidence of hemispheric specificity or lateralized replication; therefore the
 conditional handedness audit is outside the present reporting scope.
-
