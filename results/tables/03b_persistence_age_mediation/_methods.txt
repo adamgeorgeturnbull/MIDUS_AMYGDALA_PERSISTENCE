@@ -1,0 +1,93 @@
+Analysis 03b - Age -> Persistence -> Affect
+Prespecified confirmatory extension (statistical indirect effects)
+Generated: 2026-09-18 15:34
+
+Mediation sample frame: diary + fMRI conservative, N = 81
+
+COMMON COMPLETE-CASE SAMPLE
+  Each specification is fitted on ONE participant-level complete-case
+  frame. The a model, every b/c' model, every total-effect model and
+  the cluster bootstrap all use that identical frame, so a and b are
+  never estimated on different participants. Every observed model is
+  asserted to have been fitted on the specification's common N.
+  Zero-variance covariates are still pruned afterwards, which does
+  not change who is included.
+
+  The family id is constructed FIRST, on the full sample; the
+  complete-case filter is then applied to the ANALYSIS variables
+  (age predictor, mediator, the three outcomes, sex, race_2-race_6,
+  time_P2_P5, n_days_complete) plus the derived _family_id.
+
+  SAMPLMAJ and M2FAMNUM are NOT part of that filter. They are raw
+  inputs to the family-id construction rather than fixed effects; a
+  participant missing them is simply not a paired twin and is validly
+  assigned their own M2ID-keyed singleton cluster. Excluding them
+  would shrink the sample without changing any model. M2ID itself is
+  required: an otherwise-eligible participant with no M2ID cannot be
+  clustered, and the run aborts rather than dropping them silently or
+  coercing the identifier to the string "nan".
+Mediator: neg_persist_crossrun_mean_z_L
+Outcomes: PA_score, NA_score (primary); NA_score_log (robustness_log_na, outcome-transformation check)
+
+SPECIFICATIONS
+  primary_c5page - age = C5PAGE (age at the neuroscience visit)
+      a        neg_persist_crossrun_mean_z_L ~ C5PAGE + sex + race
+      b, c'    Y ~ neg_persist_crossrun_mean_z_L + C5PAGE + sex + race + time_P2_P5 + n_days_complete
+      c total  Y ~ C5PAGE + sex + race + time_P2_P5 + n_days_complete
+
+  sensitivity_c2page - age = C2PAGE (age at the diary wave);
+      an age-DEFINITION sensitivity. C2PAGE replaces C5PAGE; the two
+      never appear in the same model.
+      a        neg_persist_crossrun_mean_z_L ~ C2PAGE + sex + race + time_P2_P5
+      b, c'    Y ~ neg_persist_crossrun_mean_z_L + C2PAGE + sex + race + time_P2_P5 + n_days_complete
+      c total  Y ~ C2PAGE + sex + race + time_P2_P5 + n_days_complete
+
+      time_P2_P5 enters the C2PAGE a path because persistence is
+      measured later, at P5.
+
+Mixed-effects, random intercept for family, REML. Optimizers tried
+lbfgs -> powell -> nm -> bfgs; a fit is ACCEPTED ONLY IF the optimizer
+reports convergence. twin_pair_* dummies are excluded (family random
+intercept); zero-variance covariates are pruned, as in run_mlm.
+
+INDIRECT EFFECT a*b
+  PRIMARY:   family-level cluster bootstrap, 2,000 resamples,
+             two-sided 95% percentile interval, seed 42.
+             Families, not individuals, are resampled; a family drawn
+             twice becomes two distinct clusters. Within a replicate
+             the families are drawn once and the a model fitted once,
+             shared across all three outcomes. A replicate counts only
+             when BOTH its a and b models converge; at least
+             80% of replicates must qualify or the
+             run aborts.
+  SECONDARY: Monte Carlo distribution-of-the-product, 200,000 draws.
+             a and b are drawn from INDEPENDENT normals, so this does
+             NOT incorporate cov(a, b). An approximation only.
+  Both intervals are two-sided; the product tests are not converted to
+  one-tailed inference.
+
+  c, c' and a*b come from separate mixed models and are not
+  guaranteed to satisfy c = c' + a*b exactly; the three estimates are
+  not expected to reconcile arithmetically.
+
+  indirect_sign_as_predicted records only whether the point estimate
+  falls in the predicted direction. It is DESCRIPTIVE and is not
+  evidence of a statistical effect.
+
+MULTIPLICITY AND PRECEDENCE
+  No multiplicity adjustment is applied across the predefined
+  sensitivities. Sensitivity and robustness findings do not override
+  the primary specification.
+
+TEMPORAL ORDER AND CAUSAL STATUS
+  Daily affect (P2) precedes the neuroimaging assessment (P5) that
+  yields the mediator, as acknowledged in the preregistration. The
+  measurement order is X -> Y -> M. All estimates are statistical
+  indirect associations and cannot establish temporal precedence or
+  causal mediation.
+
+OTHER CONSTRAINTS
+  The a path is estimated here in the diary + fMRI sample; analysis 03
+  reports it in the larger conservative fMRI sample (N = 127). Both
+  appear in paths.csv / the console log.
+  Complete-case N is reported per model and per specification.
