@@ -27,3 +27,9 @@ MR1_validation/.claude/
 MR1_validation/**/__pycache__/
 MR1_validation/**/*.pyc
 MR1_validation/**/.DS_Store
+
+# Local writing and diagnostic outputs
+/MAP*.docx
+/cover_letter.docx
+/results/diagnostics/
+/results/tables/**/fit_notes.md

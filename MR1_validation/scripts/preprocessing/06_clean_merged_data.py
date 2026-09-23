@@ -231,10 +231,10 @@ def main():
     pd.DataFrame(stats_list).to_csv(STATS_OUTPUT, index=False)
     print(f"Skewness and kurtosis saved to {STATS_OUTPUT}")
 
-    min_nonzero = df.loc[df["RA5SPGN"] > 0, "RA5SPGN"].min()
-    log_offset  = min_nonzero / 2 if not pd.isna(min_nonzero) else 0.01
-    df["RA5SPGN_log"] = np.log(df["RA5SPGN"] + log_offset)
-    print(f"Log transform offset for RA5SPGN: {log_offset:.4f} (half of min non-zero value)")
+    # Cleaned PANAS scores are validated above as 1–5: no offset is needed.
+    # Use the natural log of the original positive scale; diary NA is separate.
+    df["RA5SPGN_log"] = np.log(df["RA5SPGN"])
+    print("PANAS negative affect: natural log, no added constant")
 
     df.to_csv(OUTPUT_FILE, index=False)
     print(f"Cleaned merged dataset saved to: {OUTPUT_FILE}")

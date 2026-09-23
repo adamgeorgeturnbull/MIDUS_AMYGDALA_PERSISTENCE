@@ -477,7 +477,7 @@ class TestPanasRecoding:
     """
     MR1 PANAS variables: RA5SPGP (positive) and RA5SPGN (negative affect).
     Missing codes 8, 98, 99 → NaN; valid range 1–5 is preserved.
-    RA5SPGN_log is log-transformed from recoded values with an offset.
+    RA5SPGN_log is the natural log of recoded positive values, without an offset.
     """
 
     MISSING_CODES = [8, 98, 99]
@@ -519,23 +519,19 @@ class TestPanasRecoding:
         # But 0 is outside valid range 1-5
         assert s.iloc[0] < self.VALID_MIN
 
-    def test_log_transform_offset_from_recoded_values(self):
-        # Offset = min_nonzero / 2; with min_nonzero == 1 this is 0.5
-        recoded = self._recode([1, 8, 2, 3])  # 8 → NaN; valid min = 1
-        valid = recoded.dropna()
-        min_nonzero = valid[valid > 0].min()
-        log_offset = min_nonzero / 2
-        assert log_offset == pytest.approx(0.5)
+    def test_plain_log_preserves_scale_anchor(self):
+        recoded = self._recode([1, 8, 2, 3])
+        transformed = np.log(recoded)
+        assert transformed.iloc[0] == pytest.approx(0.0)
+        assert transformed.iloc[2] == pytest.approx(np.log(2.0))
+        assert pd.isna(transformed.iloc[1])
 
     def test_log_transform_applied_to_recoded_not_raw(self):
-        # RA5SPGN_log must be derived from the recoded series, not from raw values
-        raw = pd.Series([1.0, 99.0, 3.0])  # 99 is a missing code
+        raw = pd.Series([1.0, 99.0, 3.0])
         recoded = self._recode(raw)
-        log_offset = 0.5
-        log_transformed = np.log(recoded + log_offset)
-        # The row with 99 (→ NaN) must be NaN in the log series, not log(99 + 0.5)
+        log_transformed = np.log(recoded)
         assert pd.isna(log_transformed.iloc[1])
-        assert pd.notna(log_transformed.iloc[0])
+        assert log_transformed.iloc[0] == pytest.approx(0.0)
 
     def test_both_panas_variables_use_same_missing_codes(self):
         # RA5SPGP and RA5SPGN use the same PANAS missing-code set
