@@ -15,3 +15,6 @@ MIDUS/
 /results/tables/pre_*_fix/
 /logs/01_harmonize_ids_log_20260626_103658.txt
 /scripts/diagnostics/check_missing_imaging.py
+
+# Keep manuscript documents local
+/*.docx
