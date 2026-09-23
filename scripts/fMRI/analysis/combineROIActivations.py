@@ -14,10 +14,15 @@ Output:
     ROI_activations_output/all_subjects_roi_activations.csv
 """
 
+import sys
 import pandas as pd
 from pathlib import Path
 
-input_dir = Path("/scratch/groups/fvlin/MIDUS/M3/ROI_activations_output")
+input_dir = Path("/scratch/groups/fvlin/MIDUS/M3_stc_rerun/ROI_activations_output")
+
+if not input_dir.is_dir():
+    print(f"ERROR: input directory not found: {input_dir}")
+    sys.exit(1)
 output_file = input_dir / "all_subjects_roi_activations.csv"
 
 all_dfs = []

@@ -1,169 +1,137 @@
 #!/usr/bin/env python3
+"""vmPFC image-to-following-face spatial persistence across distinct runs.
+
+Each valence uses six directional pairs for three complete runs: image in A
+versus face following that valence in B, A != B. Average correlations in Fisher
+z space, retaining the existing +/-0.9999 clipping convention. No new GLM fits.
+
+Legacy wide column names (<seed>_<valence>_image_mean_r) are retained for the
+existing merge/analysis consumers; they now denote IMAGE-TO-FACE persistence.
+Summary/pair exports explicitly record both conditions and missing/invalid pairs.
+Default outputs are separate from the previous image-to-image results.
 """
-run_cross_corr_vmPFC.py
-
-Compute cross-run voxelwise vmPFC persistence using pairwise spatial
-correlations between image conditions across different runs.
-
-Parallel to run_cross_corr.py but for vmPFC spherical ROIs (ant_vmPFC,
-post_vmPFC), using output from extract_vmPFC.sh.
-
-Persistence is operationalized as the mean spatial correlation between
-vmPFC activation patterns for the same condition in different runs.
-High cross-run correlation indicates stable, condition-specific spatial
-patterning within the vmPFC — the same measure as amygdala persistence
-but for the vmPFC, providing a comparison ROI.
-
-Conditions:
-    neg_image, neu_image, pos_image (each run separately)
-
-Method:
-    For each subject, seed (ant_vmPFC / post_vmPFC), and condition:
-    1. Extract voxelwise beta vectors per run
-    2. Compute Pearson correlations between all cross-run pairs (i != j)
-    3. Average in Fisher z-space to get a single persistence estimate
-
-Input:
-    /scratch/groups/fvlin/MIDUS/voxelwise_vmPFC_betas/<subid>/
-        <subid>_voxelwise_vmPFC_betas.csv
-    Columns: subject, run, condition, seed, nvox_resampled, beta_0..N
-
-Output:
-    results_summary_vmPFC_persistence.csv  — one row per subject x seed x condition
-        subject, seed, condition, mean_r, median_r, std_r, n_pairs
-    results_pairs_vmPFC_persistence.csv    — all pairwise cross-run correlations
-
-Run this locally (or as a short non-array Sherlock job) after extract_vmPFC.sh completes.
-"""
-
-import os
+import argparse
 from pathlib import Path
 import numpy as np
 import pandas as pd
 from scipy.stats import pearsonr
 
-# ========== USER SETTINGS ==========
-BASE_DIR = Path("/scratch/groups/fvlin/MIDUS/voxelwise_vmPFC_betas")
-OUT_DIR  = Path("/scratch/groups/fvlin/MIDUS/vmPFC_persistence_summary")
-OUT_DIR.mkdir(parents=True, exist_ok=True)
+ROOT = Path('/scratch/groups/fvlin/MIDUS/M3_stc_rerun')
+SEEDS = ('ant_vmPFC', 'post_vmPFC')
+VALENCES = ('neg', 'neu', 'pos')
+RUNS = ('run-01', 'run-02', 'run-03')
+MIN_VOXELS = 10
 
-CONDITIONS  = ['neg_image', 'neu_image', 'pos_image']
-SEEDS       = ['ant_vmPFC', 'post_vmPFC']
-MIN_VOXELS  = 10
-# ===================================
 
-def fisher_z(r):
-    return np.arctanh(np.clip(r, -0.9999, 0.9999))
-
-def inv_fisher_z(z):
-    return np.tanh(z)
-
-summary_rows = []
-pairs_rows   = []
-
-subjects = sorted([d.name for d in BASE_DIR.iterdir() if d.is_dir()])
-print(f"Processing {len(subjects)} subjects")
-
-for subj in subjects:
-    subj_dir = BASE_DIR / subj
-    csv_files = list(subj_dir.glob("*_voxelwise_vmPFC_betas.csv"))
-    if not csv_files:
-        print(f"WARNING: no vmPFC CSV for {subj}, skipping")
-        continue
-
-    df = pd.read_csv(csv_files[0])
-    df.columns = [c.strip() for c in df.columns]
-    voxel_cols = [c for c in df.columns if c.startswith("beta_")]
-
-    # Build lookup: (run, condition, seed) -> 1D array
-    data_lookup = {}
+def calculate(df, subject):
+    """Pure calculation; accepts synthetic frames without filesystem access."""
+    required = {'run', 'condition', 'seed', 'nvox_resampled'}
+    if not required.issubset(df.columns):
+        raise ValueError('Missing required voxel metadata')
+    if df.duplicated(['run', 'condition', 'seed']).any():
+        raise ValueError('Duplicate run/condition/seed rows')
+    cols = [c for c in df.columns if c.startswith('beta_')]
+    if cols != [f'beta_{i}' for i in range(len(cols))]:
+        raise ValueError('Voxel columns are not in consecutive spatial order')
+    lookup = {}
     for _, row in df.iterrows():
-        key = (row['run'], row['condition'], row['seed'])
-        vals = row[voxel_cols].to_numpy(dtype=float)
-        vals = vals[~np.isnan(vals)]
-        data_lookup[key] = vals
-
+        n = float(row['nvox_resampled'])
+        if not np.isfinite(n) or n != int(n) or not 0 <= n <= len(cols):
+            raise ValueError('Invalid voxel count')
+        n = int(n)
+        values = row[cols].to_numpy(dtype=float)
+        if not np.isnan(values[n:]).all():
+            raise ValueError('Unexpected values beyond declared voxel count')
+        # Preserve spatial positions: do not drop internal NaNs or truncate vectors.
+        lookup[(row['run'], row['condition'], row['seed'])] = values[:n]
+    summaries, pairs = [], []
     for seed in SEEDS:
-        for cond in CONDITIONS:
-            # Get all runs that have data for this seed/condition
-            runs_avail = sorted({run for (run, c, s) in data_lookup.keys()
-                                  if c == cond and s == seed})
-            if len(runs_avail) < 2:
-                print(f"  {subj} {seed} {cond}: <2 runs, skipping")
-                continue
-
-            pair_rs  = []
-            pair_meta = []
-
-            for i, run_a in enumerate(runs_avail):
-                for run_b in runs_avail[i+1:]:
-                    vec_a = data_lookup.get((run_a, cond, seed), np.array([]))
-                    vec_b = data_lookup.get((run_b, cond, seed), np.array([]))
-
-                    if vec_a.size < MIN_VOXELS or vec_b.size < MIN_VOXELS:
+        for valence in VALENCES:
+            image_cond, face_cond = f'{valence}_image', f'{valence}_face'
+            rs = []
+            for a in RUNS:
+                for b in RUNS:
+                    if a == b:
                         continue
+                    x = lookup.get((a, image_cond, seed))
+                    y = lookup.get((b, face_cond, seed))
+                    status, r, p = 'ok', np.nan, np.nan
+                    if x is None or y is None:
+                        status = 'missing_map'
+                    elif len(x) != len(y):
+                        status = 'voxel_count_mismatch'
+                    elif len(x) < MIN_VOXELS:
+                        status = 'too_few_voxels'
+                    elif not (np.isfinite(x).all() and np.isfinite(y).all()):
+                        status = 'nonfinite_voxels'
+                    elif np.std(x) == 0 or np.std(y) == 0:
+                        status = 'constant_pattern'
+                    else:
+                        r, p = pearsonr(x, y)
+                        if not np.isfinite(r):
+                            status = 'nonfinite_correlation'
+                        else:
+                            rs.append(r)
+                    pairs.append(dict(subject=subject, seed=seed, condition=image_cond,
+                                      run_A=a, cond_A=image_cond, run_B=b, cond_B=face_cond,
+                                      r=r, p=p, n_vox_A=0 if x is None else len(x),
+                                      n_vox_B=0 if y is None else len(y), status=status))
+            summaries.append(dict(subject=subject, seed=seed, condition=image_cond,
+                                  cond_A=image_cond, cond_B=face_cond,
+                                  mean_r=float(np.tanh(np.mean(np.arctanh(np.clip(rs, -.9999, .9999))))) if rs else np.nan,
+                                  median_r=float(np.median(rs)) if rs else np.nan,
+                                  std_r=float(np.std(rs, ddof=1)) if len(rs) > 1 else np.nan,
+                                  n_pairs=len(rs), expected_pairs=6,
+                                  status='complete' if len(rs) == 6 else 'review_required'))
+    return summaries, pairs
 
-                    # Trim to matching length if sizes differ
-                    nmin = min(vec_a.size, vec_b.size)
-                    v1, v2 = vec_a[:nmin], vec_b[:nmin]
 
-                    if np.std(v1) == 0 or np.std(v2) == 0:
-                        continue
+def main():
+    parser = argparse.ArgumentParser(description=__doc__)
+    parser.add_argument('--input-dir', type=Path, default=ROOT/'voxelwise_vmPFC_betas_image_face')
+    parser.add_argument('--output-dir', type=Path, default=ROOT/'vmPFC_persistence_image_face_summary')
+    args = parser.parse_args()
+    if not args.input_dir.is_dir():
+        raise FileNotFoundError('Input directory is absent')
+    summaries, pairs = [], []
+    input_status = []
+    for directory in sorted(args.input_dir.iterdir()):
+        if not directory.is_dir():
+            continue
+        files = list(directory.glob('*_voxelwise_vmPFC_betas.csv'))
+        if not files:
+            input_status.append(dict(subject=directory.name, status='missing_voxel_csv'))
+            # Preserve absent subjects in summaries so retained-sample review can
+            # distinguish missing extraction from a valid six-pair estimate.
+            empty = pd.DataFrame(columns=['run', 'condition', 'seed', 'nvox_resampled'])
+            s, p = calculate(empty, directory.name)
+            summaries.extend(s)
+            pairs.extend(p)
+            continue
+        if len(files) > 1:
+            raise ValueError('Multiple voxel CSVs in an input directory; selection requires review')
+        input_status.append(dict(subject=directory.name, status='one_voxel_csv'))
+        s, p = calculate(pd.read_csv(files[0]), directory.name)
+        summaries.extend(s)
+        pairs.extend(p)
+    if not summaries:
+        raise ValueError('No input summaries produced')
+    summary, pair = pd.DataFrame(summaries), pd.DataFrame(pairs)
+    wide = summary.pivot(index='subject', columns=['seed', 'condition'], values='mean_r')
+    wide.columns = [f'{s}_{c}_mean_r' for s, c in wide.columns]
+    # Never overwrite a previous correction run without a separate explicit archive.
+    args.output_dir.mkdir(parents=True, exist_ok=False)
+    summary.to_csv(args.output_dir/'results_summary_vmPFC_persistence.csv', index=False)
+    pair.to_csv(args.output_dir/'results_pairs_vmPFC_persistence.csv', index=False)
+    wide.reset_index().to_csv(args.output_dir/'results_wide_vmPFC_persistence.csv', index=False)
+    inventory = pd.DataFrame(input_status)
+    inventory.to_csv(args.output_dir/'input_status_vmPFC_persistence.csv', index=False)
+    print('Input directory status counts:', inventory['status'].value_counts().to_dict())
+    print('Summary rows:', len(summary))
+    print('Pair status counts:', pair['status'].value_counts().to_dict())
+    print('Summary status counts:', summary['status'].value_counts().to_dict())
+    print('Private participant-level files saved on Sherlock. Review retained-sample completeness before promotion.')
 
-                    r, p = pearsonr(v1, v2)
-                    pair_rs.append(r)
-                    pair_meta.append({
-                        'subject':   subj,
-                        'seed':      seed,
-                        'condition': cond,
-                        'run_A':     run_a,
-                        'run_B':     run_b,
-                        'r':         r,
-                        'p':         p,
-                        'n_vox':     nmin,
-                    })
 
-            if pair_rs:
-                zs     = np.array([fisher_z(r) for r in pair_rs])
-                mean_r = inv_fisher_z(np.mean(zs))
-                std_r  = np.std(pair_rs, ddof=1)
-                med_r  = np.median(pair_rs)
-                n_p    = len(pair_rs)
-            else:
-                mean_r = std_r = med_r = np.nan
-                n_p = 0
-
-            summary_rows.append({
-                'subject':   subj,
-                'seed':      seed,
-                'condition': cond,
-                'mean_r':    mean_r,
-                'median_r':  med_r,
-                'std_r':     std_r,
-                'n_pairs':   n_p,
-            })
-            pairs_rows += pair_meta
-
-df_summary = pd.DataFrame(summary_rows)
-df_pairs   = pd.DataFrame(pairs_rows)
-
-# Also write a wide-format summary (one row per subject, columns = seed_condition_mean_r)
-# to facilitate merging with behavioral data
-df_wide = df_summary.pivot_table(
-    index='subject', columns=['seed', 'condition'], values='mean_r'
-)
-df_wide.columns = [f"{s}_{c}_mean_r" for s, c in df_wide.columns]
-df_wide = df_wide.reset_index()
-
-summary_file = OUT_DIR / "results_summary_vmPFC_persistence.csv"
-pairs_file   = OUT_DIR / "results_pairs_vmPFC_persistence.csv"
-wide_file    = OUT_DIR / "results_wide_vmPFC_persistence.csv"
-
-df_summary.to_csv(summary_file, index=False)
-df_pairs.to_csv(pairs_file, index=False)
-df_wide.to_csv(wide_file, index=False)
-
-print("Done. Wrote:")
-print(f"  {summary_file}  ({len(df_summary)} rows)")
-print(f"  {pairs_file}    ({len(df_pairs)} rows)")
-print(f"  {wide_file}     ({len(df_wide)} subjects)")
+if __name__ == '__main__':
+    main()

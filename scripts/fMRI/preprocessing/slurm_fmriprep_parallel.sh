@@ -15,25 +15,25 @@
 # Output space: MNI152NLin2009cAsym
 #
 #SBATCH -J fMRIprep_MIDUS
-#SBATCH --output=/scratch/groups/fvlin/MIDUS/log/fmriprep_%A_%a.log
-#SBATCH --error=/scratch/groups/fvlin/MIDUS/log/fmriprep_%A_%a.err
+#SBATCH --output=/scratch/groups/fvlin/MIDUS/M3_stc_rerun/log/fmriprep_%A_%a.log
+#SBATCH --error=/scratch/groups/fvlin/MIDUS/M3_stc_rerun/log/fmriprep_%A_%a.err
 #SBATCH --time=10:00:00
 #SBATCH --cpus-per-task=4
 #SBATCH --mem-per-cpu=8G
 #SBATCH --mail-user=aturnbu2@stanford.edu
 #SBATCH --mail-type=ALL
-#SBATCH --array=1-2
+#SBATCH --array=1-158
 
 # User inputs:
-bids_root_dir=/scratch/groups/fvlin/MIDUS/M3/M3_ImagingSession
-out_dir=/scratch/groups/fvlin/MIDUS/derivatives
-subid=$(sed -n "${SLURM_ARRAY_TASK_ID}p" /scratch/groups/fvlin/MIDUS/missing_list.txt)
+bids_root_dir=/scratch/groups/fvlin/MIDUS/M3_stc_rerun/M3_ImagingSession
+out_dir=/scratch/groups/fvlin/MIDUS/M3_stc_rerun/derivatives
+subid=$(sed -n "${SLURM_ARRAY_TASK_ID}p" /scratch/groups/fvlin/MIDUS/M3_stc_rerun/M3_subject_list.txt)
 nthreads=4
 
 #export TEMPLATEFLOW_HOME=$HOME/.cache/templateflow
 export FS_LICENSE=/home/users/aturnbu2/freesurfer_license.txt
 
-work_dir=/scratch/groups/fvlin/MIDUS/working
+work_dir=/scratch/groups/fvlin/MIDUS/M3_stc_rerun/working
 
 unset PYTHONPATH
 
@@ -44,7 +44,7 @@ singularity run --cleanenv \
     --bind ${out_dir}:/out \
     --bind ${work_dir}:/working \
     --bind ${FS_LICENSE}:/freesurfer_license.txt \
-    /home/groups/vhenders/simg/fmriprep-24.1.0.simg \
+    /home/groups/fvlin/simg/fmriprep-24.1.0.simg \
     /data /out participant \
     --task-id EmotionRegulation \
     --skip-bids-validation \

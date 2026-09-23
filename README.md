@@ -4,12 +4,8 @@ This repository contains analysis code for a preregistered study using the MIDUS
 
 The study combines daily diary data, survey-based demographics, and neuroimaging measures to test confirmatory hypotheses derived from prior work (e.g., Puccetti et al., 2021), alongside preregistered exploratory analyses of task-based functional connectivity.
 
-**Project status (September 8, 2026): computationally frozen for manuscript preparation.**
-The corrected M3 pipeline and targeted MR1 replication pipeline are complete, their final
-aggregate outputs have been verified, and all 118 MR1 synthetic tests pass. No additional
-computational analysis is required for the currently defined manuscript scope. Remaining work
-is manuscript integration, author review, and figure/caption revision; see
-`MANUSCRIPT_PREPARATION_FREEZE.md` for the exact freeze boundary.
+**Project status (September 23, 2026): author review in progress.**
+M3 uses the corrected slice-timing pipeline and the corrected vmPFC image-to-face persistence definition. The affected aggregate results and manuscript tables have been refreshed. See [M3 imaging source](scripts/fMRI/README.md) for the active script set. Earlier freeze notes and workflow examples below describe historical checkpoints; current source and aggregate tables take precedence.
 
 **Preregistration** (updated Oct 15, 2025): OSF
 

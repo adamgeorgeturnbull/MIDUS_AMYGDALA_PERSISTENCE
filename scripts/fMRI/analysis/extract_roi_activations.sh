@@ -22,33 +22,55 @@
 # Uses existing GLM_output — can be submitted immediately.
 #
 #SBATCH -J roi_activations
-#SBATCH --output=/scratch/groups/fvlin/MIDUS/M3/log/roi_activations_%A_%a.log
-#SBATCH --error=/scratch/groups/fvlin/MIDUS/M3/log/roi_activations_%A_%a.err
+#SBATCH --output=/scratch/groups/fvlin/MIDUS/M3_stc_rerun/log/roi_activations_%A_%a.log
+#SBATCH --error=/scratch/groups/fvlin/MIDUS/M3_stc_rerun/log/roi_activations_%A_%a.err
 #SBATCH --time=02:00:00
 #SBATCH --cpus-per-task=2
 #SBATCH --mem-per-cpu=4G
 #SBATCH --mail-user=aturnbu2@stanford.edu
 #SBATCH --mail-type=ALL
-#SBATCH --array=1-160
+#SBATCH --array=1-158%20
+
+set -euo pipefail
 
 module purge
 ml python/3.12.1
 ml py-numpy/1.26.3_py312
 ml py-pandas/2.2.1_py312
-pip install --user --no-deps nilearn
 
-glm_dir=/scratch/groups/fvlin/MIDUS/GLM_output
-out_dir=/scratch/groups/fvlin/MIDUS/ROI_activations_output
-mkdir -p $out_dir
+# Verify nilearn is available in the current environment
+python3 -c "import nilearn; print(f'nilearn {nilearn.__version__} available')" || {
+  echo "ERROR: nilearn is not available in the current Python environment"
+  exit 1
+}
 
-export glm_dir=$glm_dir
-export out_dir=$out_dir
+SUBJECT_LIST="/scratch/groups/fvlin/MIDUS/M3_stc_rerun/M3_subject_list.txt"
 
-subid=$(sed -n "${SLURM_ARRAY_TASK_ID}p" /scratch/groups/fvlin/MIDUS/M3/M3_subject_list.txt)
-export subid=$subid
+if [ ! -f "$SUBJECT_LIST" ]; then
+  echo "ERROR: subject list not found: $SUBJECT_LIST"; exit 1
+fi
+
+subid=$(sed -n "${SLURM_ARRAY_TASK_ID}p" "$SUBJECT_LIST")
+if [ -z "$subid" ]; then
+  echo "ERROR: empty subject ID at line ${SLURM_ARRAY_TASK_ID} of $SUBJECT_LIST"; exit 1
+fi
+if ! [[ "$subid" =~ ^sub-[0-9]+$ ]]; then
+  echo "ERROR: subject ID '${subid}' does not match sub-[0-9]+"; exit 1
+fi
+
+glm_dir=/scratch/groups/fvlin/MIDUS/M3_stc_rerun/GLM_output
+out_dir=/scratch/groups/fvlin/MIDUS/M3_stc_rerun/ROI_activations_output
+mkdir -p "$out_dir"
+
+export glm_dir
+export out_dir
+export subid
+
+echo "[$(date)] ROI activation extraction: $subid"
 
 python3 << 'EOF'
 import os
+import sys
 from pathlib import Path
 import pandas as pd
 import numpy as np
@@ -127,7 +149,7 @@ for run in runs:
 
 if not rows:
     print(f"No beta files found for {subid} — skipping output")
-    import sys; sys.exit(0)
+    sys.exit(0)
 
 df = pd.DataFrame(rows)
 

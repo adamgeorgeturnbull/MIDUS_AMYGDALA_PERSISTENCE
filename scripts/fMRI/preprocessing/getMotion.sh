@@ -12,39 +12,58 @@
 # Output: fd_qc/fd_summary.csv (one row per subject x run)
 #
 #SBATCH -J FD_QC
-#SBATCH --output=/scratch/groups/fvlin/MIDUS/log/fd_qc_%A_%a.log
-#SBATCH --error=/scratch/groups/fvlin/MIDUS/log/fd_qc_%A_%a.err
+#SBATCH --output=/scratch/groups/fvlin/MIDUS/M3_stc_rerun/log/fd_qc_%j.log
+#SBATCH --error=/scratch/groups/fvlin/MIDUS/M3_stc_rerun/log/fd_qc_%j.err
 #SBATCH --time=01:00:00
 #SBATCH --cpus-per-task=1
 #SBATCH --mem-per-cpu=4G
 #SBATCH --mail-user=aturnbu2@stanford.edu
 #SBATCH --mail-type=ALL
 
+set -euo pipefail
+
 # Load necessary modules
 ml python/3.12.1
 ml py-pandas/2.2.1_py312
 
+DERIVATIVES_DIR="/scratch/groups/fvlin/MIDUS/M3_stc_rerun/derivatives"
+OUTPUT_DIR="/scratch/groups/fvlin/MIDUS/M3_stc_rerun/fd_qc"
+
+if [ ! -d "$DERIVATIVES_DIR" ]; then
+  echo "ERROR: derivatives directory not found: $DERIVATIVES_DIR"
+  exit 1
+fi
+
+mkdir -p "$OUTPUT_DIR"
+
+export DERIVATIVES_DIR OUTPUT_DIR
+
 # Run Python script
 python3 << 'EOF'
-#!/usr/bin/env python3
-# -*- coding: utf-8 -*-
-
 import os
-import pandas as pd
 import glob
+import sys
+import pandas as pd
 
-# Paths
-confounds_dir = "/scratch/groups/fvlin/MIDUS/derivatives"
-output_dir = "/scratch/groups/fvlin/MIDUS/fd_qc"
-os.makedirs(output_dir, exist_ok=True)
+derivatives_dir = os.environ['DERIVATIVES_DIR']
+output_dir      = os.environ['OUTPUT_DIR']
 
 # Parameters
-mean_fd_thresh = 0.5
+mean_fd_thresh  = 0.5
 spike_fd_thresh = 0.9
 spike_pct_thresh = 0.2  # 20%
 
-# Find all confounds files
-confound_files = glob.glob(os.path.join(confounds_dir, "*", "func", "*_desc-confounds_timeseries.tsv"))
+# Find EmotionRegulation confounds for runs 01-03 only
+confound_files = sorted(glob.glob(os.path.join(
+    derivatives_dir, "*", "func",
+    "*_task-EmotionRegulation_run-0[123]_desc-confounds_timeseries.tsv"
+)))
+
+if not confound_files:
+    print(f"ERROR: no EmotionRegulation confound files found under {derivatives_dir}")
+    sys.exit(1)
+
+print(f"Found {len(confound_files)} confound file(s)")
 
 results = []
 
@@ -63,23 +82,23 @@ for cf in confound_files:
         continue
 
     fd = df['framewise_displacement']
-    mean_fd = fd.mean(skipna=True)
-    n_spikes = (fd > spike_fd_thresh).sum()
+    mean_fd    = fd.mean(skipna=True)
+    n_spikes   = (fd > spike_fd_thresh).sum()
     pct_spikes = n_spikes / fd.shape[0]
 
     flagged = (mean_fd > mean_fd_thresh) or (pct_spikes > spike_pct_thresh)
 
     results.append({
-        "subject": sub,
-        "run": run,
-        "mean_fd": mean_fd,
-        "n_spikes": n_spikes,
+        "subject":    sub,
+        "run":        run,
+        "mean_fd":    mean_fd,
+        "n_spikes":   n_spikes,
         "pct_spikes": pct_spikes,
-        "flagged": flagged
+        "flagged":    flagged
     })
 
-# Save summary
 results_df = pd.DataFrame(results)
-results_df.to_csv(os.path.join(output_dir, "fd_summary.csv"), index=False)
-print("QC summary saved to:", os.path.join(output_dir, "fd_summary.csv"))
+out_file   = os.path.join(output_dir, "fd_summary.csv")
+results_df.to_csv(out_file, index=False)
+print(f"QC summary saved to: {out_file}  ({len(results_df)} rows)")
 EOF

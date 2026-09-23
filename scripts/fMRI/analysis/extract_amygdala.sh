@@ -15,38 +15,59 @@
 # These CSVs are used by run_cross_corr.py to compute cross-run persistence.
 #
 #SBATCH -J amygdala_beta_extract
-#SBATCH --output=/scratch/groups/fvlin/MIDUS/log/amygdala_beta_%A_%a.log
-#SBATCH --error=/scratch/groups/fvlin/MIDUS/log/amygdala_beta_%A_%a.err
+#SBATCH --output=/scratch/groups/fvlin/MIDUS/M3_stc_rerun/log/amygdala_beta_%A_%a.log
+#SBATCH --error=/scratch/groups/fvlin/MIDUS/M3_stc_rerun/log/amygdala_beta_%A_%a.err
 #SBATCH --time=04:00:00
 #SBATCH --cpus-per-task=4
 #SBATCH --mem-per-cpu=8G
 #SBATCH --mail-user=aturnbu2@stanford.edu
 #SBATCH --mail-type=ALL
-#SBATCH --array=1-160
+#SBATCH --array=1-158%20
+
+set -euo pipefail
 
 # Load modules
 module purge
 ml python/3.12.1
 ml py-numpy/1.26.3_py312
 ml py-pandas/2.2.1_py312
-# Activate pip install for nilearn locally
-pip install --user --no-deps nilearn
+
+# Verify nilearn is available in the current environment
+python3 -c "import nilearn; print(f'nilearn {nilearn.__version__} available')" || {
+  echo "ERROR: nilearn is not available in the current Python environment"
+  exit 1
+}
+
+SUBJECT_LIST="/scratch/groups/fvlin/MIDUS/M3_stc_rerun/M3_subject_list.txt"
+
+if [ ! -f "$SUBJECT_LIST" ]; then
+  echo "ERROR: subject list not found: $SUBJECT_LIST"; exit 1
+fi
 
 # Subject ID for this array task
-SUBJ=$(sed -n "${SLURM_ARRAY_TASK_ID}p" /scratch/groups/fvlin/MIDUS/M3_subject_list.txt)
+SUBJ=$(sed -n "${SLURM_ARRAY_TASK_ID}p" "$SUBJECT_LIST")
+if [ -z "$SUBJ" ]; then
+  echo "ERROR: empty subject ID at line ${SLURM_ARRAY_TASK_ID} of $SUBJECT_LIST"; exit 1
+fi
+if ! [[ "$SUBJ" =~ ^sub-[0-9]+$ ]]; then
+  echo "ERROR: subject ID '${SUBJ}' does not match sub-[0-9]+"; exit 1
+fi
 
 # Paths
-BETA_DIR=/scratch/groups/fvlin/MIDUS/GLM_output/${SUBJ}
-OUTPUT_DIR=/scratch/groups/fvlin/MIDUS/voxelwise_betas/${SUBJ}
-mkdir -p $OUTPUT_DIR
+BETA_DIR=/scratch/groups/fvlin/MIDUS/M3_stc_rerun/GLM_output/${SUBJ}
+OUTPUT_DIR=/scratch/groups/fvlin/MIDUS/M3_stc_rerun/voxelwise_betas/${SUBJ}
+mkdir -p "$OUTPUT_DIR"
 
 export SUBJ
 export BETA_DIR
 export OUTPUT_DIR
 
+echo "[$(date)] Amygdala beta extraction: $SUBJ"
+
 # Run Python script
 python3 << 'EOF'
 import os
+import sys
 from pathlib import Path
 import pandas as pd
 import numpy as np
@@ -60,6 +81,10 @@ output_dir.mkdir(exist_ok=True)
 # Load beta maps for this subject
 # Filenames follow: run-01_neg_image_beta.nii.gz etc.
 beta_files = sorted(beta_dir.glob("run-*_*.nii.gz"))
+
+if not beta_files:
+    print(f"WARNING: no beta files found for {subj} in {beta_dir} — skipping")
+    sys.exit(0)
 
 # Load 50% threshold Harvard-Oxford amygdala masks (2mm)
 atlas = datasets.fetch_atlas_harvard_oxford('sub-maxprob-thr50-2mm')
@@ -98,6 +123,10 @@ for beta_file in beta_files:
     rows.append(row_left)
     rows.append(row_right)
 
+if not rows:
+    print(f"WARNING: no rows extracted for {subj} — skipping output")
+    sys.exit(0)
+
 # Dynamically create column names
 max_voxels = max(len(r) - 5 for r in rows)
 voxel_cols = [f"beta_{i}" for i in range(max_voxels)]
@@ -113,5 +142,5 @@ df = pd.DataFrame(rows, columns=columns)
 # Save to CSV
 output_file = output_dir / f"{subj}_voxelwise_amygdala_betas.csv"
 df.to_csv(output_file, index=False)
+print(f"Saved: {output_file}  ({len(df)} rows)")
 EOF
-

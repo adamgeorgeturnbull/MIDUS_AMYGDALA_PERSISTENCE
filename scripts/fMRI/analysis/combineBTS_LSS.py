@@ -20,7 +20,7 @@ Output:
 import pandas as pd
 from pathlib import Path
 
-input_dir = Path("/scratch/groups/fvlin/MIDUS/M3/BetaSeries_LSS_output")
+input_dir = Path("/scratch/groups/fvlin/MIDUS/M3_stc_rerun/BetaSeries_LSS_output")
 output_file = input_dir / "all_subjects_betaSeries_LSS_all_conditions_M2ID.csv"
 
 all_dfs = []

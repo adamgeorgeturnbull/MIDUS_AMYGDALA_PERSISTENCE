@@ -33,3 +33,8 @@ MR1_validation/**/.DS_Store
 /cover_letter.docx
 /results/diagnostics/
 /results/tables/**/fit_notes.md
+
+# Restricted participant-level data
+/data/
+/MR1_validation/data/
+/scripts/fMRI/analysis/fmri_qc_processed.csv

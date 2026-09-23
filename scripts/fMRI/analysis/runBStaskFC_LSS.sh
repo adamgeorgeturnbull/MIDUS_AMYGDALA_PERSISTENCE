@@ -32,32 +32,58 @@
 #     Values: Fisher z-transformed correlation, averaged across runs.
 #
 #SBATCH -J betaSeries_LSS
-#SBATCH --output=/scratch/groups/fvlin/MIDUS/M3/log/betaSeries_LSS_%A_%a.log
-#SBATCH --error=/scratch/groups/fvlin/MIDUS/M3/log/betaSeries_LSS_%A_%a.err
+#SBATCH --output=/scratch/groups/fvlin/MIDUS/M3_stc_rerun/log/betaSeries_LSS_%A_%a.log
+#SBATCH --error=/scratch/groups/fvlin/MIDUS/M3_stc_rerun/log/betaSeries_LSS_%A_%a.err
 #SBATCH --time=24:00:00
 #SBATCH --cpus-per-task=4
 #SBATCH --mem-per-cpu=6G
 #SBATCH --mail-user=aturnbu2@stanford.edu
 #SBATCH --mail-type=ALL
-#SBATCH --array=1-160%20
+#SBATCH --array=1-158%20
+
+set -euo pipefail
 
 module purge
 ml python/3.12.1
 ml py-numpy/1.26.3_py312
 ml py-pandas/2.2.1_py312
-pip install --user --no-deps nilearn
 
-bids_root_dir=/scratch/groups/fvlin/MIDUS/M3/M3_ImagingSession
-derivatives_dir=/scratch/groups/fvlin/MIDUS/M3/derivatives
-out_dir=/scratch/groups/fvlin/MIDUS/M3/BetaSeries_LSS_output
-mkdir -p $out_dir
+# Verify nilearn is available in the current environment
+python3 -c "import nilearn; print(f'nilearn {nilearn.__version__} available')" || {
+  echo "ERROR: nilearn is not available in the current Python environment"
+  exit 1
+}
 
-export bids_root_dir=$bids_root_dir
-export derivatives_dir=$derivatives_dir
-export out_dir=$out_dir
+BIDS_ROOT_DIR="/scratch/groups/fvlin/MIDUS/M3_stc_rerun/M3_ImagingSession"
+DERIVATIVES_DIR="/scratch/groups/fvlin/MIDUS/M3_stc_rerun/derivatives"
+OUT_DIR="/scratch/groups/fvlin/MIDUS/M3_stc_rerun/BetaSeries_LSS_output"
+SUBJECT_LIST="/scratch/groups/fvlin/MIDUS/M3_stc_rerun/M3_subject_list.txt"
 
-subid=$(sed -n "${SLURM_ARRAY_TASK_ID}p" /scratch/groups/fvlin/MIDUS/M3/M3_subject_list.txt)
-export subid=$subid
+# Validate top-level inputs
+if [ ! -f "$SUBJECT_LIST" ]; then
+  echo "ERROR: subject list not found: $SUBJECT_LIST"; exit 1
+fi
+if [ ! -d "$BIDS_ROOT_DIR" ]; then
+  echo "ERROR: BIDS root not found: $BIDS_ROOT_DIR"; exit 1
+fi
+if [ ! -d "$DERIVATIVES_DIR" ]; then
+  echo "ERROR: derivatives directory not found: $DERIVATIVES_DIR"; exit 1
+fi
+
+# Get subject
+SUBJ=$(sed -n "${SLURM_ARRAY_TASK_ID}p" "$SUBJECT_LIST")
+if [ -z "$SUBJ" ]; then
+  echo "ERROR: empty subject ID at line ${SLURM_ARRAY_TASK_ID} of $SUBJECT_LIST"; exit 1
+fi
+if ! [[ "$SUBJ" =~ ^sub-[0-9]+$ ]]; then
+  echo "ERROR: subject ID '${SUBJ}' does not match sub-[0-9]+"; exit 1
+fi
+
+mkdir -p "$OUT_DIR"
+
+export BIDS_ROOT_DIR DERIVATIVES_DIR OUT_DIR SUBJ
+
+echo "[$(date)] LSS beta-series FC: $SUBJ"
 
 python3 << 'EOF'
 import os, sys
@@ -69,11 +95,11 @@ from nilearn.maskers import NiftiMasker, NiftiSpheresMasker
 from nilearn.glm.first_level import FirstLevelModel
 from scipy.stats import pearsonr
 
-subid = os.environ['subid']
-bids_root_dir = Path(os.environ['bids_root_dir'])
-derivatives_dir = Path(os.environ['derivatives_dir'])
-out_dir = Path(os.environ['out_dir'])
-sub_out_dir = out_dir / subid
+subid           = os.environ['SUBJ']
+bids_root_dir   = Path(os.environ['BIDS_ROOT_DIR'])
+derivatives_dir = Path(os.environ['DERIVATIVES_DIR'])
+out_dir         = Path(os.environ['OUT_DIR'])
+sub_out_dir     = out_dir / subid
 sub_out_dir.mkdir(parents=True, exist_ok=True)
 
 print(f"Running LSS ROI beta-series FC: {subid}")
@@ -82,11 +108,11 @@ sys.stdout.flush()
 # -------------------------------------------------------
 # Define ROI maskers
 # -------------------------------------------------------
-atlas = datasets.fetch_atlas_harvard_oxford('sub-maxprob-thr50-2mm')
-labels = atlas.labels
-atlas_img = atlas.filename
-left_idx  = labels.index('Left Amygdala')
-right_idx = labels.index('Right Amygdala')
+atlas      = datasets.fetch_atlas_harvard_oxford('sub-maxprob-thr50-2mm')
+labels     = atlas.labels
+atlas_img  = atlas.filename
+left_idx   = labels.index('Left Amygdala')
+right_idx  = labels.index('Right Amygdala')
 
 def get_atlas_mask(idx):
     return image.math_img("img == {}".format(idx), img=atlas_img)
@@ -111,8 +137,8 @@ roi_pairs = [
 # -------------------------------------------------------
 # Run parameters
 # -------------------------------------------------------
-runs = ['01', '02', '03']
-TR   = 2.0
+runs       = ['01', '02', '03']
+TR         = 2.0
 conditions = ['neg', 'neu', 'pos']
 
 motion_columns = [
@@ -157,15 +183,15 @@ results_all_runs = []
 for run in runs:
     bold_file      = derivatives_dir / subid / 'func' / f"{subid}_task-EmotionRegulation_run-{run}_space-MNI152NLin2009cAsym_desc-preproc_bold.nii.gz"
     confounds_file = derivatives_dir / subid / 'func' / f"{subid}_task-EmotionRegulation_run-{run}_desc-confounds_timeseries.tsv"
-    events_file    = bids_root_dir / subid / 'func' / f"{subid}_task-EmotionRegulation_run-{run}_events.tsv"
+    events_file    = bids_root_dir   / subid / 'func' / f"{subid}_task-EmotionRegulation_run-{run}_events.tsv"
 
-    if not bold_file.exists():
-        print(f"  WARNING: BOLD not found for run {run}, skipping")
+    missing = [str(p) for p in [bold_file, confounds_file, events_file] if not p.exists()]
+    if missing:
+        print(f"  WARNING: run {run} missing file(s), skipping: {missing}", flush=True)
         continue
 
-    bold_img = image.index_img(bold_file, slice(4, None))
-
-    confounds = pd.read_csv(confounds_file, sep='\t')
+    bold_img          = image.index_img(bold_file, slice(4, None))
+    confounds         = pd.read_csv(confounds_file, sep='\t')
     motion_regressors = confounds[motion_columns].iloc[4:]
 
     # Build trial-wise events
@@ -173,12 +199,15 @@ for run in runs:
     available_conds = [v for v in conditions if v in events['valence'].values]
     clean_events_list = []
     for val in available_conds:
-        df_val = events[events['valence']==val][['onset_trimmed','duration']].copy()
-        df_val = df_val.rename(columns={'onset_trimmed':'onset'})
+        df_val = events[events['valence'] == val][['onset_trimmed', 'duration']].copy()
+        df_val = df_val.rename(columns={'onset_trimmed': 'onset'})
         df_val['duration'] = 6.0
         df_val = df_val.reset_index(drop=True)
         df_val['trial_type'] = [f"{val}_{i+1:03d}" for i in range(len(df_val))]
         clean_events_list.append(df_val)
+    if not clean_events_list:
+        print(f"  WARNING: run {run} events file has no valid valence values — skipping run", flush=True)
+        continue
     events_all = pd.concat(clean_events_list, ignore_index=True).sort_values('onset').reset_index(drop=True)
 
     trials_by_cond = {
@@ -259,10 +288,10 @@ for run in runs:
 # Average across runs and save
 # -------------------------------------------------------
 if not results_all_runs:
-    print(f"No runs completed for {subid}")
+    print(f"ERROR: no runs completed for {subid}")
     sys.exit(1)
 
-results_df = pd.DataFrame(results_all_runs)
+results_df   = pd.DataFrame(results_all_runs)
 results_mean = results_df.drop(columns='run').mean().to_frame().T
 results_mean['subid'] = subid
 results_mean = results_mean[['subid'] + [c for c in results_mean.columns if c != 'subid']]

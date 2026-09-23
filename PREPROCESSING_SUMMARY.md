@@ -6,8 +6,7 @@ construction, and the run order for reproducing the statistical results. It repl
 code-standardization document.
 
 MR1 validation was completed as a separate pipeline after the corrected M3 freeze and is
-documented under `MR1_validation/`. Both pipelines are computationally frozen for manuscript
-preparation as of September 8, 2026.
+documented under `MR1_validation/`. The September 8 freeze is a historical checkpoint. The September 23 author review corrected vmPFC persistence to six directional image-to-following-face comparisons and refreshed affected analyses. See [M3 imaging source](scripts/fMRI/README.md) for the active script set; historical workflow references below may name superseded scripts.
 
 ---
 
