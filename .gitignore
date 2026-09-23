@@ -6,3 +6,6 @@ __pycache__/
 
 # Python virtual environment
 MIDUS/
+
+# Keep manuscript documents local
+/*.docx
