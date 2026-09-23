@@ -38,3 +38,6 @@ MR1_validation/**/.DS_Store
 /data/
 /MR1_validation/data/
 /scripts/fMRI/analysis/fmri_qc_processed.csv
+
+# Keep manuscript documents local
+/*.docx
