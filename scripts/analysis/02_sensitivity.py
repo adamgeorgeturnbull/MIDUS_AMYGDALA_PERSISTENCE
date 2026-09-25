@@ -60,7 +60,7 @@ def main():
                  outcomes=OUTCOMES_DIARY, covariates=base_covs, n=len(cons))
 
     # -------------------------------------------------------------------------
-    # 2. PANAS (convergent validity — run only after primary is significant)
+    # 2. PANAS (convergent validity — run regardless of primary significance)
     #    Includes log-transformed PANAS NA; all one-tailed (same construct)
     #    Uses full conservative fMRI sample (no diary requirement)
     # -------------------------------------------------------------------------

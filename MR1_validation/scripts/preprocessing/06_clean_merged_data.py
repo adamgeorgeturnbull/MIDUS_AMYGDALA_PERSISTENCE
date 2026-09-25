@@ -11,9 +11,9 @@ Clean merged MR1 dataset:
 
 MR1 vs M3 differences:
 - No MKE2 markers / twin_pair fill step
-- Age at diary (RA2PAGE): computed from harmonized birth_year (RA1PBYEAR primary,
-  RAACBYEAR fallback) where available. For MKE participants without birth_year,
-  uses the MKE interview-age formula:
+- Age at diary (RA2PAGE): non-Milwaukee participants use diary year minus
+  birth_year. Milwaukee participants (is_mker1 == 1) use the same
+  interview-age approach as M3 Milwaukee participants:
     RAACRAGE + (StartYear - RAACIDATE_YR) + (StartMonth - RAACIDATE_MO)/12
   RA5PAGE (age at neuroscience visit) remains the primary age covariate in analyses.
 - PANAS: RA5SPGP, RA5SPGN (not C5SPGP, C5SPGN)
@@ -52,7 +52,8 @@ STATS_OUTPUT       = os.path.join(TABLE_DIR, "panas_skew_kurtosis.csv")
 PANAS_AUDIT_OUTPUT = os.path.join(TABLE_DIR, "panas_missing_code_recode.csv")
 
 REQUIRED_COLS = [
-    "MIDUSID", "StartYear", "StartMonth", "birth_year",
+    "MIDUSID", "StartYear", "StartMonth", "birth_year", "is_mker1",
+    "RAACRAGE", "RAACIDATE_YR", "RAACIDATE_MO",
     "RA5PDATE_YR", "RA5PDATE_MO", "RA5SER", "RA5SES", "RA5SPGP", "RA5SPGN",
 ]
 
@@ -61,6 +62,34 @@ PANAS_VALID_MIN, PANAS_VALID_MAX = 1, 5
 
 DATE_MV_YEAR  = [9997, 9998, 9999]
 DATE_MV_MONTH = [97, 98, 99]
+
+
+def estimate_diary_age(df):
+    """Match M3's cohort-specific age rule; missing interview inputs stay missing.
+
+    Milwaukee membership comes from the source-file membership flag created
+    by 05_merge_master_dataset.py, not from demographic value availability.
+    This function does not modify its input or perform file operations.
+    """
+    membership = df["is_mker1"]
+    if membership.isna().any() or not membership.isin([0, 1]).all():
+        raise ValueError("is_mker1 must contain complete 0/1 cohort membership")
+    is_mke = membership.eq(1)
+    start_year = pd.to_numeric(df["StartYear"], errors="coerce")
+    start_month = pd.to_numeric(df["StartMonth"], errors="coerce")
+    age = pd.Series(np.nan, index=df.index, dtype=float)
+    byear = pd.to_numeric(df["birth_year"], errors="coerce")
+    age.loc[~is_mke] = (start_year - byear).loc[~is_mke]
+
+    interview_age = pd.to_numeric(df["RAACRAGE"], errors="coerce")
+    interview_age = interview_age.where(~interview_age.isin([97, 98, 99]))
+    interview_year = pd.to_numeric(df["RAACIDATE_YR"], errors="coerce")
+    interview_year = interview_year.where(~interview_year.isin([9997, 9998, 9999]))
+    interview_month = pd.to_numeric(df["RAACIDATE_MO"], errors="coerce")
+    interview_month = interview_month.where(~interview_month.isin([97, 98, 99]))
+    adjusted = interview_age + (start_year - interview_year) + (start_month - interview_month) / 12
+    age.loc[is_mke] = adjusted.loc[is_mke]
+    return age
 
 
 def main():
@@ -86,42 +115,8 @@ def main():
         )
 
     # ── Age at diary wave (RA2PAGE) ───────────────────────────────────────────
-    # Primary: harmonized birth_year (RA1PBYEAR or RAACBYEAR) → StartYear - birth_year
-    start_year  = pd.to_numeric(df.get("StartYear"),  errors="coerce")
-    start_month = pd.to_numeric(df.get("StartMonth"), errors="coerce")
-
-    if "birth_year" in df.columns:
-        byear = pd.to_numeric(df["birth_year"], errors="coerce")
-        df["RA2PAGE"] = start_year - byear
-        n_byear = df["RA2PAGE"].notna().sum()
-        print(f"RA2PAGE from birth_year: {n_byear} participants")
-    elif "RA1PBYEAR" in df.columns:
-        df["RA2PAGE"] = start_year - pd.to_numeric(df["RA1PBYEAR"], errors="coerce")
-        n_byear = df["RA2PAGE"].notna().sum()
-        print(f"RA2PAGE from RA1PBYEAR: {n_byear} participants")
-    else:
-        df["RA2PAGE"] = np.nan
-        print("WARNING: birth_year / RA1PBYEAR not found — RA2PAGE will use MKE formula only")
-
-    # MKE interview-age formula fallback for participants still missing RA2PAGE
-    mke_vars = ["RAACRAGE", "RAACIDATE_YR", "RAACIDATE_MO"]
-    if all(v in df.columns for v in mke_vars) and df["RA2PAGE"].isna().any():
-        raacrage = pd.to_numeric(df["RAACRAGE"], errors="coerce")
-        raacrage = raacrage.where(~raacrage.isin([97, 98, 99]))
-        raacidate_yr = pd.to_numeric(df["RAACIDATE_YR"], errors="coerce")
-        raacidate_yr = raacidate_yr.where(~raacidate_yr.isin([9997, 9998, 9999]))
-        raacidate_mo = pd.to_numeric(df["RAACIDATE_MO"], errors="coerce")
-        raacidate_mo = raacidate_mo.where(~raacidate_mo.isin([97, 98, 99]))
-
-        mke_age = (raacrage
-                   + (start_year - raacidate_yr)
-                   + (start_month - raacidate_mo) / 12)
-        needs_fill = df["RA2PAGE"].isna() & mke_age.notna()
-        df.loc[needs_fill, "RA2PAGE"] = mke_age[needs_fill]
-        print(
-            f"RA2PAGE from MKE interview-age formula: "
-            f"{needs_fill.sum()} additional participants"
-        )
+    df["RA2PAGE"] = estimate_diary_age(df)
+    print("RA2PAGE: non-Milwaukee uses birth year; Milwaukee uses adjusted interview age")
 
     if df["RA2PAGE"].notna().any():
         print(

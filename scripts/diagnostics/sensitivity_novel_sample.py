@@ -2,13 +2,13 @@
 """
 sensitivity_novel_sample.py
 
-Sensitivity analysis for Analysis 02 (persistence–affect replication) restricted
-to participants NOT present in the Puccetti et al. (2021) MIDUS II sample.
-
-Excludes the 26 participants who completed both MIDUS II and MIDUS III
-neuroimaging, leaving the 54 novel participants only. Tests whether the
-persistence–affect associations hold in participants for whom this is a
-genuinely new finding rather than a test-retest.
+Sensitivity analysis for Analysis 02 (persistence–affect replication) excluding
+potential overlap with the original MIDUS II study. The original analytic roster
+was unavailable. The proxy identifies participants with any recorded B2DC diary
+entry and indicated neuroimaging completion (B5IC == 1); recorded entries can
+include special codes and do not establish usable diary data. The reviewed
+inputs exclude 26 of 81 participants, leaving 55. This does not establish actual
+membership in the original analytic sample.
 
 Uses the same conservative sample definition, covariates, and three statistical
 approaches (correlation, OLS, MLM) as script 02_persistence_affect.py.
@@ -43,7 +43,7 @@ EXPECTED    = {"PA_score": -1, "NA_score": 1, "NA_score_log": 1}
 
 
 def get_midus2_ids():
-    """Return set of M2IDs present in MIDUS II diary + neuroimaging sample."""
+    """Return IDs meeting the diary-entry and imaging-completion overlap proxy."""
     p2 = pd.read_csv(M2P2_FILE)
     p2["M2ID"] = pd.to_numeric(p2["M2ID"], errors="coerce").astype("Int64")
     diary_cols = [c for c in p2.columns if c.upper().startswith("B2DC")]
@@ -61,7 +61,7 @@ def get_midus2_ids():
 
 def main():
     print("=" * 70)
-    print("Sensitivity: Persistence–Affect in Novel (Non-Overlapping) Sample")
+    print("Sensitivity: Persistence–Affect in Potential-Overlap Exclusion Sample")
     print("=" * 70)
 
     # ── Identify MIDUS II participants ────────────────────────────────────────
@@ -79,12 +79,12 @@ def main():
 
     print(f"Conservative diary+fMRI sample:     N = {len(conservative)}")
     print(f"  Overlapping with MIDUS II:         N = {len(overlap)}")
-    print(f"  Novel participants only:            N = {len(novel)}")
+    print(f"  Remaining participants:            N = {len(novel)}")
 
     base_covs = get_covariates(novel)
 
     # ── Run all three analyses on novel sample ────────────────────────────────
-    print("\nRunning correlation + OLS + MLM on novel sample...")
+    print("\nRunning correlation + OLS + MLM on the proxy-exclusion sample...")
     corr_df, ols_df, mlm_df = run_analysis_set(
         df=novel,
         predictors=[PERSIST_VAR],
