@@ -1,0 +1,4 @@
+model,predictor,moderator,outcome,n,optimizer,converged,saved_result_match,interaction_beta,interaction_p
+06_persistence_affect_moderation,neg_persist_crossrun_mean_z_L,C5SER,PA_score,80,lbfgs,True,True,0.9995479033598584,0.04381986370301716
+06_persistence_affect_moderation,neg_persist_crossrun_mean_z_L,C5SES,PA_score,80,lbfgs,True,True,0.5862802678233412,0.00010751642372830439
+07_fc_affect_moderation,l_amyg-post_vmPFC_neg_vs_neu,C5SES,NA_score,80,lbfgs,True,True,0.09747452930262529,0.04728175383299593

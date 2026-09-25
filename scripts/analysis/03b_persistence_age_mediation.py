@@ -21,22 +21,15 @@ POSITIVE for PA_score and NEGATIVE for NA_score and NA_score_log.
 TEMPORAL ORDER AND CAUSAL STATUS - READ BEFORE INTERPRETING
 ======================================================================
 
-The mediator is measured AFTER the outcome. Daily diary affect (Y) is
-collected in Project 2; the neuroscience visit that yields persistence (M)
-happens afterwards. Preprocessing computes
-time_P2_P5 = C5PDATE - diary start date (06_clean_merged_data.py), i.e. the P5
-visit post-dates the P2 diary. The absolute value is taken there, which also
-conceals any participant for whom that order is reversed.
+Daily diary affect (Y) and neuroscience persistence (M) were assessed at
+separate visits, with assessment order varying across participants.
+time_P2_P5 represents the absolute interval between assessments and does not
+encode their order.
 
-The preregistration acknowledged that diary affect preceded the neuroimaging
-assessment. The measurement order is therefore X -> Y -> M, not X -> M -> Y.
-
-Everything this script produces is a STATISTICAL DECOMPOSITION OF COVARIANCE.
-These are indirect associations. They cannot establish temporal precedence or
-causal mediation, and must not be described as showing that age affects affect
-"through" persistence: persistence had not yet been measured when affect was
-reported. This constraint is a property of the study design and is not
-remedied by any modelling choice below.
+These estimates are STATISTICAL DECOMPOSITIONS OF COVARIANCE. They cannot
+establish temporal precedence or causal mediation. The study does not establish
+the temporal sequence required to infer that age affects affect through
+persistence; adjustment for the assessment interval does not resolve this.
 
 ======================================================================
 
@@ -66,8 +59,8 @@ lbfgs -> powell -> nm -> bfgs, exactly as analysis_utils.run_mlm builds them):
       b, c'       Y ~ M + C2PAGE + sex + race + time_P2_P5 + n_days_complete
       c total     Y ~ C2PAGE + sex + race + time_P2_P5 + n_days_complete
 
-The elapsed-time covariate enters the C2PAGE a path because persistence is
-measured later, at P5. It remains in the affect models under the existing
+The assessment-interval covariate enters the C2PAGE a path to account for
+the separation between diary-age and persistence assessments. It remains in the affect models under the existing
 diary-analysis convention.
 
 run_mlm's own rules apply throughout: the predictor is dropped from its own
@@ -488,7 +481,7 @@ def spec_covariates(age_var, base):
         return list(base), list(base) + diary, list(base) + diary
 
     no_c5 = [c for c in base if c != PRIMARY_AGE]
-    a_covs = no_c5 + [ELAPSED_COV]    # persistence measured later, at P5
+    a_covs = no_c5 + [ELAPSED_COV]    # account for separation between assessments
     b_covs = no_c5 + [age_var] + diary
     c_covs = no_c5 + diary            # run_mlm strips the predictor (C2PAGE)
     return a_covs, b_covs, c_covs
@@ -873,8 +866,8 @@ def main():
     print("Analysis 03b: Age -> Persistence -> Affect")
     print("Prespecified confirmatory extension - statistical indirect effects")
     print("=" * 74)
-    print("TEMPORAL ORDER: the mediator (P5 neuroscience) is measured AFTER the")
-    print("outcome (P2 daily diary), as acknowledged in the preregistration.")
+    print("TEMPORAL ORDER: diary and neuroscience assessment order varied")
+    print("across participants; the interval covariate is an absolute gap.")
     print("These are statistical decompositions of covariance; they cannot")
     print("establish temporal precedence or causal mediation.")
     print("=" * 74)
@@ -938,7 +931,7 @@ def main():
             print(
                 f"  Diary-to-neuroscience interval: median {gap.median():.1f} "
                 f"months (IQR {gap.quantile(.25):.1f}-{gap.quantile(.75):.1f}); "
-                "the mediator post-dates the outcome."
+                "assessment order varied across participants."
             )
 
     rng = np.random.default_rng(SEED)
@@ -959,8 +952,8 @@ def main():
     _write_methods_note(len(cons))
     print(f"\n  Saved to: {OUT_DIR}")
     print(
-        "  Reminder: indirect associations only; the mediator post-dates the "
-        "outcome. Sensitivity results do not override the primary "
+        "  Reminder: indirect associations only; assessment order varied "
+        "across participants. Sensitivity results do not override the primary "
         "specification."
     )
     return 0
@@ -1019,8 +1012,8 @@ def _write_methods_note(n_frame):
         f"      c total  Y ~ {SENSITIVITY_AGE} + sex + race + time_P2_P5 + "
         "n_days_complete",
         "",
-        "      time_P2_P5 enters the C2PAGE a path because persistence is",
-        "      measured later, at P5.",
+        "      time_P2_P5 enters the C2PAGE a path to account for the",
+        "      separation between diary-age and persistence assessments.",
         "",
         "Mixed-effects, random intercept for family, REML. Optimizers tried",
         "lbfgs -> powell -> nm -> bfgs; a fit is ACCEPTED ONLY IF the optimizer",
@@ -1057,9 +1050,9 @@ def _write_methods_note(n_frame):
         "  the primary specification.",
         "",
         "TEMPORAL ORDER AND CAUSAL STATUS",
-        "  Daily affect (P2) precedes the neuroimaging assessment (P5) that",
-        "  yields the mediator, as acknowledged in the preregistration. The",
-        "  measurement order is X -> Y -> M. All estimates are statistical",
+        "  Daily affect (P2) and neuroimaging persistence (P5) were assessed",
+        "  at separate visits; assessment order varied across participants.",
+        "  The interval covariate is absolute. All estimates are statistical",
         "  indirect associations and cannot establish temporal precedence or",
         "  causal mediation.",
         "",
