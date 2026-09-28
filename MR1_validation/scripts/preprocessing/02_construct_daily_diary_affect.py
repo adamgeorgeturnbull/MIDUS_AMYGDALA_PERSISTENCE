@@ -3,6 +3,8 @@
 02_construct_daily_diary_affect.py (MR1)
 
 Process MR1 daily diary data (RA2 wave) to compute participant-level PA/NA scores.
+Each participant/day contributes once. Repeated records must agree on all
+cleaned affect items and diary dates; conflicting records stop processing.
 
 MR1 variable differences vs M3:
 - ID key: MIDUSID (not M2ID)
@@ -49,12 +51,38 @@ def _read_raw(path):
     return pd.read_csv(actual, encoding="utf-8-sig", sep=sep)
 
 
+def deduplicate_diary_days(df):
+    """Collapse identical scoring records after missing-code recoding.
+
+    Metadata may differ between export rows. Affect/date missingness must match,
+    as well as observed values. Never choose between conflicting responses.
+    """
+    keys = ["MIDUSID", "RA2DDAY"]
+    fields = [f"RA2DC{i}" for i in range(1, 28)] + ["RA2DIMON", "RA2DIYEAR"]
+    if not set(keys + fields).issubset(df.columns):
+        raise ValueError("Required diary scoring columns are missing")
+    result = df.copy()
+    for key in keys:
+        values = pd.to_numeric(result[key], errors="coerce")
+        if not (np.isfinite(values) & values.eq(np.floor(values))).all():
+            raise ValueError("Diary keys must be complete finite integers")
+        result[key] = values.astype("int64")
+    if not result["RA2DDAY"].between(1, 8).all():
+        raise ValueError("Diary day must be between 1 and 8")
+    repeated = result.loc[result.duplicated(keys, keep=False)]
+    if not repeated.empty:
+        distinct = repeated.groupby(keys)[fields].nunique(dropna=False)
+        if distinct.gt(1).any(axis=None):
+            raise ValueError("Repeated diary days disagree on affect items or dates")
+    return result.drop_duplicates(keys, keep="first").copy()
+
+
 def construct_daily_diary_affect(raw_file, output_file, descriptives_file):
     df = _read_raw(raw_file)
     print(f"Loaded daily diary data: {df.shape[0]} rows, {df.shape[1]} columns")
 
     # MIDUSID is only recorded on day-1 rows; MRID is identical and always present
-    df["MIDUSID"] = df["MIDUSID"].fillna(df["MRID"]).astype(int)
+    df["MIDUSID"] = df["MIDUSID"].fillna(df["MRID"])
     print(f"MIDUSID after fill from MRID: {df['MIDUSID'].isna().sum()} missing")
 
     # All 27 affect items (sorted numerically — P2 file has RA2DC7 before RA2DC6)
@@ -64,6 +92,11 @@ def construct_daily_diary_affect(raw_file, output_file, descriptives_file):
     df[all_items] = df[all_items].replace(missing_dict)
     df["RA2DIMON"] = df["RA2DIMON"].replace(MISSING_CODE_MONTH, np.nan)
     df["RA2DIYEAR"] = df["RA2DIYEAR"].replace(MISSING_CODE_YEAR, np.nan)
+
+    original_rows = len(df)
+    df = deduplicate_diary_days(df)
+    print(f"Repeated identical participant/day rows removed: {original_rows - len(df)}")
+    print(f"Unique participant/day records: {len(df)}")
 
     # Positive and negative affect item indices match M3 (same instrument)
     pos_items = [f"RA2DC{i}" for i in [7, 8, 9, 10, 11, 12, 21, 22, 23, 24, 25, 26, 27]]

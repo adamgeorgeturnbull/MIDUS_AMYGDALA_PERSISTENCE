@@ -162,7 +162,9 @@ analysis sample definitions.
     #          data/processed/mker1_ids.csv
 
 3   python scripts/preprocessing/02_construct_daily_diary_affect.py
-    # Aggregates P2 long-format diary rows to participant-level affect scores.
+    # Counts each participant/day once; repeated records must agree on all
+    # cleaned affect items and diary dates, otherwise processing stops.
+    # Averages complete diary days to participant-level affect scores.
     # Output: data/processed/daily_diary_processed.csv
 
 4   python scripts/preprocessing/03_construct_demographics.py
