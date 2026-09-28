@@ -3,8 +3,8 @@
 **Status (September 8, 2026): complete and computationally frozen for manuscript
 preparation.** The protected-data preprocessing sequence, main analyses, and predefined
 sensitivity families were run successfully. The active result directories contain only the
-final OLS/correlation outputs and methods notes; obsolete pre-final MLM outputs remain only
-in the explicitly labelled local archive.
+final OLS/correlation outputs and methods notes; obsolete pre-final MLM outputs are archived
+outside the active result tree.
 
 Targeted replication of key findings from the frozen corrected MIDUS 3 (M3)
 analysis, using the independent **MIDUS Refresher (MR1)** neuroimaging cohort
@@ -104,6 +104,36 @@ The following imaging-derived outputs have been copied locally into `data/fMRI/`
 | `condition_fd_wide.csv` | Per-condition FD (wide format) |
 | `run_completeness.csv` | Per-participant run volume counts |
 | `task_fMRI_QC_MR1.xlsx` | Historical manual visual-QC decisions |
+
+## Imaging metadata repair and workflow-specific setup
+
+A missing comma in physiological JSON metadata was encountered in both the
+MR1 and M3 inputs used for this project. Other users of those MIDUS source
+files may also need this repair; it is not a requirement for every MIDUS
+dataset. [fix_invalid_physio_json_reproduction.py](scripts/fMRI/preprocessing/fix_invalid_physio_json_reproduction.py)
+checks for the recognized defect without changing files by default; `--apply`
+repairs it in the Scratch copy. It changes JSON syntax, not physiological
+measurements, and does not perform physiological noise regression. The script
+has MR1-specific paths and an expected repair count, so it must be adapted and
+validated before use with another dataset. M3 has its own
+[repair script](../scripts/fMRI/preprocessing/fix_invalid_physio_json.py).
+
+The following setup scripts are specific to this Sherlock reproduction:
+
+- [seed_freesurfer_template_reproduction.sh](scripts/fMRI/preprocessing/seed_freesurfer_template_reproduction.sh)
+  prepares the shared `fsaverage` template once before parallel fMRIPrep jobs,
+  avoiding concurrent initialization. It leaves an already validated template
+  unchanged.
+- [prepare_fmriprep_reproduction.sh](scripts/fMRI/preprocessing/prepare_fmriprep_reproduction.sh)
+  checks the reproduction paths, resources, expected input counts and timing
+  metadata, then creates the task subject list. It requires the template to
+  have been seeded first.
+
+These are setup utilities, not universal MIDUS preprocessing steps. After
+metadata validation/repair, template seeding and preflight, this workflow uses
+[slurm_fmriprep_reproduction.sh](scripts/fMRI/preprocessing/slurm_fmriprep_reproduction.sh)
+to launch fMRIPrep with standard BIDS slice-timing correction. Paths, resources
+and dataset-specific expectations must be adapted for another environment.
 
 ## Preprocessing run order
 
