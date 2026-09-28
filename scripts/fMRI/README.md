@@ -4,7 +4,7 @@
 
 ## Preprocessing
 
-Start from untouched raw inputs: validate the subject list (`make_subject_list.py`), apply the documented orientation correction (`fixOrientation.py`), extract the 1-based slice order (`extractSliceTiming.py JSON_PATH`), and run `slurm_M3_stc_parallel.sh`. fMRIPrep is launched with slice-timing correction disabled. FreeSurfer preparation/retry launchers are retained; participant-specific retry lists remain restricted. `fix_invalid_physio_json.py` repairs metadata syntax; it does not perform physiological noise regression. These scripts are provenance and reproduction source, not instructions to reprocess existing corrected inputs in place.
+Start from untouched raw inputs: validate the subject list (`make_subject_list.py`), extract the 1-based slice order (`extractSliceTiming.py JSON_PATH`), and run `slurm_M3_stc_parallel.sh`. That launcher performs reorientation, a temporary axis swap, slice-timing correction, swap-back, and geometry restoration within one script; no separate orientation script precedes it. fMRIPrep is launched with slice-timing correction disabled. FreeSurfer preparation/retry launchers are retained; participant-specific retry lists remain restricted. `fix_invalid_physio_json.py` repairs metadata syntax; it does not perform physiological noise regression. These scripts are provenance and reproduction source, not instructions to reprocess existing corrected inputs in place.
 
 ## Measures
 

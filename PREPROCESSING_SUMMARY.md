@@ -30,10 +30,10 @@ rerun.
 The corrected rerun (`M3_stc_rerun`) began from **untouched raw BOLD data** that had not been
 processed by the invalid STC workflow. The pipeline steps were:
 
-1. `fixOrientation.py` — Fix transposed NIfTI axes in raw BOLD files
-2. `M3_slice_time_correction.sh` / `slurm_M3_stc_parallel.sh` — FSL `slicetimer` with the
+1. Restore untouched raw BOLD inputs and prepare the subject list and corrected slice-order file.
+2. `slurm_M3_stc_parallel.sh` — integrated reorientation, axis swap, and FSL `slicetimer` with the
    corrected **1-based** interleaved order (`np.argsort(slice_times) + 1`); axis-swapped before
-   STC and restored afterward
+   STC, swapped back, and input geometry copied afterward. No separate orientation correction is run before this launcher.
 3. `slurm_fmriprep_parallel.sh` — fMRIPrep 24.1.0 via Singularity with `--ignore slicetiming`,
    so STC is applied **exactly once** (by step 2)
 4. HTML visual QC of corrected fMRIPrep outputs — no new participant failed QC compared with the
