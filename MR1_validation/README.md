@@ -50,10 +50,10 @@ analysis writes `mlm.csv`.
 - **Behavioral data available** — MR1 P2 diary and P5 survey data (plus MKER1
   demographics supplement) are in the PHI-compliant folder. The behavioral
   pipeline below is fully operational.
-- **Audited historical scripts retained** — fMRIPrep wrappers, GLM, LSS, and
-  extraction scripts under `historical_sherlock_scripts/` and
-  `submitted_reproduction_scripts/` are kept for provenance. They do not need
-  to be rerun for the current local analysis.
+- **Provenance archives** — `historical_sherlock_scripts/` contains earlier
+  workflow versions; `submitted_reproduction_scripts/` retains submitted copies
+  that duplicate the corresponding active scripts. Use `scripts/` for the
+  final reproduction; do not run both active scripts and archived copies.
 
 ## Variable mapping vs M3
 
@@ -134,6 +134,14 @@ metadata validation/repair, template seeding and preflight, this workflow uses
 [slurm_fmriprep_reproduction.sh](scripts/fMRI/preprocessing/slurm_fmriprep_reproduction.sh)
 to launch fMRIPrep with standard BIDS slice-timing correction. Paths, resources
 and dataset-specific expectations must be adapted for another environment.
+
+The imaging preprocessing utility
+[`summarize_run_completeness.py`](scripts/fMRI/preprocessing/summarize_run_completeness.py)
+creates `run_completeness.csv` from fMRIPrep confound-row counts. Generate this
+input before running `08_process_fmri_qc.py`; it supplies the three-complete-runs
+criterion. The optional atlas-label check
+[`check_amygdala_lr.py`](scripts/diagnostics/check_amygdala_lr.py) is kept under
+`diagnostics/` and does not generate an analysis input.
 
 ## Preprocessing run order
 
