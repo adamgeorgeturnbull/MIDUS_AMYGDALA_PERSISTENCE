@@ -11,7 +11,8 @@ Fallback source: MKE Refresher 1 aggregate (RAAC* variables)
 Harmonized output fields
   sex        : 1=Male, 2=Female       (RA1PRSEX, then RAACRSEX)
   educ       : 1–12 scale             (RA1PB1,   then RAACB1)
-  ethnicity  : 0=No, 1=Yes Hispanic   (RA1PF1,   then RAACF1)
+  ethnicity  : 1=Not Spanish/Hispanic; 2–7=specified Spanish/Hispanic origins
+               (RA1PF1, then RAACF1; original categories retained)
   race       : 1–6 category           (RA1PF7A,  then RAACF7A)
   birth_year : 4-digit year           (RA1PBYEAR, then RAACBYEAR)
 
