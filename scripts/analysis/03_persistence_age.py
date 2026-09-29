@@ -10,8 +10,33 @@ Primary analysis (conservative fMRI sample):
   Methods    : Pearson correlation, OLS regression, MLM (random intercept for family)
   Tests      : One-tailed (older age → lower persistence; prespecified direction)
 
-Full sample results saved to full_sample/.
-Sensitivity analyses (right hemisphere, other persistence types) in 03_sensitivity.py.
+Adjusted-model covariates:
+  sex and race_2 through race_6; White (race == 1) is the reference category.
+  C5PAGE is the predictor and is excluded from covariates by the fitting helpers.
+  No diary covariates apply. Covariates with no complete-case variation are omitted.
+  OLS additionally uses available twin-pair indicators, excluding singletons;
+  MLM uses a family random intercept instead of twin-pair indicators.
+  Pearson correlations are unadjusted.
+
+Conservative criterion (qc_conservative == 1):
+  - historical visual-QC decisions (all runs pass)
+  - mean FD < 0.5 mm
+  - task completeness (six left-amygdala negative cross-run pairs)
+
+Negative-persistence availability is required; diary participation is not.
+Each method applies its own model-variable complete-case restriction.
+The conservative result is primary. Results before conservative QC restriction
+are archived in full_sample/.
+
+Sensitivity analyses (right hemisphere and alternative persistence measures)
+are in 03_sensitivity.py.
+
+Inputs:
+  data/processed/midus_with_fmri.csv (from preprocessing scripts 08-09)
+
+Outputs: results/tables/03_persistence_age/
+  correlations.csv, regressions.csv, mlm.csv, _methods.txt
+  Corresponding broader-sample outputs are saved under full_sample/.
 
 Run from project root directory.
 """

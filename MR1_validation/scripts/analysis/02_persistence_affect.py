@@ -16,6 +16,8 @@ Primary analysis (conservative fMRI + diary sample):
 
 Adjusted OLS covariates:
   RA5PAGE, sex, race_2 – race_6  (base; returned by get_covariates)
+  White (race == 1) is the omitted reference category; no race_1 dummy is used.
+  Covariates with no variation in the complete-case sample are omitted.
   time_P2_P5, n_days_complete    (diary-specific; added automatically by
                                   run_analysis_set for diary outcomes)
 

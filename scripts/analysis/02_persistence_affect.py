@@ -4,13 +4,27 @@
 
 Primary analysis: left amygdala negative persistence and daily life affect.
 
-Primary analysis (conservative fMRI sample):
+Primary analysis (conservative fMRI + diary sample):
   Predictors : neg_persist_crossrun_mean_z_L  (Fisher z, left hemisphere)
-  Outcomes   : PA_score, NA_score  (daily diary)
+  Outcomes   : PA_score, NA_score, NA_score_log  (daily diary)
   Methods    : Pearson correlation, OLS regression, MLM (random intercept for family)
   Tests      : One-tailed (confirmatory replication, pre-registered directional hypothesis)
 
-Full sample results saved to full_sample/.
+Adjusted-model covariates:
+  C5PAGE (age at neuroscience visit), sex, and race_2 through race_6.
+  White (race == 1) is the omitted reference category; no race_1 dummy is used.
+  time_P2_P5 and n_days_complete are added for diary outcomes.
+  Covariates with no variation in the complete-case sample are omitted.
+  OLS additionally uses available twin-pair indicators, excluding singletons;
+  MLM uses a family random intercept instead of twin-pair indicators.
+  Pearson correlations are unadjusted.
+
+Sample selection:
+  Require negative-persistence availability and at least one diary affect score,
+  then restrict the primary analysis to qc_conservative == 1.
+  Each method applies its own model-variable complete-case restriction.
+
+Full-sample results before conservative QC restriction are archived in full_sample/.
 Sensitivity analyses (right hemisphere, PANAS, other persistence) in 02_sensitivity.py.
 
 Run from project root directory.

@@ -7,18 +7,19 @@ Replication: age-related differences in daily life affect.
 Two samples:
   1. Full daily diary sample (primary):
        Predictor  : C2PAGE (age at diary wave / P2)
-       Outcomes   : PA_score, NA_score
+       Outcomes   : PA_score, NA_score, NA_score_log
        Sample     : everyone with at least one daily affect measure
 
   2. Neuroscience subsample (saved to neuro_sample/):
        Predictor  : C5PAGE (age at MRI visit / P5)
-       Outcomes   : PA_score, NA_score
-       Sample     : participants with fMRI data (has_neg_persistence == 1)
+       Outcomes   : PA_score, NA_score, NA_score_log
+       Sample     : diary affect available and C5PAGE nonmissing;
+                    no imaging QC restriction is applied
 
 Methods    : Pearson correlation, OLS regression, MLM (random intercept for family)
-Tests      : Two-tailed
+Tests      : One-tailed (older age → higher PA, lower NA)
 
-Sensitivity analyses (PANAS, log-transforms) are in 01_sensitivity.py.
+Log-NA robustness is included here; PANAS sensitivity analyses are in 01_sensitivity.py.
 
 Run from project root directory.
 """

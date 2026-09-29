@@ -5,17 +5,9 @@
 Primary analysis: left amygdala–vmPFC FC (negative > neutral contrast) and
 daily life affect.
 
-Directional hypothesis: greater amygdala–vmPFC connectivity during negative
-relative to neutral stimuli → higher PA and lower NA in daily life, reflecting
-vmPFC regulatory modulation of amygdala threat responses.
-
-Direct R4 replication target:
-  Predictor : l_amyg-ant_vmPFC_neg_vs_neu  (anterior vmPFC)
-  Outcome   : NA_score
-  Direction : negative (higher differential FC → lower NA)
-  Note      : the posterior-vmPFC predictor and remaining outcomes are part of
-              the prespecified analysis family but may not be substituted for the
-              anterior-vmPFC / NA_score result when judging direct replication.
+Directional hypothesis: greater left-amygdala–vmPFC connectivity during negative
+relative to neutral stimuli → higher PA and lower NA in daily life.
+Both anterior and posterior vmPFC connections are tested.
 
 Analysis family:
   Predictors : l_amyg-ant_vmPFC_neg_vs_neu, l_amyg-post_vmPFC_neg_vs_neu
@@ -24,10 +16,12 @@ Analysis family:
   Methods    : Pearson correlation and participant-level OLS
                (available MR1 P5 inputs do not contain a usable family or other
                grouping identifier; MLM is therefore not applicable)
-  Tests      : One-tailed (pre-registered directional hypotheses)
+  Tests      : One-tailed (directions carried forward from the M3 analysis)
 
 Adjusted OLS covariates:
   RA5PAGE, sex, race_2 – race_6  (base; returned by get_covariates)
+  White (race == 1) is the omitted reference category.
+  Covariates with no complete-case variation are omitted.
   time_P2_P5, n_days_complete    (diary-specific; added automatically by
                                   run_analysis_set for diary outcomes)
 
@@ -83,7 +77,7 @@ PREDICTORS = [
 ]
 OUTCOMES = ["PA_score", "NA_score", "NA_score_log"]
 
-# Pre-registered directional hypotheses
+# Directional hypotheses carried forward from M3
 EXPECTED_DIRECTIONS = {
     "PA_score":     +1,   # higher differential FC → higher PA
     "NA_score":     -1,   # higher differential FC → lower NA
