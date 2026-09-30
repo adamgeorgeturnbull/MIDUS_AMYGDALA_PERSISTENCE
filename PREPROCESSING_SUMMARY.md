@@ -173,13 +173,12 @@ Derived from those inputs by local scripts:
 
 ## 9. Archived and Obsolete Products
 
-Obsolete bad-STC, concatenated, seed-based, and aCompCor-derived products were moved to local
+Obsolete bad-STC, seed-based, and aCompCor-derived products were moved to local
 `bad_stc_0based_slice_order` archival directories and are absent from canonical `data/fMRI/`
 paths. Git history preserves versions that were previously tracked. These products must not be
 used as analysis inputs.
 
 Archived files (not at canonical `data/fMRI/` paths):
-- `negative_persistence_concat.csv` — concatenated operationalization (sensitivity only)
 - `betaSeries_neg_vs_neu_threat_safety.csv` — superseded by LSS file
 - `betaSeries_neg_vs_neu.csv` — superseded by LSS file
 - `all_subjects_betaSeries_all_conditions_M2ID.csv` — LSA file (LSS preferred)

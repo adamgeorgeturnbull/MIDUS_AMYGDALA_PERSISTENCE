@@ -4,6 +4,9 @@
 
 Sensitivity analyses for Analysis 02: Persistence → Affect.
 
+Diary outcomes include PA, raw NA, and log NA; log NA uses the same
+covariates and test direction as raw NA.
+
 Sections:
   1. Right hemisphere negative persistence → sensitivity_right_hemisphere/
      Hemispheric specificity check; two-tailed inference.
@@ -42,7 +45,7 @@ from analysis_utils import (
 BASE_DIR = RESULTS_DIR / "02_persistence_affect"
 
 RIGHT_PREDICTORS = ["neg_persist_crossrun_mean_z_R"]
-DIARY_OUTCOMES   = ["PA_score", "NA_score"]
+DIARY_OUTCOMES   = ["PA_score", "NA_score", "NA_score_log"]
 
 PANAS_PREDICTORS = ["neg_persist_crossrun_mean_z_L"]
 PANAS_OUTCOMES   = ["RA5SPGP", "RA5SPGN", "RA5SPGN_log"]

@@ -54,8 +54,8 @@
     },
     {
       "source": "results/tables/02_persistence_affect/sensitivity_other_persistence/regressions.csv",
-      "sha256": "fc01932ad6d8903021c988d12434cb92d8269a414d7de277b281f9de3140c711",
-      "rows": 2
+      "sha256": "c342368d38dc7275fbefa844958e165d8e9c322baef60eceb7d424ea22955530",
+      "rows": 3
     },
     {
       "source": "results/tables/02_persistence_affect/sensitivity_panas/regressions.csv",
@@ -64,18 +64,18 @@
     },
     {
       "source": "results/tables/02_persistence_affect/sensitivity_right_hemisphere/regressions.csv",
-      "sha256": "830b64a57471c4c4e021e563af3ed2515a764ef13dbaf161f73e3aa015de5622",
-      "rows": 2
+      "sha256": "8c19bcf48668519901a020767f9921c71da4f131d02c0268de86457c88bbcb0d",
+      "rows": 3
     },
     {
       "source": "results/tables/02_persistence_affect/sensitivity_roi_activations/regressions.csv",
-      "sha256": "5be9c79dccb98c64206e178e208a8ac09d1f768d2a2b026edcacb0115566de22",
-      "rows": 6
+      "sha256": "09d393e383bfe76dd81d892098d79c1482af838ce1861dcc8622f04867ad760b",
+      "rows": 9
     },
     {
       "source": "results/tables/02_persistence_affect/sensitivity_vmpfc_persistence/regressions.csv",
-      "sha256": "26344e62ebe074d333b22cf704fc9ee02c8c2b207fe3618d68cacbfb443ab658",
-      "rows": 4
+      "sha256": "af380acdec08d51f72d76408712a44513d3d5091837ddc654d958670bd24ffbe",
+      "rows": 6
     },
     {
       "source": "results/tables/03_persistence_age/regressions.csv",
@@ -104,8 +104,8 @@
     },
     {
       "source": "results/tables/04_fc_affect/sensitivity_neg_condition/regressions.csv",
-      "sha256": "b4d38b8b2d42ee084cf5162f72514efb053494eb4b52ecd398d659df127f4310",
-      "rows": 4
+      "sha256": "848ff4208a496d2afb0aeafadac6848e7bc09fa9d58fce8de4e40ecb51656da7",
+      "rows": 6
     },
     {
       "source": "results/tables/04_fc_affect/sensitivity_panas/regressions.csv",
@@ -114,13 +114,13 @@
     },
     {
       "source": "results/tables/04_fc_affect/sensitivity_pos_vs_neu/regressions.csv",
-      "sha256": "d0284a248258740282e9509d5a98b412c6b038146a87cbebb50ac73526ddde83",
-      "rows": 4
+      "sha256": "0fc51b5afff728d8972b2c1f55d83c561b78891f91b1755d45f5ffc3e7077729",
+      "rows": 6
     },
     {
       "source": "results/tables/04_fc_affect/sensitivity_right_amygdala/regressions.csv",
-      "sha256": "6b264fbdfbe138bc2c42cd8463bb5b9b0c9fc73306f4e21b216eca6384d2ce5e",
-      "rows": 4
+      "sha256": "8025a7bff2c1925706b1df2ad5abd11a190be26eef50d5a68b0b32dabed4737a",
+      "rows": 6
     },
     {
       "source": "results/tables/04ex_fc_affect_antpost/diary/regressions.csv",
@@ -214,8 +214,8 @@
     },
     {
       "source": "results/tables/02_persistence_affect/sensitivity_other_persistence/correlations.csv",
-      "sha256": "9d02ee38a5edd2f3f5f99ff1ec3ed9c4d6a15b1e49cde72e03c2178aba8e1987",
-      "rows": 2
+      "sha256": "8a4a3245179306ea15e84a090cc7c4cc5957d220165ebc80854a69a81154d554",
+      "rows": 3
     },
     {
       "source": "results/tables/02_persistence_affect/sensitivity_panas/correlations.csv",
@@ -224,18 +224,18 @@
     },
     {
       "source": "results/tables/02_persistence_affect/sensitivity_right_hemisphere/correlations.csv",
-      "sha256": "6a9af9c62e9e58e44f3d6fa4e14caf1c115c2b7047668e6105f773df18fb50f5",
-      "rows": 2
+      "sha256": "15bfb58a0c542cf2e42eed3aa1fc37edee1acd88aa8f8646169099b47b961bf2",
+      "rows": 3
     },
     {
       "source": "results/tables/02_persistence_affect/sensitivity_roi_activations/correlations.csv",
-      "sha256": "c0c8483d61ce6014caf09c99fd35e126d6d08797ff1f75ed8e490328566fddb1",
-      "rows": 6
+      "sha256": "e70850a517d441673ce767049df5de280510e0cab23a54949ec7f177e47db853",
+      "rows": 9
     },
     {
       "source": "results/tables/02_persistence_affect/sensitivity_vmpfc_persistence/correlations.csv",
-      "sha256": "135a16ae7a61bb5d5a686e0f24558cc1424608c8f94f3d6df0d4add393a9eb29",
-      "rows": 4
+      "sha256": "37dfef2f10df8a2b54562892185418fccd8dde36a036eda0930ae97662009864",
+      "rows": 6
     },
     {
       "source": "results/tables/03_persistence_age/correlations.csv",
@@ -264,8 +264,8 @@
     },
     {
       "source": "results/tables/04_fc_affect/sensitivity_neg_condition/correlations.csv",
-      "sha256": "886e554650e1e68d66a46e37d99666f0d95178319835758568e9f5ddc93619b5",
-      "rows": 4
+      "sha256": "fd8209a7e9f5bfda125e8e86417034ec051376ba0e144f40dddedd7318970b93",
+      "rows": 6
     },
     {
       "source": "results/tables/04_fc_affect/sensitivity_panas/correlations.csv",
@@ -274,13 +274,13 @@
     },
     {
       "source": "results/tables/04_fc_affect/sensitivity_pos_vs_neu/correlations.csv",
-      "sha256": "6c024dabd09b8306ec42035ef8f2dfdfe2047a442b10ff69b6b43cacd67cb8e4",
-      "rows": 4
+      "sha256": "55e9cfe021d157e75fed0091464b08e2d9b18a4e45e3f464108e36c2f368e717",
+      "rows": 6
     },
     {
       "source": "results/tables/04_fc_affect/sensitivity_right_amygdala/correlations.csv",
-      "sha256": "2d2817d26c087f48169eab3ea92d458501e9299d07087600834747d52937ff4c",
-      "rows": 4
+      "sha256": "72c25f2b7345742f2843b2399f9b940c900a9288513e60318a560bbeb4c8c2f1",
+      "rows": 6
     },
     {
       "source": "results/tables/04ex_fc_affect_antpost/diary/correlations.csv",
@@ -424,13 +424,13 @@
     },
     {
       "source": "MR1_validation/results/tables/02_persistence_affect/sensitivity_panas/correlations.csv",
-      "sha256": "47f1fbb62236a85f940c67f45aabf3acbd3d052b99456edc6885ac6d1c1c3434",
+      "sha256": "217dd71542a873f4db7ec82e08cf9ca05745bd3b878cc9363aedbe0215688332",
       "rows": 3
     },
     {
       "source": "MR1_validation/results/tables/02_persistence_affect/sensitivity_right_hemisphere/correlations.csv",
-      "sha256": "04a4885243137ad2a0b04c59c368cce22efcd5c20fa635042b37d636c2e89a07",
-      "rows": 2
+      "sha256": "fb633b1572bc84551f4c831482faac5a01bcf28351df25d9a3ddbc680d788a6b",
+      "rows": 3
     },
     {
       "source": "MR1_validation/results/tables/03_persistence_age/correlations.csv",
@@ -454,28 +454,82 @@
     },
     {
       "source": "MR1_validation/results/tables/04_fc_affect/sensitivity_neg_condition/correlations.csv",
-      "sha256": "2b01feb6d01bcf4b883f39546e848b225dbc0ae59bd50bea9ff2bfb6680f4768",
-      "rows": 4
+      "sha256": "26e80435f2344274755b8dec465f65fc8944cbd9b2b6b4cc1cec1bef08add297",
+      "rows": 6
     },
     {
       "source": "MR1_validation/results/tables/04_fc_affect/sensitivity_panas/correlations.csv",
-      "sha256": "5b9e3cbe27d0b0afca38bfa8b69f8196b6772535ab711549b8e7e5a6e61e3911",
+      "sha256": "ea723e62145863c4ab9d426d4cf1aadfc59aaede03b70392109911723ed76c51",
       "rows": 6
     },
     {
       "source": "MR1_validation/results/tables/04_fc_affect/sensitivity_pos_vs_neu/correlations.csv",
-      "sha256": "e2088c53992f401c6d9e95ae6c8ee16e270a13629b346b320776a084acdb7e5d",
-      "rows": 4
+      "sha256": "8afad40df6bc28d53c410cd2fe48d40d7768125343fbdb439d3cf5ce297ffcdf",
+      "rows": 6
     },
     {
       "source": "MR1_validation/results/tables/04_fc_affect/sensitivity_right_amygdala/correlations.csv",
-      "sha256": "ee91fbc76ad7122a00db4e0efae80b3b95a091305a7f2fb7b484a18157889842",
-      "rows": 4
+      "sha256": "414957d3e642cd81a8e34392b2bbfccc935869f6c03c2e3657b8c7c916d7f890",
+      "rows": 6
     },
     {
       "source": "MR1_validation/results/tables/05_fc_persistence/correlations.csv",
       "sha256": "7446f170a29ea84f967e92f24457bb1fec0091852d67a62ea78e6eb979da7d04",
       "rows": 2
+    },
+    {
+      "source": "MR1_validation/results/tables/02_persistence_affect/sensitivity_panas/regressions.csv",
+      "sha256": "4921e8b004bbbb1aa920bf15dc538e0a986802fc4713bd7f224825d2e14746e1",
+      "rows": 3
+    },
+    {
+      "source": "MR1_validation/results/tables/02_persistence_affect/sensitivity_right_hemisphere/regressions.csv",
+      "sha256": "ed5cbe24e2c609df2c2f7f16c782e3542c897235a1d46833ab66949b2da477c5",
+      "rows": 3
+    },
+    {
+      "source": "MR1_validation/results/tables/04_fc_affect/sensitivity_neg_condition/regressions.csv",
+      "sha256": "5be30bba6e807ab9a72814f76e5d72b5c597521491a0b575f56320e7db5ff9d2",
+      "rows": 6
+    },
+    {
+      "source": "MR1_validation/results/tables/04_fc_affect/sensitivity_panas/regressions.csv",
+      "sha256": "60133478ee879577c21e11960e16e99db0b206f7fbca4cdc2fca744e80d06f5a",
+      "rows": 6
+    },
+    {
+      "source": "MR1_validation/results/tables/04_fc_affect/sensitivity_pos_vs_neu/regressions.csv",
+      "sha256": "7f51f10866fb30c9d15611ceb4b43a5dc01ef401810b22a5260524a4a4ad575d",
+      "rows": 6
+    },
+    {
+      "source": "MR1_validation/results/tables/04_fc_affect/sensitivity_right_amygdala/regressions.csv",
+      "sha256": "23bf92a9410cc3ffcd3622ce834aa34a58764914da047c839177dcc05ec10a19",
+      "rows": 6
     }
-  ]
+  ],
+  "diary_log_sensitivity_refresh": {
+    "current_table_changes": {
+      "S3": {
+        "before": 131,
+        "after": 144,
+        "added": 13
+      },
+      "S4": {
+        "before": 29,
+        "after": 36,
+        "added": 7
+      },
+      "S7": {
+        "before": 131,
+        "after": 144,
+        "added": 13
+      },
+      "S8": {
+        "before": 29,
+        "after": 36,
+        "added": 7
+      }
+    }
+  }
 }

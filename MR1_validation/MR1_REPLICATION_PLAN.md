@@ -113,6 +113,17 @@ No additional analysis will be added solely because its provisional MR1 result
 is statistically significant. If a new analysis becomes scientifically
 necessary, it will be labeled post hoc and justified separately.
 
+### Review-stage scope amendment (September 30, 2026)
+
+Code review identified that the diary-affect sensitivity families included raw
+NA but omitted log-transformed diary NA, despite including log PANAS NA. All
+seven corresponding MR1 diary log-NA associations were added, irrespective of
+statistical significance, with the same covariates and test directions as raw
+NA. This addition was specified before fitting these additional models and was
+not part of the original sensitivity plan. Raw NA remains the principal outcome;
+these exploratory robustness results do not redefine direct replication. The
+corresponding M3 diary sensitivity models were extended consistently.
+
 ## Interpretation rules
 
 Direct replication is judged from the conservative-sample adjusted OLS model.

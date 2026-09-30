@@ -6,6 +6,9 @@ Sensitivity analyses for Analysis 02: Persistence → Affect.
 
 Run ONLY if primary findings in 02_persistence_affect.py show meaningful signal.
 
+Diary outcomes include PA, raw NA, and log NA; log NA uses the same
+covariates and test direction as raw NA.
+
 Sections:
   1. Right hemisphere persistence          → sensitivity_right_hemisphere/
   2. PANAS (convergent validity)           → sensitivity_panas/
@@ -13,7 +16,7 @@ Sections:
   3. vmPFC persistence (two-tailed)        → sensitivity_vmpfc_persistence/
   4. ROI activations (two-tailed)          → sensitivity_roi_activations/
   5. Other persistence operationalisations → sensitivity_other_persistence/
-     (positive cross-run, concatenated negative)
+     (positive cross-run)
 
 Run from project root directory.
 """
@@ -30,7 +33,7 @@ from analysis_utils import (
 )
 
 BASE_DIR = RESULTS_DIR / "02_persistence_affect"
-OUTCOMES_DIARY = ["PA_score", "NA_score"]
+OUTCOMES_DIARY = ["PA_score", "NA_score", "NA_score_log"]
 
 # PANAS directions mirror the primary affect directions (same construct)
 PANAS_EXPECTED = {"C5SPGP": -1, "C5SPGN": +1, "C5SPGN_log": +1}  # more persistence → lower PA, higher NA
@@ -134,7 +137,6 @@ def main():
     print("\n--- Sensitivity: Other Persistence ---")
     other_persist = [v for v in [
         "pos_persist_crossrun_mean_z_L",
-        "neg_persist_concat_z_L",
     ] if v in cons.columns]
 
     if other_persist:

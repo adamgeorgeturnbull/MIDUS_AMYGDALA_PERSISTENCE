@@ -2,7 +2,7 @@ MODEL SPECIFICATION
 ============================================================
 Analysis  : 02 ROI Activations → Affect  [conservative, two-tailed]
 N         : 81
-Generated : 2026-09-22
+Generated : 2026-09-30
 
 VARIABLES
 ------------------------------------------------------------
@@ -13,6 +13,7 @@ Predictor(s):
 Outcome(s):
   PA_score                                      positive affect (daily diary composite, mean across days)
   NA_score                                      negative affect (daily diary composite, mean across days)
+  NA_score_log                                  log-transformed negative affect (daily diary)
 
 STATISTICAL MODELS
 ------------------------------------------------------------

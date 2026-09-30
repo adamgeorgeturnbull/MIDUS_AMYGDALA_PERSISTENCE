@@ -468,8 +468,6 @@ VAR_LABELS = {
     "neg_persist_crossrun_mean_z_R": "right amygdala negative-affect persistence (cross-run spatial correlation, Fisher z)",
     "pos_persist_crossrun_mean_z_L": "left amygdala positive-affect persistence (cross-run spatial correlation, Fisher z)",
     "pos_persist_crossrun_mean_z_R": "right amygdala positive-affect persistence (cross-run spatial correlation, Fisher z)",
-    "neg_persist_concat_z_L": "left amygdala negative-affect persistence (concatenated runs, Fisher z)",
-    "neg_persist_concat_z_R": "right amygdala negative-affect persistence (concatenated runs, Fisher z)",
     # Functional connectivity (seed-based, LSS betas, Fisher z)
     "l_amyg-ant_vmPFC_neg":  "left amygdala – anterior vmPFC FC, negative condition (Fisher z)",
     "l_amyg-post_vmPFC_neg": "left amygdala – posterior vmPFC FC, negative condition (Fisher z)",

@@ -4,6 +4,9 @@
 
 Sensitivity analyses for Analysis 04: FC (neg − neu contrast) → Affect.
 
+Diary outcomes include PA, raw NA, and log NA; log NA uses the same
+covariates and test direction as raw NA.
+
 Sections:
   1. Right-amygdala neg−neu FC → diary affect  (two-tailed, hemisphere specificity)
      → sensitivity_right_amygdala/
@@ -55,7 +58,7 @@ BASE_DIR = RESULTS_DIR / "04_fc_affect"
 
 PRIMARY_FC = "l_amyg-ant_vmPFC_neg_vs_neu"
 
-DIARY_OUTCOMES = ["PA_score", "NA_score"]
+DIARY_OUTCOMES = ["PA_score", "NA_score", "NA_score_log"]
 
 RIGHT_PREDICTORS = [
     "r_amyg-ant_vmPFC_neg_vs_neu",
@@ -93,6 +96,7 @@ NEG_ONLY_PREDICTORS = [
 EXPECTED_DIRECTIONS = {
     "PA_score":    +1,
     "NA_score":    -1,
+    "NA_score_log": -1,
     "RA5SPGP":     +1,
     "RA5SPGN":     -1,
     "RA5SPGN_log": -1,

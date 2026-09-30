@@ -147,7 +147,6 @@ def main(negative_condition_only=False):
     print("\n--- Sensitivity: Other Persistence ---")
     other_persist = [v for v in [
         "pos_persist_crossrun_mean_z_L",
-        "neg_persist_concat_z_L",
     ] if v in cons.columns]
 
     if other_persist:

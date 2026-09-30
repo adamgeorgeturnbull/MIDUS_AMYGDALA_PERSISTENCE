@@ -6,6 +6,9 @@ Sensitivity analyses for Analysis 04: FC (neg − neu contrast) → Affect.
 
 Run ONLY if primary findings in 04_fc_affect.py show meaningful signal.
 
+Diary outcomes include PA, raw NA, and log NA; log NA uses the same
+covariates and test direction as raw NA.
+
 Sections:
   1. Right amygdala FC (neg−neu)      → sensitivity_right_amygdala/
   2. pos−neu contrast (specificity)   → sensitivity_pos_vs_neu/
@@ -27,11 +30,12 @@ from analysis_utils import (
 )
 
 BASE_DIR = RESULTS_DIR / "04_fc_affect"
-OUTCOMES_DIARY = ["PA_score", "NA_score"]
+OUTCOMES_DIARY = ["PA_score", "NA_score", "NA_score_log"]
 
 EXPECTED_DIRECTIONS = {
     "PA_score":    +1,
     "NA_score":    -1,
+    "NA_score_log": -1,
     "C5SPGP":      +1,
     "C5SPGN":      -1,
     "C5SPGN_log":  -1,

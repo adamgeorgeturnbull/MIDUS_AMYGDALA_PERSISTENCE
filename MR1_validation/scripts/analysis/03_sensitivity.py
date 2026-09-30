@@ -21,8 +21,8 @@ Inference:
   hemispheric coefficients differ; a direct coefficient comparison would be
   required to support that claim.
 
-Corrected vmPFC persistence and concatenated persistence are not produced by
-the MR1 pipeline and are therefore not analyzed here.
+Corrected vmPFC persistence is not produced by the MR1 pipeline and is
+therefore not analyzed here.
 
 Participant-level OLS is used because the available MR1 P5 analytic inputs do
 not contain a usable family or other grouping identifier.
