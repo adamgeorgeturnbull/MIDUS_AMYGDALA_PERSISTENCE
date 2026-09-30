@@ -15,7 +15,7 @@ posterior (threat) vmPFC during negative stimuli.
 
 Predictors : l_amyg-ant_minus_post_vmPFC_neg_vs_neu  (computed; left)
              r_amyg-ant_minus_post_vmPFC_neg_vs_neu  (right, if available)
-Outcomes   : PA_score, NA_score  (daily diary)
+Outcomes   : PA_score, NA_score, NA_score_log  (daily diary)
              C5SPGP, C5SPGN, C5SPGN_log  (PANAS, full fMRI sample)
 Methods    : Pearson correlation, OLS regression, MLM
 Tests      : One-tailed (directional hypothesis: safety bias → higher PA, lower NA)
@@ -94,7 +94,7 @@ def main():
                  one_tailed=True, expected_directions=EXPECTED_DIRECTIONS)
 
     # -------------------------------------------------------------------------
-    # PANAS (full conservative fMRI sample, two-tailed)
+    # PANAS (full conservative fMRI sample, one-tailed)
     # -------------------------------------------------------------------------
     print("\n--- PANAS ---")
     has_persist = df.get("has_neg_persistence", pd.Series(0, index=df.index)) == 1
