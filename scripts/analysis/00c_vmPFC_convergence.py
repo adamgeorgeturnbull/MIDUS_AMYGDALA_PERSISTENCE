@@ -13,7 +13,7 @@ Methods × conditions tested:
   2. Spatial persistence (neg, neu, pos)
   3. Task-based FC / LSS (neg, neu, pos)
 
-Sample  : conservative fMRI sample (qc_conservative == 1, no diary required)
+Sample  : final fMRI sample (qc_conservative == 1, no diary required)
 Tests   : two-tailed Pearson r
 
 Output:
@@ -94,7 +94,7 @@ def load_data():
         df = df.merge(f, on="M2ID", how="left")
 
     df = df[df["qc_conservative"] == 1].copy()
-    print(f"  Conservative fMRI N = {len(df)}")
+    print(f"  Final fMRI N = {len(df)}")
     return df
 
 

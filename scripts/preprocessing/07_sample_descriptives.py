@@ -35,7 +35,7 @@ fMRI samples — source: data/processed/midus_with_fmri.csv via load_master()
 ---------------------------------------------------------------------------
 fmri_conservative
     load_master(fc=False) → prepare_persistence_vars() →
-    get_samples(require_diary=False), conservative sample.
+    get_samples(require_diary=False), final sample.
     No diary requirement.  Analysis 03 (age → persistence).  The PANAS
     sensitivity blocks of 02_sensitivity.py and 06_sensitivity.py apply the
     same criteria (has_neg_persistence & qc_conservative, fc=False, no diary),
@@ -43,7 +43,7 @@ fmri_conservative
 
 fmri_fc_conservative
     load_master(fc=True) → prepare_persistence_vars() →
-    get_samples(check_fc_col=PRIMARY_FC, require_diary=False), conservative.
+    get_samples(check_fc_col=PRIMARY_FC, require_diary=False), final.
     No diary requirement.  Analysis 05 (FC → persistence).  The PANAS
     sensitivity blocks of 04_sensitivity.py and 07_sensitivity.py apply the
     same criteria (has_neg_persistence & qc_conservative & PRIMARY_FC
@@ -51,12 +51,12 @@ fmri_fc_conservative
 
 diary_fmri_conservative
     load_master(fc=False) → prepare_persistence_vars() → get_samples(),
-    conservative sample (diary required).
+    final sample (diary required).
     Analyses 02 (persistence → affect) and 06 (persistence x ERQ moderation).
 
 diary_fmri_fc_conservative
     load_master(fc=True) → prepare_persistence_vars() →
-    get_samples(check_fc_col=PRIMARY_FC), conservative (diary required).
+    get_samples(check_fc_col=PRIMARY_FC), final (diary required).
     Analyses 04 (FC → affect) and 07 (FC x ERQ moderation).
 
 reappraisal_complete_case / suppression_complete_case

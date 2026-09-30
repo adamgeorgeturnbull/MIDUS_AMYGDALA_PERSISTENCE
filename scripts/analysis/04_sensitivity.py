@@ -26,7 +26,7 @@ Adjusted covariates:
   PANAS models omit diary covariates and do not require diary participation.
   OLS includes available twin-pair indicators; MLM uses family grouping instead.
 
-Conservative criterion (qc_conservative == 1):
+QC criteria (qc_conservative == 1):
   - visual-QC decisions (all runs pass)
   - mean FD < 0.5 mm
   - task completeness (n_pairs == 6)
@@ -76,7 +76,7 @@ def main():
         df["l_amyg-post_vmPFC_pos_vs_neu"] = df["l_amyg-post_vmPFC_pos"] - df["l_amyg-post_vmPFC_neu"]
 
     full, cons = get_samples(df, check_fc_col="l_amyg-ant_vmPFC_neg_vs_neu")
-    print(f"  Conservative N (diary+fMRI) = {len(cons)}")
+    print(f"  Final N (diary+fMRI) = {len(cons)}")
     base_covs = get_covariates(cons)
 
     # -------------------------------------------------------------------------
@@ -93,7 +93,7 @@ def main():
             cons, right_preds, OUTCOMES_DIARY, base_covs,
         )
         save_results(corr, ols, mlm, BASE_DIR / "sensitivity_right_amygdala",
-                     label="04 FC-R (neg−neu) → Affect  [conservative, two-tailed]",
+                     label="04 FC-R (neg−neu) → Affect  [final, two-tailed]",
                      predictors=right_preds, outcomes=OUTCOMES_DIARY,
                      covariates=base_covs, n=len(cons))
     else:
@@ -113,7 +113,7 @@ def main():
             cons, pos_neu_preds, OUTCOMES_DIARY, base_covs,
         )
         save_results(corr, ols, mlm, BASE_DIR / "sensitivity_pos_vs_neu",
-                     label="04 FC (pos−neu) → Affect  [conservative, two-tailed]",
+                     label="04 FC (pos−neu) → Affect  [final, two-tailed]",
                      predictors=pos_neu_preds, outcomes=OUTCOMES_DIARY,
                      covariates=base_covs, n=len(cons))
     else:
@@ -122,7 +122,7 @@ def main():
 
     # -------------------------------------------------------------------------
     # 3. PANAS (convergent validity)
-    #    Uses full conservative fMRI sample (no diary requirement)
+    #    Uses full final fMRI sample (no diary requirement)
     # -------------------------------------------------------------------------
     print("\n--- Sensitivity: PANAS ---")
     has_persist = df.get("has_neg_persistence", pd.Series(0, index=df.index)) == 1
@@ -130,7 +130,7 @@ def main():
     fc_col      = "l_amyg-ant_vmPFC_neg_vs_neu"
     panas_cons  = df[has_persist & has_qc & df[fc_col].notna()].copy()
     panas_covs = get_covariates(panas_cons)
-    print(f"  PANAS N (conservative fMRI) = {len(panas_cons)}")
+    print(f"  PANAS N (final fMRI) = {len(panas_cons)}")
 
     panas_preds = ["l_amyg-ant_vmPFC_neg_vs_neu", "l_amyg-post_vmPFC_neg_vs_neu"]
     panas_outcomes = ["C5SPGP", "C5SPGN", "C5SPGN_log"]
@@ -139,7 +139,7 @@ def main():
         one_tailed=True, expected_directions=EXPECTED_DIRECTIONS,
     )
     save_results(corr, ols, mlm, BASE_DIR / "sensitivity_panas",
-                 label="04 FC (neg−neu) → PANAS  [conservative fMRI, one-tailed]",
+                 label="04 FC (neg−neu) → PANAS  [final fMRI, one-tailed]",
                  predictors=panas_preds, outcomes=panas_outcomes,
                  covariates=panas_covs, n=len(panas_cons),
                  one_tailed=True, expected_directions=EXPECTED_DIRECTIONS)
@@ -159,7 +159,7 @@ def main():
             one_tailed=True, expected_directions=EXPECTED_DIRECTIONS,
         )
         save_results(corr, ols, mlm, BASE_DIR / "sensitivity_neg_condition",
-                     label="04 FC (neg only) → Affect  [conservative, one-tailed]",
+                     label="04 FC (neg only) → Affect  [final, one-tailed]",
                      predictors=neg_preds, outcomes=OUTCOMES_DIARY,
                      covariates=base_covs, n=len(cons),
                      one_tailed=True, expected_directions=EXPECTED_DIRECTIONS)

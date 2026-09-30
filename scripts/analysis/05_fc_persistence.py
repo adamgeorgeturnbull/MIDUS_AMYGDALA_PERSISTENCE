@@ -12,7 +12,7 @@ threat processing. Tested for:
   - Anterior vmPFC (safety/extinction signalling)
   - Posterior vmPFC (threat regulation)
 
-Primary analysis (conservative fMRI sample, no diary required):
+Primary analysis (final fMRI sample, no diary required):
   Predictors : l_amyg-ant_vmPFC_neg_vs_neu, l_amyg-post_vmPFC_neg_vs_neu
                (Fisher z, LSS)
   Outcome    : neg_persist_crossrun_mean_z_L  (Fisher z, left hemisphere)
@@ -63,18 +63,18 @@ def main():
     df = load_master(fc=True)
     prepare_persistence_vars(df)
     full, cons = get_samples(df, check_fc_col=PREDICTORS[0], require_diary=False)
-    print(f"  Full N = {len(full)} | Conservative N = {len(cons)}")
+    print(f"  Full N = {len(full)} | Final N = {len(cons)}")
 
     # No diary covariates — purely neuroimaging measures
     base_covs = get_covariates(cons)
 
-    # -- Primary: conservative sample, one-tailed --
+    # -- Primary: final sample, one-tailed --
     corr, ols, mlm = run_analysis_set(
         cons, PREDICTORS, OUTCOMES, base_covs,
         one_tailed=True, expected_directions=EXPECTED_DIRECTIONS,
     )
     save_results(corr, ols, mlm, OUT_DIR,
-                 label="05 FC (neg−neu) → Persistence  [conservative, one-tailed]",
+                 label="05 FC (neg−neu) → Persistence  [final, one-tailed]",
                  predictors=PREDICTORS, outcomes=OUTCOMES, covariates=base_covs,
                  n=len(cons), one_tailed=True, expected_directions=EXPECTED_DIRECTIONS)
 

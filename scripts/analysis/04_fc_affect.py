@@ -9,7 +9,7 @@ Directional hypothesis: greater left-amygdala–vmPFC connectivity during negati
 relative to neutral stimuli → higher PA and lower NA in daily life.
 Both anterior and posterior vmPFC connections are tested.
 
-Primary analysis (conservative fMRI + diary + FC sample):
+Primary analysis (final fMRI + diary + FC sample):
   Predictors : l_amyg-ant_vmPFC_neg_vs_neu, l_amyg-post_vmPFC_neg_vs_neu
   Outcomes   : PA_score, NA_score, NA_score_log (daily diary)
   Methods    : Pearson correlation, OLS regression, MLM (family random intercept)
@@ -26,7 +26,7 @@ nonmissing anterior negative-minus-neutral FC, and qc_conservative == 1.
 The QC flag combines visual QC, mean FD < 0.5 mm and six negative-persistence
 cross-run pairs. Each method then applies model-specific complete-case selection.
 
-Full-sample results before conservative QC restriction are archived in full_sample/.
+Full-sample results before QC restriction are archived in full_sample/.
 Sensitivity analyses are in 04_sensitivity.py. The anterior-minus-posterior
 contrast is a separate exploratory analysis in 04ex_fc_affect_antpost.py;
 it is not a predictor in this script.
@@ -79,17 +79,17 @@ def main():
 
     df = load_master(fc=True)
     full, cons = get_samples(df, check_fc_col=PREDICTORS[0])
-    print(f"  Full N = {len(full)} | Conservative N = {len(cons)}")
+    print(f"  Full N = {len(full)} | Final N = {len(cons)}")
 
     base_covs = get_covariates(cons)
 
-    # -- Primary: conservative sample, one-tailed --
+    # -- Primary: final sample, one-tailed --
     corr, ols, mlm = run_analysis_set(
         cons, PREDICTORS, OUTCOMES, base_covs,
         one_tailed=True, expected_directions=EXPECTED_DIRECTIONS,
     )
     save_results(corr, ols, mlm, OUT_DIR,
-                 label="04 FC (neg−neu) → Affect  [conservative, one-tailed]",
+                 label="04 FC (neg−neu) → Affect  [final, one-tailed]",
                  predictors=PREDICTORS, outcomes=OUTCOMES, covariates=base_covs,
                  n=len(cons), one_tailed=True, expected_directions=EXPECTED_DIRECTIONS)
 

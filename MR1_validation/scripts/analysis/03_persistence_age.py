@@ -5,7 +5,7 @@
 Confirmatory extension: age-related differences in left amygdala negative
 persistence in MR1. Prespecified direction: older age → lower persistence.
 
-Primary analysis (conservative fMRI sample):
+Primary analysis (final fMRI sample):
   Predictor  : RA5PAGE (age at neuroscience visit, P5)
   Outcome    : neg_persist_crossrun_mean_z_L  (Fisher z, left hemisphere)
   Methods    : Pearson correlation and participant-level OLS
@@ -16,15 +16,15 @@ Primary analysis (conservative fMRI sample):
 Adjusted OLS covariates:
   sex, race_2 – race_6  (RA5PAGE is the predictor; no diary covariates apply)
 
-Conservative criterion (qc_conservative == 1):
+QC criteria (qc_conservative == 1):
   - historical visual-QC decisions (all runs pass)
   - mean FD < 0.5 mm
   - task completeness (n_pairs == 6)
   - all three task runs present with exactly 231 volumes
 
-No diary participation is required; the conservative fMRI sample is used.
+No diary participation is required; the final fMRI sample is used.
 
-The conservative result is primary. Full-sample results (less restrictive QC)
+The final result is primary. Full-sample results (less restrictive QC)
 are saved to full_sample/ as an archived secondary analysis.
 
 Inputs:
@@ -80,18 +80,18 @@ def main():
         sys.exit(1)
 
     full, cons = get_samples(df, require_diary=False)
-    print(f"  Full N = {len(full)} | Conservative N = {len(cons)}")
+    print(f"  Full N = {len(full)} | Final N = {len(cons)}")
 
     # RA5PAGE is the predictor — exclude it from covariates.
     # No diary covariates apply (persistence is a neuroscience-only outcome).
     base_covs = [c for c in get_covariates(cons) if c not in PREDICTORS]
 
-    # -- Primary: conservative sample --
+    # -- Primary: final sample --
     corr, ols = run_analysis_set(cons, PREDICTORS, OUTCOMES, base_covs,
                                  one_tailed=True,
                                  expected_directions=EXPECTED_DIRECTIONS)
     save_results(corr, ols, OUT_DIR,
-                 label="03 Age → Persistence  [conservative, one-tailed]",
+                 label="03 Age → Persistence  [final, one-tailed]",
                  predictors=PREDICTORS, outcomes=OUTCOMES, covariates=base_covs,
                  n=len(cons), one_tailed=True, expected_directions=EXPECTED_DIRECTIONS)
 

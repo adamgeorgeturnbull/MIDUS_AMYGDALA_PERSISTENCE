@@ -18,7 +18,7 @@ Adjusted covariates:
   OLS includes available twin-pair indicators; MLM uses family grouping instead.
   No diary covariates apply.
 
-Conservative criterion (qc_conservative == 1):
+QC criteria (qc_conservative == 1):
   - visual-QC decisions (all runs pass)
   - mean FD < 0.5 mm
   - task completeness (n_pairs == 6)
@@ -57,7 +57,7 @@ def main():
     df = load_master()
     prepare_persistence_vars(df)
     _, cons = get_samples(df, require_diary=False)
-    print(f"  Conservative N = {len(cons)}")
+    print(f"  Final N = {len(cons)}")
     # No diary covariates — purely neuroscience measures
     base_covs = get_covariates(cons)
 
@@ -69,7 +69,7 @@ def main():
         cons, PREDICTORS, ["neg_persist_crossrun_mean_z_R"], base_covs,
     )
     save_results(corr, ols, mlm, BASE_DIR / "sensitivity_right_hemisphere",
-                 label="03 Age → Persistence (R)  [conservative]",
+                 label="03 Age → Persistence (R)  [final]",
                  predictors=PREDICTORS, outcomes=["neg_persist_crossrun_mean_z_R"],
                  covariates=base_covs, n=len(cons))
 
@@ -85,7 +85,7 @@ def main():
     if pos_vars:
         corr, ols, mlm = run_analysis_set(cons, PREDICTORS, pos_vars, base_covs)
         save_results(corr, ols, mlm, BASE_DIR / "sensitivity_positive_persistence",
-                     label="03 Age → Positive Persistence  [conservative]",
+                     label="03 Age → Positive Persistence  [final]",
                      predictors=PREDICTORS, outcomes=pos_vars,
                      covariates=base_covs, n=len(cons))
     else:
@@ -101,7 +101,7 @@ def main():
     if vmPFC_vars:
         corr, ols, mlm = run_analysis_set(cons, PREDICTORS, vmPFC_vars, base_covs)
         save_results(corr, ols, mlm, BASE_DIR / "sensitivity_vmPFC",
-                     label="03 Age → vmPFC Persistence  [conservative]",
+                     label="03 Age → vmPFC Persistence  [final]",
                      predictors=PREDICTORS, outcomes=vmPFC_vars,
                      covariates=base_covs, n=len(cons))
     else:

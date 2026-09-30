@@ -33,24 +33,24 @@ scripts use, so the Ns here match analysis Ns exactly.
 
 fmri_conservative
     load_master(fc=False) → prepare_persistence_vars() →
-    get_samples(require_diary=False), conservative sample.
+    get_samples(require_diary=False), final sample.
     Describes Analysis 03 (age → persistence) and the PANAS sensitivity
     blocks of Analysis 02.
 
 fmri_fc_conservative
     load_master(fc=True) → prepare_persistence_vars() →
-    get_samples(check_fc_col=PRIMARY_FC, require_diary=False), conservative.
+    get_samples(check_fc_col=PRIMARY_FC, require_diary=False), final.
     Describes Analysis 05 (FC → persistence) and the PANAS sensitivity
     blocks of Analysis 04.
 
 diary_fmri_conservative
     load_master(fc=False) → prepare_persistence_vars() → get_samples(),
-    conservative sample (diary required).
+    final sample (diary required).
     Describes Analysis 02 (persistence → affect).
 
 diary_fmri_fc_conservative
     load_master(fc=True) → prepare_persistence_vars() →
-    get_samples(check_fc_col=PRIMARY_FC), conservative (diary required).
+    get_samples(check_fc_col=PRIMARY_FC), final (diary required).
     Describes Analysis 04 (FC → affect).
 
 Coding conventions

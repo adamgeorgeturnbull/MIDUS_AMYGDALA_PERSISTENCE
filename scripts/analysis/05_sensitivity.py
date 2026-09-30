@@ -28,7 +28,7 @@ Adjusted covariates:
   OLS includes available twin-pair indicators; MLM uses family grouping instead.
   No diary covariates apply, and diary participation is not required.
 
-Conservative criterion (qc_conservative == 1):
+QC criteria (qc_conservative == 1):
   - visual-QC decisions (all runs pass)
   - mean FD < 0.5 mm
   - task completeness (n_pairs == 6)
@@ -79,7 +79,7 @@ def run_negative_condition(cons, base_covs):
         if len(target) != 1 or target.iloc[0]["ci_status"] != "ok":
             raise RuntimeError("Targeted connectivity fit still requires review; outputs not replaced.")
         save_results(corr, ols, mlm, BASE_DIR / "sensitivity_neg_condition",
-                     label="05 FC (neg only) → Persistence  [conservative, one-tailed]",
+                     label="05 FC (neg only) → Persistence  [final, one-tailed]",
                      predictors=neg_preds, outcomes=PRIMARY_OUTCOME,
                      covariates=base_covs, n=len(cons),
                      one_tailed=True, expected_directions=EXPECTED_DIRECTIONS)
@@ -110,7 +110,7 @@ def main(negative_condition_only=False):
 
     full, cons = get_samples(df, check_fc_col="l_amyg-ant_vmPFC_neg_vs_neu",
                              require_diary=False)
-    print(f"  Conservative N = {len(cons)}")
+    print(f"  Final N = {len(cons)}")
     base_covs = get_covariates(cons)
     if negative_condition_only:
         run_negative_condition(cons, base_covs)
@@ -130,7 +130,7 @@ def main(negative_condition_only=False):
             cons, right_preds, PRIMARY_OUTCOME, base_covs,
         )
         save_results(corr, ols, mlm, BASE_DIR / "sensitivity_right_amygdala",
-                     label="05 FC-R (neg−neu) → Persistence  [conservative, two-tailed]",
+                     label="05 FC-R (neg−neu) → Persistence  [final, two-tailed]",
                      predictors=right_preds, outcomes=PRIMARY_OUTCOME,
                      covariates=base_covs, n=len(cons))
     else:
@@ -150,7 +150,7 @@ def main(negative_condition_only=False):
             cons, pos_neu_preds, PRIMARY_OUTCOME, base_covs,
         )
         save_results(corr, ols, mlm, BASE_DIR / "sensitivity_pos_vs_neu",
-                     label="05 FC (pos−neu) → Persistence  [conservative, two-tailed]",
+                     label="05 FC (pos−neu) → Persistence  [final, two-tailed]",
                      predictors=pos_neu_preds, outcomes=PRIMARY_OUTCOME,
                      covariates=base_covs, n=len(cons))
     else:
@@ -164,7 +164,7 @@ def main(negative_condition_only=False):
         cons, PRIMARY_PREDS, ["neg_persist_crossrun_mean_z_R"], base_covs,
     )
     save_results(corr, ols, mlm, BASE_DIR / "sensitivity_right_hemisphere",
-                 label="05 FC (L, neg−neu) → Persistence (R)  [conservative, two-tailed]",
+                 label="05 FC (L, neg−neu) → Persistence (R)  [final, two-tailed]",
                  predictors=PRIMARY_PREDS, outcomes=["neg_persist_crossrun_mean_z_R"],
                  covariates=base_covs, n=len(cons))
 
@@ -181,7 +181,7 @@ def main(negative_condition_only=False):
             cons, PRIMARY_PREDS, other_persist, base_covs,
         )
         save_results(corr, ols, mlm, BASE_DIR / "sensitivity_other_persistence",
-                     label="05 FC (L, neg−neu) → Other Persistence  [conservative, two-tailed]",
+                     label="05 FC (L, neg−neu) → Other Persistence  [final, two-tailed]",
                      predictors=PRIMARY_PREDS, outcomes=other_persist,
                      covariates=base_covs, n=len(cons))
     else:

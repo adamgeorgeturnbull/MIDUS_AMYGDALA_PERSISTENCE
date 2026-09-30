@@ -25,10 +25,10 @@ Adjusted OLS covariates:
   time_P2_P5, n_days_complete    (diary-specific; added automatically by
                                   run_analysis_set for diary outcomes)
 
-Sample: conservative fMRI + diary + FC sample (get_samples with
+Sample: final fMRI + diary + FC sample (get_samples with
 check_fc_col=PREDICTORS[0] and require_diary=True).
 
-Conservative criterion (qc_conservative == 1):
+QC criteria (qc_conservative == 1):
   - historical visual-QC decisions (all runs pass)
   - mean FD < 0.5 mm
   - task completeness (n_pairs == 6)
@@ -38,7 +38,7 @@ FC availability: l_amyg-ant_vmPFC_neg_vs_neu must be nonmissing; validated by
 get_samples (check_fc_col). Both FC predictors must be present in the DataFrame;
 validated by run_analysis_set.
 
-The conservative result is primary. Full-sample results (less restrictive QC)
+The final result is primary. Full-sample results (less restrictive QC)
 are saved to full_sample/ as an archived secondary analysis.
 
 Inputs:
@@ -95,17 +95,17 @@ def main():
 
     df = load_master(fc=True)
     full, cons = get_samples(df, check_fc_col=PREDICTORS[0], require_diary=True)
-    print(f"  Full N = {len(full)} | Conservative N = {len(cons)}")
+    print(f"  Full N = {len(full)} | Final N = {len(cons)}")
 
     base_covs = get_covariates(cons)
 
-    # -- Primary: conservative sample, one-tailed --
+    # -- Primary: final sample, one-tailed --
     corr, ols = run_analysis_set(
         cons, PREDICTORS, OUTCOMES, base_covs,
         one_tailed=True, expected_directions=EXPECTED_DIRECTIONS,
     )
     save_results(corr, ols, OUT_DIR,
-                 label="04 FC (neg−neu) → Affect  [conservative, one-tailed]",
+                 label="04 FC (neg−neu) → Affect  [final, one-tailed]",
                  predictors=PREDICTORS, outcomes=OUTCOMES, covariates=base_covs,
                  n=len(cons), one_tailed=True, expected_directions=EXPECTED_DIRECTIONS)
 

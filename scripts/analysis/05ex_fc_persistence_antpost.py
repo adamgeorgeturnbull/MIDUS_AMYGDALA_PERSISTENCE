@@ -54,7 +54,7 @@ def main():
 
     full, cons = get_samples(df, check_fc_col="l_amyg-ant_vmPFC_neg_vs_neu",
                              require_diary=False)
-    print(f"  Conservative N = {len(cons)}")
+    print(f"  Final N = {len(cons)}")
     base_covs = get_covariates(cons)
 
     preds = [p for p in [
@@ -67,7 +67,7 @@ def main():
         one_tailed=True, expected_directions=EXPECTED_DIRECTIONS,
     )
     save_results(corr, ols, mlm, OUT_DIR,
-                 label="05ex FC ant−post (neg−neu) → Persistence  [conservative, one-tailed]",
+                 label="05ex FC ant−post (neg−neu) → Persistence  [final, one-tailed]",
                  predictors=preds, outcomes=OUTCOMES,
                  covariates=base_covs, n=len(cons),
                  one_tailed=True, expected_directions=EXPECTED_DIRECTIONS)

@@ -30,9 +30,9 @@ Adjusted OLS covariates:
   RA5PAGE, sex, race_2 – race_6
   No diary covariates apply (outcome is a neuroimaging measure).
 
-No diary participation is required; the conservative fMRI + FC sample is used.
+No diary participation is required; the final fMRI + FC sample is used.
 
-Conservative criterion (qc_conservative == 1):
+QC criteria (qc_conservative == 1):
   - historical visual-QC decisions (all runs pass)
   - mean FD < 0.5 mm
   - task completeness (n_pairs == 6)
@@ -42,7 +42,7 @@ FC availability: l_amyg-ant_vmPFC_neg_vs_neu must be nonmissing (check_fc_col).
 Persistence availability: neg_persist_crossrun_mean_z_L validated by
 run_analysis_set; prepare_persistence_vars computes it from raw r columns.
 
-The conservative result is the main specification. Full-sample results (less
+The final result is the main specification. Full-sample results (less
 restrictive QC) are saved to full_sample/ as an archived secondary analysis.
 
 Inputs:
@@ -98,18 +98,18 @@ def main():
     df = load_master(fc=True)
     prepare_persistence_vars(df)
     full, cons = get_samples(df, check_fc_col=PREDICTORS[0], require_diary=False)
-    print(f"  Full N = {len(full)} | Conservative N = {len(cons)}")
+    print(f"  Full N = {len(full)} | Final N = {len(cons)}")
 
     # No diary covariates — outcome is a neuroimaging measure
     base_covs = get_covariates(cons)
 
-    # -- Primary: conservative sample, one-tailed --
+    # -- Primary: final sample, one-tailed --
     corr, ols = run_analysis_set(
         cons, PREDICTORS, OUTCOMES, base_covs,
         one_tailed=True, expected_directions=EXPECTED_DIRECTIONS,
     )
     save_results(corr, ols, OUT_DIR,
-                 label="05 FC (neg−neu) → Persistence  [conservative, one-tailed]",
+                 label="05 FC (neg−neu) → Persistence  [final, one-tailed]",
                  predictors=PREDICTORS, outcomes=OUTCOMES, covariates=base_covs,
                  n=len(cons), one_tailed=True, expected_directions=EXPECTED_DIRECTIONS)
 

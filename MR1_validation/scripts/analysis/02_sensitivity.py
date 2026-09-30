@@ -14,7 +14,7 @@ Sections:
      One-tailed inference; same directional hypotheses as primary.
      Does not require diary participation.
 
-Both sections use the conservative QC criterion (qc_conservative == 1):
+Both sections use the QC criterion (qc_conservative == 1):
   - historical visual-QC decisions (all runs pass)
   - mean FD < 0.5 mm
   - task completeness (n_pairs == 6)
@@ -64,7 +64,7 @@ def main():
     df = load_master(fc=False)
     prepare_persistence_vars(df)
     _, cons = get_samples(df)
-    print(f"  Conservative N (diary+fMRI) = {len(cons)}")
+    print(f"  Final N (diary+fMRI) = {len(cons)}")
     base_covs = get_covariates(cons)
 
     # ── 1. Right hemisphere (two-tailed hemispheric specificity check) ─────────
@@ -73,7 +73,7 @@ def main():
         cons, RIGHT_PREDICTORS, DIARY_OUTCOMES, base_covs,
     )
     save_results(corr, ols, BASE_DIR / "sensitivity_right_hemisphere",
-                 label="02 Persistence (R) → Affect  [conservative, two-tailed]",
+                 label="02 Persistence (R) → Affect  [final, two-tailed]",
                  predictors=RIGHT_PREDICTORS, outcomes=DIARY_OUTCOMES,
                  covariates=base_covs, n=len(cons))
 
@@ -81,13 +81,13 @@ def main():
     print("\n--- Sensitivity: PANAS ---")
     _, panas_cons = get_samples(df, require_diary=False)
     panas_covs = get_covariates(panas_cons)
-    print(f"  PANAS N (conservative fMRI) = {len(panas_cons)}")
+    print(f"  PANAS N (final fMRI) = {len(panas_cons)}")
     corr, ols = run_analysis_set(
         panas_cons, PANAS_PREDICTORS, PANAS_OUTCOMES, panas_covs,
         one_tailed=True, expected_directions=PANAS_EXPECTED,
     )
     save_results(corr, ols, BASE_DIR / "sensitivity_panas",
-                 label="02 Persistence (L) → PANAS  [conservative fMRI, one-tailed]",
+                 label="02 Persistence (L) → PANAS  [final fMRI, one-tailed]",
                  predictors=PANAS_PREDICTORS, outcomes=PANAS_OUTCOMES,
                  covariates=panas_covs, n=len(panas_cons),
                  one_tailed=True, expected_directions=PANAS_EXPECTED)

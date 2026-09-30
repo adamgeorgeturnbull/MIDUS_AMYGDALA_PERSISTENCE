@@ -4,7 +4,7 @@
 
 Primary analysis: left amygdala negative persistence and daily life affect.
 
-Primary analysis (conservative fMRI + diary sample):
+Primary analysis (final fMRI + diary sample):
   Predictors : neg_persist_crossrun_mean_z_L  (Fisher z, left hemisphere)
   Outcomes   : PA_score, NA_score, NA_score_log  (daily diary)
   Methods    : Pearson correlation, OLS regression, MLM (random intercept for family)
@@ -24,7 +24,7 @@ Sample selection:
   then restrict the primary analysis to qc_conservative == 1.
   Each method applies its own model-variable complete-case restriction.
 
-Full-sample results before conservative QC restriction are archived in full_sample/.
+Full-sample results before QC restriction are archived in full_sample/.
 Sensitivity analyses (right hemisphere, PANAS, other persistence) in 02_sensitivity.py.
 
 Run from project root directory.
@@ -62,16 +62,16 @@ def main():
     df = load_master()
     prepare_persistence_vars(df)
     full, cons = get_samples(df)
-    print(f"  Full N = {len(full)} | Conservative N = {len(cons)}")
+    print(f"  Full N = {len(full)} | Final N = {len(cons)}")
 
     base_covs = get_covariates(cons)
 
-    # -- Primary: conservative sample --
+    # -- Primary: final sample --
     corr, ols, mlm = run_analysis_set(cons, PREDICTORS, OUTCOMES, base_covs,
                                       one_tailed=True,
                                       expected_directions=EXPECTED_DIRECTIONS)
     save_results(corr, ols, mlm, OUT_DIR,
-                 label="02 Persistence → Affect  [conservative]",
+                 label="02 Persistence → Affect  [final]",
                  predictors=PREDICTORS, outcomes=OUTCOMES, covariates=base_covs,
                  n=len(cons), one_tailed=True, expected_directions=EXPECTED_DIRECTIONS)
 

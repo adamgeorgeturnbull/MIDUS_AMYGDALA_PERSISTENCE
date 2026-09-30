@@ -264,12 +264,12 @@ def get_samples(df, check_fc_col=None, behavioral=False, require_diary=True):
 
     When behavioral=True:
       Full sample  = participants with at least one of PA_score / NA_score.
-      Conservative = same as full (no fMRI QC applies).
+      Final = same as full (no fMRI QC applies).
 
     When behavioral=False (fMRI analyses, default):
       Full sample  = participants with has_neg_persistence == 1
                      and, if require_diary=True, at least one affect measure.
-      Conservative = full sample restricted to qc_conservative == 1.
+      Final = full sample restricted to qc_conservative == 1.
 
     Parameters
     ----------

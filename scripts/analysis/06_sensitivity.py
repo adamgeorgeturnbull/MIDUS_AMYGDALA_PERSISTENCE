@@ -23,7 +23,7 @@ Adjusted covariates:
   PANAS models omit diary covariates and do not require diary participation.
   OLS includes eligible twin-pair indicators; MLM uses family grouping instead.
 
-Conservative criterion (qc_conservative == 1):
+QC criteria (qc_conservative == 1):
   - visual-QC decisions (all runs pass)
   - mean FD < 0.5 mm
   - task completeness (n_pairs == 6)
@@ -298,13 +298,13 @@ def main(panas_reappraisal_only=False):
 
     # -------------------------------------------------------------------------
     # 1. PANAS (convergent validity)
-    #    Uses full conservative fMRI sample — no diary requirement (N~128)
+    #    Uses full final fMRI sample — no diary requirement (N~128)
     # -------------------------------------------------------------------------
     print("\n--- Sensitivity: PANAS ---")
     has_persist = df.get("has_neg_persistence", pd.Series(0, index=df.index)) == 1
     has_qc      = df.get("qc_conservative",    pd.Series(0, index=df.index)) == 1
     panas_sample = df[has_persist & has_qc].copy()
-    print(f"  PANAS N (conservative fMRI) = {len(panas_sample)}")
+    print(f"  PANAS N (final fMRI) = {len(panas_sample)}")
 
     panas_outcomes = ["C5SPGP", "C5SPGN", "C5SPGN_log"]
     panas_covs = get_covariates(panas_sample)
@@ -316,18 +316,18 @@ def main(panas_reappraisal_only=False):
         )
         save_moderation(ols_df, mlm_df,
                         BASE_DIR / "sensitivity_panas" / mod_name,
-                        f"06 Sensitivity: Persistence × {mod_name} → PANAS  [conservative fMRI, two-tailed]")
+                        f"06 Sensitivity: Persistence × {mod_name} → PANAS  [final fMRI, two-tailed]")
 
     if panas_reappraisal_only:
         return
 
     # -------------------------------------------------------------------------
     # 2. Right hemisphere persistence (hemisphere specificity)
-    #    Same diary+fMRI conservative sample as primary (N~80)
+    #    Same diary+fMRI final sample as primary (N~80)
     # -------------------------------------------------------------------------
     print("\n--- Sensitivity: Right Hemisphere Persistence ---")
     _, cons = get_samples(df)
-    print(f"  N (diary+fMRI conservative) = {len(cons)}")
+    print(f"  N (diary+fMRI final) = {len(cons)}")
     base_covs = get_covariates(cons)
     diary_outcomes = ["PA_score", "NA_score", "NA_score_log"]
 
@@ -338,7 +338,7 @@ def main(panas_reappraisal_only=False):
         )
         save_moderation(ols_df, mlm_df,
                         BASE_DIR / "sensitivity_right_hemisphere" / mod_name,
-                        f"06 Sensitivity: Persistence (R) × {mod_name} → Affect  [conservative, two-tailed]")
+                        f"06 Sensitivity: Persistence (R) × {mod_name} → Affect  [final, two-tailed]")
 
 
 if __name__ == "__main__":

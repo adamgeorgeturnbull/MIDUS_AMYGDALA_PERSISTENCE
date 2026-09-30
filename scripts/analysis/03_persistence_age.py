@@ -4,7 +4,7 @@
 
 Extension: age-related differences in amygdala persistence to negative images.
 
-Primary analysis (conservative fMRI sample):
+Primary analysis (final fMRI sample):
   Predictor  : C5PAGE (age at neuroscience visit)
   Outcome    : neg_persist_crossrun_mean_z_L  (Fisher z, left hemisphere)
   Methods    : Pearson correlation, OLS regression, MLM (random intercept for family)
@@ -18,14 +18,14 @@ Adjusted-model covariates:
   MLM uses a family random intercept instead of twin-pair indicators.
   Pearson correlations are unadjusted.
 
-Conservative criterion (qc_conservative == 1):
+QC criteria (qc_conservative == 1):
   - historical visual-QC decisions (all runs pass)
   - mean FD < 0.5 mm
   - task completeness (six left-amygdala negative cross-run pairs)
 
 Negative-persistence availability is required; diary participation is not.
 Each method applies its own model-variable complete-case restriction.
-The conservative result is primary. Results before conservative QC restriction
+The final result is primary. Results before QC restriction
 are archived in full_sample/.
 
 Sensitivity analyses (right hemisphere and alternative persistence measures)
@@ -73,17 +73,17 @@ def main():
     df = load_master()
     prepare_persistence_vars(df)
     full, cons = get_samples(df, require_diary=False)
-    print(f"  Full N = {len(full)} | Conservative N = {len(cons)}")
+    print(f"  Full N = {len(full)} | Final N = {len(cons)}")
 
     # No diary covariates — purely neuroscience measures
     base_covs = get_covariates(cons)
 
-    # -- Primary: conservative sample --
+    # -- Primary: final sample --
     corr, ols, mlm = run_analysis_set(cons, PREDICTORS, OUTCOMES, base_covs,
                                       one_tailed=True,
                                       expected_directions=EXPECTED_DIRECTIONS)
     save_results(corr, ols, mlm, OUT_DIR,
-                 label="03 Age → Persistence  [conservative, one-tailed]",
+                 label="03 Age → Persistence  [final, one-tailed]",
                  predictors=PREDICTORS, outcomes=OUTCOMES, covariates=base_covs,
                  n=len(cons), one_tailed=True, expected_directions=EXPECTED_DIRECTIONS)
 

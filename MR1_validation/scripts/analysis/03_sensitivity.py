@@ -19,7 +19,7 @@ not contain a usable family or other grouping identifier.
 Adjusted OLS covariates:
   sex, race_2 – race_6  (RA5PAGE is the predictor; no diary covariates apply)
 
-Conservative criterion (qc_conservative == 1):
+QC criteria (qc_conservative == 1):
   - historical visual-QC decisions (all runs pass)
   - mean FD < 0.5 mm
   - task completeness (n_pairs == 6)
@@ -77,7 +77,7 @@ def main():
     df = load_master(fc=False)
     prepare_persistence_vars(df)
     _, cons = get_samples(df, require_diary=False)
-    print(f"  Conservative N = {len(cons)}")
+    print(f"  Final N = {len(cons)}")
 
     # RA5PAGE is the predictor — exclude it from covariates.
     # No diary covariates apply (outcomes are neuroimaging measures).
@@ -87,7 +87,7 @@ def main():
     print("\n--- Sensitivity: Right Hemisphere ---")
     corr, ols = run_analysis_set(cons, PREDICTORS, RIGHT_NEG_OUTCOMES, base_covs)
     save_results(corr, ols, BASE_DIR / "sensitivity_right_hemisphere",
-                 label="03 Age → Persistence (R)  [conservative, two-tailed]",
+                 label="03 Age → Persistence (R)  [final, two-tailed]",
                  predictors=PREDICTORS, outcomes=RIGHT_NEG_OUTCOMES,
                  covariates=base_covs, n=len(cons))
 
@@ -95,7 +95,7 @@ def main():
     print("\n--- Sensitivity: Positive Persistence ---")
     corr, ols = run_analysis_set(cons, PREDICTORS, POSITIVE_OUTCOMES, base_covs)
     save_results(corr, ols, BASE_DIR / "sensitivity_positive_persistence",
-                 label="03 Age → Positive Persistence  [conservative, two-tailed]",
+                 label="03 Age → Positive Persistence  [final, two-tailed]",
                  predictors=PREDICTORS, outcomes=POSITIVE_OUTCOMES,
                  covariates=base_covs, n=len(cons))
 

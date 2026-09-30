@@ -14,10 +14,10 @@ IMPORTANT — Data provenance:
     differ from the original values.
 
     The 231-volume completeness rule (all_three_runs_231 = 1) prevents any
-    shortened acquisition from qualifying for the conservative sample through
+    shortened acquisition from qualifying for the final sample through
     n_pairs = 6 alone.
 
-Creates binary QC flags and criteria for the conservative analysis sample:
+Creates binary QC flags and criteria for the final analysis sample:
 - All 3 runs pass visual QC  (from task_fMRI_QC_MR1.xlsx; run1/run2/run3 only)
 - Mean FD < 0.5 mm           (from fd_summary.csv)
 - n_pairs = 6                (all 3 cross-run persistence pairs valid,
@@ -270,7 +270,7 @@ def main():
         qc["n_pairs"].notna() & (qc["n_pairs"] == 6)
     ).astype(int)
 
-    # Conservative sample: all four criteria must be true.
+    # Final sample: all four criteria must be true.
     # NaN in all_three_runs_231 (participant absent from completeness file)
     # evaluates as != 1, so it correctly fails the criterion.
     qc["qc_conservative"] = (

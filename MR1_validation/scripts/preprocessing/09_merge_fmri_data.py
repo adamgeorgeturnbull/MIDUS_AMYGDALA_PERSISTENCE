@@ -8,7 +8,7 @@ behavioral dataset.
 IMPORTANT — QC provenance:
     Visual QC decisions come from historical MR1 manual inspections (carried
     forward; no new visual QC was performed for the reproduction).
-    Reproduced FD replicates historical MR1 values.  The conservative sample
+    Reproduced FD replicates historical MR1 values.  The final sample
     also requires the 231-volume completeness criterion.
 
 Required inputs:

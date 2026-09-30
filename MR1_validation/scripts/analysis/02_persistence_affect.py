@@ -5,7 +5,7 @@
 Primary analysis: left amygdala negative persistence and daily life affect.
 Replication of Puccetti et al. (2021) and the M3 primary finding.
 
-Primary analysis (conservative fMRI + diary sample):
+Primary analysis (final fMRI + diary sample):
   Predictor  : neg_persist_crossrun_mean_z_L  (Fisher z, left hemisphere)
   Outcomes   : PA_score, NA_score, NA_score_log  (daily diary)
   Methods    : Pearson correlation and participant-level OLS
@@ -21,12 +21,12 @@ Adjusted OLS covariates:
   time_P2_P5, n_days_complete    (diary-specific; added automatically by
                                   run_analysis_set for diary outcomes)
 
-Conservative criterion (qc_conservative == 1):
+QC criteria (qc_conservative == 1):
   - historical visual-QC decisions (all runs pass)
   - mean FD < 0.5 mm
   - task completeness (n_pairs == 6)
   - all three task runs present with exactly 231 volumes (all_three_runs_231)
-  The conservative result is primary.
+  The final result is primary.
 
 Full-sample results (less restrictive QC) are saved to full_sample/ as an
 archived secondary result.
@@ -87,16 +87,16 @@ def main():
         sys.exit(1)
 
     full, cons = get_samples(df, require_diary=True)
-    print(f"  Full N = {len(full)} | Conservative N = {len(cons)}")
+    print(f"  Full N = {len(full)} | Final N = {len(cons)}")
 
     base_covs = get_covariates(cons)
 
-    # -- Primary: conservative sample --
+    # -- Primary: final sample --
     corr, ols = run_analysis_set(cons, PREDICTORS, OUTCOMES, base_covs,
                                  one_tailed=True,
                                  expected_directions=EXPECTED_DIRECTIONS)
     save_results(corr, ols, OUT_DIR,
-                 label="02 Persistence → Affect  [conservative]",
+                 label="02 Persistence → Affect  [final]",
                  predictors=PREDICTORS, outcomes=OUTCOMES, covariates=base_covs,
                  n=len(cons), one_tailed=True, expected_directions=EXPECTED_DIRECTIONS)
 

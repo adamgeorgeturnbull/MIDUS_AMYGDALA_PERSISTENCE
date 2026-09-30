@@ -10,7 +10,7 @@ include special codes and do not establish usable diary data. The reviewed
 inputs exclude 26 of 81 participants, leaving 55. This does not establish actual
 membership in the original analytic sample.
 
-Uses the same conservative sample definition, covariates, and three statistical
+Uses the same final sample definition, covariates, and three statistical
 approaches (correlation, OLS, MLM) as script 02_persistence_affect.py.
 
 Inputs:
@@ -68,7 +68,7 @@ def main():
     midus2_ids = get_midus2_ids()
     print(f"\nMIDUS II diary+neuroimaging sample: N = {len(midus2_ids)}")
 
-    # ── Load and filter to conservative sample ────────────────────────────────
+    # ── Load and filter to final sample ────────────────────────────────
     df = load_master()
     prepare_persistence_vars(df)
     _, conservative = get_samples(df)
@@ -77,7 +77,7 @@ def main():
     overlap     = conservative[df_m2id.isin(midus2_ids)]
     novel       = conservative[~df_m2id.isin(midus2_ids)]
 
-    print(f"Conservative diary+fMRI sample:     N = {len(conservative)}")
+    print(f"Final diary+fMRI sample:     N = {len(conservative)}")
     print(f"  Overlapping with MIDUS II:         N = {len(overlap)}")
     print(f"  Remaining participants:            N = {len(novel)}")
 

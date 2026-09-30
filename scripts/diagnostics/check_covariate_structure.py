@@ -95,27 +95,27 @@ def main():
     report_covariates("01 Neuro subsample (age→affect)", neuro, covs_01_neuro,
                       outcome="PA_score", predictor="C5PAGE", add_diary_covs=False)
 
-    # --- Conservative diary+fMRI (Analyses 02, 04, 06, 07) ---
+    # --- Final diary+fMRI (Analyses 02, 04, 06, 07) ---
     df = load_master()
     prepare_persistence_vars(df)
     _, cons = get_samples(df)
     base_covs = get_covariates(cons)
-    report_covariates("02/06 Conservative diary+fMRI (N~80)", cons, base_covs,
+    report_covariates("02/06 Final diary+fMRI (N~80)", cons, base_covs,
                       outcome="PA_score", predictor="neg_persist_crossrun_mean_z_L")
 
-    # --- Conservative fMRI only (Analysis 03) ---
+    # --- Final fMRI only (Analysis 03) ---
     _, cons3 = get_samples(df, require_diary=False)
     base_covs3 = get_covariates(cons3)
-    report_covariates("03 Conservative fMRI only (N~128)", cons3, base_covs3,
+    report_covariates("03 Final fMRI only (N~128)", cons3, base_covs3,
                       outcome="neg_persist_crossrun_mean_z_L", predictor="C5PAGE",
                       add_diary_covs=False)
 
-    # --- Conservative diary+fMRI with FC (Analyses 04, 05, 07) ---
+    # --- Final diary+fMRI with FC (Analyses 04, 05, 07) ---
     df_fc = load_master(fc=True)
     prepare_persistence_vars(df_fc)
     _, cons_fc = get_samples(df_fc, check_fc_col="l_amyg-ant_vmPFC_neg_vs_neu")
     base_covs_fc = get_covariates(cons_fc)
-    report_covariates("04/07 Conservative diary+fMRI+FC (N~80)", cons_fc, base_covs_fc,
+    report_covariates("04/07 Final diary+fMRI+FC (N~80)", cons_fc, base_covs_fc,
                       outcome="PA_score", predictor="l_amyg-ant_vmPFC_neg_vs_neu")
 
     print("\n" + "=" * 70)

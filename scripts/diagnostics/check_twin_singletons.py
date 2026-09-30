@@ -25,10 +25,10 @@ samples = {
     "01 neuro subsample      (N~137, C5PAGE + diary)":
         df[df["C5PAGE"].notna() & has_affect],
 
-    "02 conservative diary+fMRI (N~80, qc_cons + diary)":
+    "02 final diary+fMRI (N~80, qc_cons + diary)":
         df[(df["qc_conservative"] == 1) & has_affect],
 
-    "03/04/05 conservative fMRI (N~128, qc_cons)":
+    "03/04/05 final fMRI (N~128, qc_cons)":
         df[df["qc_conservative"] == 1],
 
     "02 PANAS sensitivity    (N~128, has persistence + PANAS)":

@@ -3,7 +3,7 @@
 compare_midus2_overlap.py
 
 Construct a refined MIDUS II comparison sample (diary data + completed
-neuroimaging) and compare with the conservative diary+fMRI sample from
+neuroimaging) and compare with the final diary+fMRI sample from
 the current MIDUS III study.
 
 Inputs:
@@ -46,14 +46,14 @@ print(f"MIDUS II — completed neuroimaging: N = {len(has_imaging)}")
 midus2_ids = has_diary & has_imaging
 print(f"MIDUS II — diary + neuroimaging:   N = {len(midus2_ids)}")
 
-# ── Load current conservative sample (MIDUS III) ──────────────────────────────
+# ── Load current final sample (MIDUS III) ──────────────────────────────
 df = pd.read_csv(MASTER_FILE)
 df["M2ID_int"] = pd.to_numeric(df["M2ID"], errors="coerce").astype("Int64")
 
 cons = df[(df.get("qc_conservative", pd.Series(0, index=df.index)) == 1) &
           df[["PA_score", "NA_score"]].notna().any(axis=1)]
 cons_ids = set(cons["M2ID_int"].dropna().astype(int))
-print(f"\nMIDUS III — conservative diary+fMRI sample: N = {len(cons_ids)}")
+print(f"\nMIDUS III — final diary+fMRI sample: N = {len(cons_ids)}")
 
 # ── Overlap ───────────────────────────────────────────────────────────────────
 overlap  = midus2_ids & cons_ids
@@ -63,7 +63,7 @@ only_m3  = cons_ids   - midus2_ids
 print(f"\nOverlap (same participants in both studies):")
 print(f"  N = {len(overlap)}")
 print(f"  {len(overlap)/len(midus2_ids)*100:.1f}% of MIDUS II diary+neuroimaging sample")
-print(f"  {len(overlap)/len(cons_ids)*100:.1f}% of current conservative sample")
+print(f"  {len(overlap)/len(cons_ids)*100:.1f}% of current final sample")
 print(f"\nOnly in MIDUS II: N = {len(only_m2)}")
 print(f"Only in MIDUS III: N = {len(only_m3)}")
 

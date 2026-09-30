@@ -5,7 +5,7 @@
 Process fMRI quality control (QC) data from manual inspection and corrected-STC
 framewise-displacement (FD) summary.
 
-Creates binary QC flags and criteria for defining conservative analysis samples:
+Creates binary QC flags and criteria for defining final analysis samples:
 - All 3 runs pass visual QC  (from task_fMRI_QC.xlsx, run1/run2/run3 columns only)
 - Mean FD < 0.5 mm           (from fd_summary.csv, corrected-STC pipeline)
 - n_pairs = 6                (all 3 cross-run persistence pairs valid,
@@ -215,7 +215,7 @@ def main():
     # task_complete: n_pairs == 6; NaN (no persistence data) fails
     qc["task_complete"] = (qc["n_pairs"].notna() & (qc["n_pairs"] == 6)).astype(int)
 
-    # Conservative sample: visual QC AND FD AND task completeness
+    # Final sample: visual QC AND FD AND task completeness
     qc["qc_conservative"] = (
         (qc["all_runs_pass"] == 1) &
         (qc["fd_pass"] == 1) &

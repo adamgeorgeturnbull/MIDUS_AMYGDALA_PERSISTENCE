@@ -24,7 +24,7 @@ Adjusted covariates:
   PANAS models omit diary covariates and do not require diary participation.
   OLS includes eligible twin-pair indicators; MLM uses family grouping instead.
 
-Conservative criterion (qc_conservative == 1):
+QC criteria (qc_conservative == 1):
   - visual-QC decisions (all runs pass)
   - mean FD < 0.5 mm
   - task completeness (n_pairs == 6)
@@ -270,13 +270,13 @@ def main():
 
     # -------------------------------------------------------------------------
     # 1. PANAS (convergent validity)
-    #    Uses full conservative fMRI sample — no diary requirement (N~128)
+    #    Uses full final fMRI sample — no diary requirement (N~128)
     # -------------------------------------------------------------------------
     print("\n--- Sensitivity: PANAS ---")
     has_persist = df.get("has_neg_persistence", pd.Series(0, index=df.index)) == 1
     has_qc      = df.get("qc_conservative",    pd.Series(0, index=df.index)) == 1
     panas_sample = df[has_persist & has_qc & df[PRIMARY_FC].notna()].copy()
-    print(f"  PANAS N (conservative fMRI) = {len(panas_sample)}")
+    print(f"  PANAS N (final fMRI) = {len(panas_sample)}")
 
     panas_outcomes = ["C5SPGP", "C5SPGN", "C5SPGN_log"]
     panas_preds    = ["l_amyg-ant_vmPFC_neg_vs_neu", "l_amyg-post_vmPFC_neg_vs_neu"]
@@ -288,15 +288,15 @@ def main():
         )
         save_moderation(ols_df, mlm_df,
                         BASE_DIR / "sensitivity_panas" / mod_name,
-                        f"07 Sensitivity: FC × {mod_name} → PANAS  [conservative fMRI, two-tailed]")
+                        f"07 Sensitivity: FC × {mod_name} → PANAS  [final fMRI, two-tailed]")
 
     # -------------------------------------------------------------------------
     # 2. Right amygdala FC (hemisphere specificity)
-    #    Same diary+fMRI conservative sample as primary (N~80)
+    #    Same diary+fMRI final sample as primary (N~80)
     # -------------------------------------------------------------------------
     print("\n--- Sensitivity: Right Amygdala FC ---")
     _, cons = get_samples(df, check_fc_col=PRIMARY_FC)
-    print(f"  N (diary+fMRI conservative) = {len(cons)}")
+    print(f"  N (diary+fMRI final) = {len(cons)}")
     base_covs = get_covariates(cons)
     diary_outcomes = ["PA_score", "NA_score", "NA_score_log"]
 
@@ -312,7 +312,7 @@ def main():
             )
             save_moderation(ols_df, mlm_df,
                             BASE_DIR / "sensitivity_right_amygdala" / mod_name,
-                            f"07 Sensitivity: FC (R) × {mod_name} → Affect  [conservative, two-tailed]")
+                            f"07 Sensitivity: FC (R) × {mod_name} → Affect  [final, two-tailed]")
     else:
         print("  Right amygdala neg−neu FC variables not found — skipping.")
 

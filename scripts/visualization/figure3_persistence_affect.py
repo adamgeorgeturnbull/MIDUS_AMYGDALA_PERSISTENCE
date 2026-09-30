@@ -23,7 +23,7 @@ covariate set, family grouping, and model are identical by construction:
 
     load_master()                 -> master behavioural + fMRI table
     prepare_persistence_vars(df)  -> creates neg_persist_crossrun_mean_z_L
-    get_samples(df)               -> (full, conservative); the conservative
+    get_samples(df)               -> (full, final); the final
                                      diary + fMRI sample is used
     get_covariates(cons)          -> C5PAGE, sex, race_*, twin_pair_*
     run_mlm(...)                  -> the authoritative MLM recomputation
@@ -38,7 +38,7 @@ Note two behaviours inherited from run_mlm that matter for interpretation:
     the fixed effects by run_mlm, because the family random intercept replaces
     them. They are therefore absent from the fitted model here too.
   - run_mlm drops zero-variance covariates before fitting. In the N = 81
-    conservative sample some race dummies have no members and are dropped.
+    final sample some race dummies have no members and are dropped.
     That is a property of the authoritative analysis, not a deviation from it;
     the dropped columns are reported at run time.
 
@@ -357,7 +357,7 @@ def load_stored_mlm():
 # Sample + model
 # ============================================================================
 def build_sample():
-    """Rebuild the conservative diary + fMRI sample via the analysis utilities."""
+    """Rebuild the final diary + fMRI sample via the analysis utilities."""
     try:
         df = load_master()
     except FileNotFoundError as exc:
@@ -379,7 +379,7 @@ def build_sample():
     _full, cons = get_samples(df)
     if len(cons) != EXPECTED_N:
         _fail(
-            f"the conservative diary + fMRI sample has N = {len(cons)}, "
+            f"the final diary + fMRI sample has N = {len(cons)}, "
             f"expected {EXPECTED_N}.\n"
             "  The sample definition or the master table has changed; refusing "
             "to plot a different sample."
@@ -667,7 +667,7 @@ def main():
 
     sample, covariates = build_sample()
     n_cov = len([c for c in covariates if not c.startswith("twin_pair_")])
-    print(f"Sample: conservative diary + fMRI, N = {len(sample)}")
+    print(f"Sample: final diary + fMRI, N = {len(sample)}")
     print(f"  fixed-effect covariates offered: {n_cov} (twin_pair_* excluded by run_mlm)")
 
     panel_data = []

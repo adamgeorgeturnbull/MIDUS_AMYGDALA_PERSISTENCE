@@ -26,8 +26,8 @@ grouping, and model are identical by construction:
 
     load_master(fc=True)                     -> master table merged with the
                                                 beta-series FC file
-    get_samples(df, check_fc_col=PREDICTOR)  -> (full, conservative); the
-                                                conservative sample is used
+    get_samples(df, check_fc_col=PREDICTOR)  -> (full, final); the
+                                                final sample is used
     get_covariates(cons)                     -> C5PAGE, sex, race_*, twin_pair_*
     run_mlm(...)                              -> authoritative MLM recomputation
 
@@ -46,7 +46,7 @@ Two behaviours inherited from run_mlm matter for interpretation:
     the fixed effects by run_mlm, because the family random intercept replaces
     them. They are therefore absent from the fitted model here too.
   - run_mlm drops zero-variance covariates before fitting. In the N = 81
-    conservative sample some race dummies have no members and are dropped.
+    final sample some race dummies have no members and are dropped.
     That is a property of the authoritative analysis, not a deviation from it;
     the number dropped is reported at run time.
 
@@ -398,7 +398,7 @@ def load_stored_mlm():
 # Sample + model
 # ============================================================================
 def build_sample():
-    """Rebuild the conservative diary + fMRI FC sample via the analysis utilities."""
+    """Rebuild the final diary + fMRI FC sample via the analysis utilities."""
     try:
         df = load_master(fc=True)
     except FileNotFoundError as exc:
@@ -422,7 +422,7 @@ def build_sample():
     _full, cons = get_samples(df, check_fc_col=PREDICTOR)
     if len(cons) != EXPECTED_N:
         _fail(
-            f"the conservative diary + fMRI FC sample has N = {len(cons)}, "
+            f"the final diary + fMRI FC sample has N = {len(cons)}, "
             f"expected {EXPECTED_N}.\n"
             "  The sample definition or the master table has changed; refusing "
             "to plot a different sample."
@@ -710,7 +710,7 @@ def main():
 
     sample, covariates = build_sample()
     n_cov = len([c for c in covariates if not c.startswith("twin_pair_")])
-    print(f"Sample: conservative diary + fMRI FC, N = {len(sample)}")
+    print(f"Sample: final diary + fMRI FC, N = {len(sample)}")
     print(f"  fixed-effect covariates offered: {n_cov} (twin_pair_* excluded by run_mlm)")
 
     panel_data = []

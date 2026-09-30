@@ -22,8 +22,8 @@ family grouping, and model are identical by construction:
 
     load_master()                            -> master behavioural + fMRI table
     prepare_persistence_vars(df)             -> creates the Fisher-z outcome
-    get_samples(df, require_diary=False)     -> (full, conservative); the
-                                                conservative fMRI sample is used
+    get_samples(df, require_diary=False)     -> (full, final); the
+                                                final fMRI sample is used
     get_covariates(cons)                     -> C5PAGE, sex, race_*, twin_pair_*
     run_mlm(...)                              -> authoritative MLM recomputation
 
@@ -38,7 +38,7 @@ Covariate handling, all inherited from run_mlm rather than reimplemented:
     so run_analysis_set would not add time_P2_P5 or n_days_complete. This
     script asserts the outcome is NOT in DIARY_OUTCOMES before relying on that.
   - Zero-variance race dummies are pruned exactly as run_mlm prunes them. In
-    the N = 127 conservative sample some race categories have no members; the
+    the N = 127 final sample some race categories have no members; the
     number dropped is reported at run time.
 
 The effective covariate set is therefore sex plus the race dummies that retain
@@ -379,7 +379,7 @@ def load_stored_mlm():
 # Sample + model
 # ============================================================================
 def build_sample():
-    """Rebuild the conservative fMRI sample via the analysis utilities."""
+    """Rebuild the final fMRI sample via the analysis utilities."""
     try:
         df = load_master()
     except FileNotFoundError as exc:
@@ -403,7 +403,7 @@ def build_sample():
     _full, cons = get_samples(df, require_diary=False)
     if len(cons) != EXPECTED_N:
         _fail(
-            f"the conservative fMRI sample has N = {len(cons)}, "
+            f"the final fMRI sample has N = {len(cons)}, "
             f"expected {EXPECTED_N}.\n"
             "  The sample definition or the master table has changed; refusing "
             "to plot a different sample."
@@ -721,7 +721,7 @@ def main():
             if not c.startswith("twin_pair_") and c != PREDICTOR
         ]
     )
-    print(f"Sample: conservative fMRI, N = {len(sample)}")
+    print(f"Sample: final fMRI, N = {len(sample)}")
     print(
         f"  fixed-effect covariates offered: {n_cov} "
         "(predictor and twin_pair_* excluded by run_mlm)"

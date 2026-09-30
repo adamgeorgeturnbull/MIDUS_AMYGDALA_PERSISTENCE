@@ -13,7 +13,7 @@ Sections:
      Connections: l_amyg-ant_vmPFC, l_amyg-post_vmPFC,
                   r_amyg-ant_vmPFC, r_amyg-post_vmPFC
 
-Sample   : conservative fMRI sample (qc_conservative == 1)
+Sample   : final fMRI sample (qc_conservative == 1)
 Tests    : two-tailed
 
 Outputs:
@@ -117,7 +117,7 @@ def _save(rows, out_path, label):
 # ============================================================================
 def load_data():
     """
-    Returns (roi_cons, fc_cons): conservative-sample DataFrames
+    Returns (roi_cons, fc_cons): final-sample DataFrames
     for ROI activations and LSS FC respectively.
     """
     # Master for QC flags
@@ -134,7 +134,7 @@ def load_data():
         roi_raw["M2ID"] = roi_raw["M2ID"].astype(str)
         roi_df   = qc.merge(roi_raw, on="M2ID", how="inner")
         roi_cons = roi_df[roi_df["qc_conservative"] == 1].copy()
-        print(f"  ROI activations — conservative N = {len(roi_cons)}")
+        print(f"  ROI activations — final N = {len(roi_cons)}")
 
     # ---- LSS FC ----
     if not FC_FILE.exists():
@@ -146,7 +146,7 @@ def load_data():
         fc_df   = qc.merge(fc_raw, on="M2ID", how="inner")
         fc_cons = fc_df[fc_df["qc_conservative"] == 1].copy()
         fc_label = "LSS" if "LSS" in FC_FILE.name else "LSA"
-        print(f"  FC ({fc_label}) — conservative N = {len(fc_cons)}")
+        print(f"  FC ({fc_label}) — final N = {len(fc_cons)}")
 
     return roi_cons, fc_cons
 
@@ -240,7 +240,7 @@ def run_fc_conditions(df):
 def main():
     print("=" * 70)
     print("Analysis 00b: Task Condition Differences")
-    print("  (ROI activations + LSS FC, conservative fMRI sample)")
+    print("  (ROI activations + LSS FC, final fMRI sample)")
     print("=" * 70)
 
     roi_cons, fc_cons = load_data()

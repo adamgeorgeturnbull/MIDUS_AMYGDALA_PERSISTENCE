@@ -112,7 +112,7 @@ Validation anchors
 The primary specification's models are the published models, so they must
 reproduce them exactly or the script aborts:
 
-  * a path refitted in the N = 127 conservative fMRI sample must reproduce
+  * a path refitted in the N = 127 final fMRI sample must reproduce
     results/tables/03_persistence_age/mlm.csv
   * the b/c' model IS analysis 02's model (02 already covaries C5PAGE), so the
     fitted b for PA_score, NA_score and NA_score_log must reproduce
@@ -218,8 +218,8 @@ OUTCOMES = {
 SPEC_PRIMARY = "primary_c5page"
 SPEC_SENSITIVITY = "sensitivity_c2page"
 
-EXPECTED_N_PRIMARY = 81     # diary + fMRI conservative
-EXPECTED_N_APATH_PUB = 127  # conservative fMRI, diary not required
+EXPECTED_N_PRIMARY = 81     # diary + fMRI final
+EXPECTED_N_APATH_PUB = 127  # final fMRI, diary not required
 
 N_MC = 200_000
 N_BOOT = 2000
@@ -895,7 +895,7 @@ def main():
     _f127, cons127 = get_samples(df, require_diary=False)
     if len(cons127) != EXPECTED_N_APATH_PUB:
         _fail(
-            f"the conservative fMRI sample has N = {len(cons127)}, expected "
+            f"the final fMRI sample has N = {len(cons127)}, expected "
             f"{EXPECTED_N_APATH_PUB}."
         )
     a_pub, se_a_pub, opt_pub = validate_apath_against_published(
@@ -910,7 +910,7 @@ def main():
     _full, cons = get_samples(df)
     if len(cons) != EXPECTED_N_PRIMARY:
         _fail(
-            f"the diary + fMRI conservative sample has N = {len(cons)}, "
+            f"the diary + fMRI final sample has N = {len(cons)}, "
             f"expected {EXPECTED_N_PRIMARY}."
         )
     # get_covariates() collects race dummies by prefix. The model definitions
@@ -924,7 +924,7 @@ def main():
             f"definitions specify exactly {sorted(RACE_DUMMIES)}."
         )
 
-    print(f"  Mediation sample frame N = {len(cons)} (diary + fMRI, conservative)")
+    print(f"  Mediation sample frame N = {len(cons)} (diary + fMRI, final)")
     if "time_P2_P5" in cons.columns:
         gap = cons["time_P2_P5"].dropna()
         if len(gap):
@@ -967,7 +967,7 @@ def _write_methods_note(n_frame):
         "Prespecified confirmatory extension (statistical indirect effects)",
         f"Generated: {datetime.datetime.now():%Y-%m-%d %H:%M}",
         "",
-        f"Mediation sample frame: diary + fMRI conservative, N = {n_frame}",
+        f"Mediation sample frame: diary + fMRI final, N = {n_frame}",
         "",
         "COMMON COMPLETE-CASE SAMPLE",
         "  Each specification is fitted on ONE participant-level complete-case",
@@ -1058,7 +1058,7 @@ def _write_methods_note(n_frame):
         "",
         "OTHER CONSTRAINTS",
         "  The a path is estimated here in the diary + fMRI sample; analysis 03",
-        "  reports it in the larger conservative fMRI sample (N = 127). Both",
+        "  reports it in the larger final fMRI sample (N = 127). Both",
         "  appear in paths.csv / the console log.",
         "  Complete-case N is reported per model and per specification.",
     ]

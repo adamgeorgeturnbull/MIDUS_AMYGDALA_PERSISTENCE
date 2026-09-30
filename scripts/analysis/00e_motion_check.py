@@ -7,11 +7,11 @@ Motion sensitivity analyses for the MIDUS Amygdala Persistence project.
 Part 1 — Motion as predictor:
   Test whether overall mean FD and condition-window FD (negative trials) predict
   the primary fMRI outcomes (left amygdala persistence and amygdala–vmPFC FC)
-  using correlation, OLS, and MLM in the conservative fMRI sample.
+  using correlation, OLS, and MLM in the final fMRI sample.
   Two-tailed tests (no directional prior for motion–signal relationships).
 
 Part 2 — Motion-controlled replication:
-  Candidate effects are selected from the existing conservative primary MLM
+  Candidate effects are selected from the existing final primary MLM
   results for scripts 02 (persistence-affect), 03 (age-persistence), and 04
   (FC-affect): every pair significant at p < .05 is carried forward. Each
   selected pair is then re-tested with OLS and MLM, with each motion measure
@@ -152,7 +152,7 @@ def get_significant_pairs():
     """
     Select the candidate effects to re-test under motion control.
 
-    Reads the existing conservative primary MLM results for scripts 02, 03, and
+    Reads the existing final primary MLM results for scripts 02, 03, and
     04 and returns every (predictor, outcome, expected_positive) with p <
     P_THRESH. The motion-controlled tests themselves are OLS and MLM
     (part2_motion_controlled).
@@ -199,7 +199,7 @@ def part2_motion_controlled(df, sig_pairs):
         print("  No significant primary effects found — nothing to rerun.")
         return
 
-    print(f"\n  Pairs significant at p < {P_THRESH} in the primary conservative")
+    print(f"\n  Pairs significant at p < {P_THRESH} in the primary final")
     print(f"  MLMs, to be re-tested with motion as a covariate:")
     for pred, out, exp_pos in sig_pairs:
         dirn = "positive" if exp_pos else "negative"

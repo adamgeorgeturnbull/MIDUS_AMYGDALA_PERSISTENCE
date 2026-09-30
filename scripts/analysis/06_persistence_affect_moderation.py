@@ -259,18 +259,18 @@ def main():
     df = load_master(fc=False)
     prepare_persistence_vars(df)
     full, cons = get_samples(df)
-    print(f"  Full N = {len(full)} | Conservative N = {len(cons)}")
+    print(f"  Full N = {len(full)} | Final N = {len(cons)}")
 
     for mod_var, mod_name in MODERATORS:
         print(f"\n{'─' * 70}")
         print(f"  Moderator: {mod_name} ({mod_var})")
 
-        # -- Conservative (primary) --
+        # -- Final (primary) --
         base_covs = get_covariates(cons)
         ols_df, mlm_df = run_moderation_set(cons, PREDICTOR, OUTCOMES, mod_var, base_covs)
         save_moderation(ols_df, mlm_df,
                         OUT_DIR / mod_name,
-                        f"06 Persistence × {mod_name} → Daily Affect  [conservative, two-tailed]")
+                        f"06 Persistence × {mod_name} → Daily Affect  [final, two-tailed]")
 
         # -- Full sample (archive) --
         base_covs_full = get_covariates(full)

@@ -48,7 +48,7 @@ def main():
     df = load_master()
     prepare_persistence_vars(df)
     _, cons = get_samples(df)
-    print(f"  Conservative N (diary+fMRI) = {len(cons)}")
+    print(f"  Final N (diary+fMRI) = {len(cons)}")
     base_covs = get_covariates(cons)
 
     # -------------------------------------------------------------------------
@@ -59,30 +59,30 @@ def main():
         cons, ["neg_persist_crossrun_mean_z_R"], OUTCOMES_DIARY, base_covs,
     )
     save_results(corr, ols, mlm, BASE_DIR / "sensitivity_right_hemisphere",
-                 label="02 Persistence (R) → Affect  [conservative]",
+                 label="02 Persistence (R) → Affect  [final]",
                  predictors=["neg_persist_crossrun_mean_z_R"],
                  outcomes=OUTCOMES_DIARY, covariates=base_covs, n=len(cons))
 
     # -------------------------------------------------------------------------
     # 2. PANAS (convergent validity — run regardless of primary significance)
     #    Includes log-transformed PANAS NA; all one-tailed (same construct)
-    #    Uses full conservative fMRI sample (no diary requirement)
+    #    Uses full final fMRI sample (no diary requirement)
     # -------------------------------------------------------------------------
     panas_outcomes = ["C5SPGP", "C5SPGN", "C5SPGN_log"]
     print("\n--- Sensitivity: PANAS ---")
-    # Build PANAS sample and covariates together: conservative fMRI, no diary needed
+    # Build PANAS sample and covariates together: final fMRI, no diary needed
     has_persist = df.get("has_neg_persistence", pd.Series(0, index=df.index)) == 1
     has_qc = df.get("qc_conservative", pd.Series(0, index=df.index)) == 1
     panas_cons = df[has_persist & has_qc].copy()
     prepare_persistence_vars(panas_cons)
     panas_covs = get_covariates(panas_cons)  # no diary covariates
-    print(f"  PANAS N (conservative fMRI) = {len(panas_cons)}")
+    print(f"  PANAS N (final fMRI) = {len(panas_cons)}")
     corr, ols, mlm = run_analysis_set(
         panas_cons, ["neg_persist_crossrun_mean_z_L"], panas_outcomes, panas_covs,
         one_tailed=True, expected_directions=PANAS_EXPECTED,
     )
     save_results(corr, ols, mlm, BASE_DIR / "sensitivity_panas",
-                 label="02 Persistence (L) → PANAS  [conservative fMRI, one-tailed]",
+                 label="02 Persistence (L) → PANAS  [final fMRI, one-tailed]",
                  predictors=["neg_persist_crossrun_mean_z_L"],
                  outcomes=panas_outcomes, covariates=panas_covs, n=len(panas_cons),
                  one_tailed=True, expected_directions=PANAS_EXPECTED)
@@ -103,7 +103,7 @@ def main():
             cons, vmpfc_persist_vars, OUTCOMES_DIARY, base_covs,
         )
         save_results(corr, ols, mlm, BASE_DIR / "sensitivity_vmpfc_persistence",
-                     label="02 vmPFC Persistence → Affect  [conservative, two-tailed]",
+                     label="02 vmPFC Persistence → Affect  [final, two-tailed]",
                      predictors=vmpfc_persist_vars, outcomes=OUTCOMES_DIARY,
                      covariates=base_covs, n=len(cons))
     else:
@@ -125,7 +125,7 @@ def main():
             cons, roi_act_vars, OUTCOMES_DIARY, base_covs,
         )
         save_results(corr, ols, mlm, BASE_DIR / "sensitivity_roi_activations",
-                     label="02 ROI Activations → Affect  [conservative, two-tailed]",
+                     label="02 ROI Activations → Affect  [final, two-tailed]",
                      predictors=roi_act_vars, outcomes=OUTCOMES_DIARY,
                      covariates=base_covs, n=len(cons))
     else:
@@ -145,7 +145,7 @@ def main():
             cons, other_persist, OUTCOMES_DIARY, base_covs,
         )
         save_results(corr, ols, mlm, BASE_DIR / "sensitivity_other_persistence",
-                     label="02 Other Persistence → Affect  [conservative]",
+                     label="02 Other Persistence → Affect  [final]",
                      predictors=other_persist, outcomes=OUTCOMES_DIARY,
                      covariates=base_covs, n=len(cons))
     else:

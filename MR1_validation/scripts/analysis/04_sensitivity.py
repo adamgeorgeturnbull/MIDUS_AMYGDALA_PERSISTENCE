@@ -25,7 +25,7 @@ Adjusted covariates:
   Diary models additionally include time_P2_P5 and n_days_complete.
   PANAS models omit diary covariates and do not require diary participation.
 
-Conservative criterion (qc_conservative == 1):
+QC criteria (qc_conservative == 1):
   - visual-QC decisions (all runs pass)
   - mean FD < 0.5 mm
   - task completeness (n_pairs == 6)
@@ -123,14 +123,14 @@ def main():
 
     # Shared diary + fMRI + FC sample
     _, cons = get_samples(df, check_fc_col=PRIMARY_FC, require_diary=True)
-    print(f"  Conservative N (diary+fMRI+FC) = {len(cons)}")
+    print(f"  Final N (diary+fMRI+FC) = {len(cons)}")
     base_covs = get_covariates(cons)
 
     # ── 1. Right amygdala neg−neu (two-tailed; hemisphere specificity) ─────────
     print("\n--- Sensitivity: Right Amygdala (neg−neu) ---")
     corr, ols = run_analysis_set(cons, RIGHT_PREDICTORS, DIARY_OUTCOMES, base_covs)
     save_results(corr, ols, BASE_DIR / "sensitivity_right_amygdala",
-                 label="04 FC-R (neg−neu) → Affect  [conservative, two-tailed]",
+                 label="04 FC-R (neg−neu) → Affect  [final, two-tailed]",
                  predictors=RIGHT_PREDICTORS, outcomes=DIARY_OUTCOMES,
                  covariates=base_covs, n=len(cons))
 
@@ -138,7 +138,7 @@ def main():
     print("\n--- Sensitivity: pos−neu contrast ---")
     corr, ols = run_analysis_set(cons, POS_NEU_PREDICTORS, DIARY_OUTCOMES, base_covs)
     save_results(corr, ols, BASE_DIR / "sensitivity_pos_vs_neu",
-                 label="04 FC (pos−neu) → Affect  [conservative, two-tailed]",
+                 label="04 FC (pos−neu) → Affect  [final, two-tailed]",
                  predictors=POS_NEU_PREDICTORS, outcomes=DIARY_OUTCOMES,
                  covariates=base_covs, n=len(cons))
 
@@ -146,13 +146,13 @@ def main():
     print("\n--- Sensitivity: PANAS ---")
     _, panas_cons = get_samples(df, check_fc_col=PRIMARY_FC, require_diary=False)
     panas_covs = get_covariates(panas_cons)
-    print(f"  PANAS N (conservative fMRI) = {len(panas_cons)}")
+    print(f"  PANAS N (final fMRI) = {len(panas_cons)}")
     corr, ols = run_analysis_set(
         panas_cons, PANAS_PREDICTORS, PANAS_OUTCOMES, panas_covs,
         one_tailed=True, expected_directions=EXPECTED_DIRECTIONS,
     )
     save_results(corr, ols, BASE_DIR / "sensitivity_panas",
-                 label="04 FC (neg−neu) → PANAS  [conservative fMRI, one-tailed]",
+                 label="04 FC (neg−neu) → PANAS  [final fMRI, one-tailed]",
                  predictors=PANAS_PREDICTORS, outcomes=PANAS_OUTCOMES,
                  covariates=panas_covs, n=len(panas_cons),
                  one_tailed=True, expected_directions=EXPECTED_DIRECTIONS)
@@ -164,7 +164,7 @@ def main():
         one_tailed=True, expected_directions=EXPECTED_DIRECTIONS,
     )
     save_results(corr, ols, BASE_DIR / "sensitivity_neg_condition",
-                 label="04 FC (neg only) → Affect  [conservative, one-tailed]",
+                 label="04 FC (neg only) → Affect  [final, one-tailed]",
                  predictors=NEG_ONLY_PREDICTORS, outcomes=DIARY_OUTCOMES,
                  covariates=base_covs, n=len(cons),
                  one_tailed=True, expected_directions=EXPECTED_DIRECTIONS)

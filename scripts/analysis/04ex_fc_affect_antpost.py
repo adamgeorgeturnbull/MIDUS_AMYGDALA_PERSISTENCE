@@ -71,7 +71,7 @@ def main():
         )
 
     full, cons = get_samples(df, check_fc_col="l_amyg-ant_vmPFC_neg_vs_neu")
-    print(f"  Conservative N (diary+fMRI) = {len(cons)}")
+    print(f"  Final N (diary+fMRI) = {len(cons)}")
     base_covs = get_covariates(cons)
 
     diary_preds = [p for p in [
@@ -80,7 +80,7 @@ def main():
     ] if p in cons.columns]
 
     # -------------------------------------------------------------------------
-    # Diary affect (conservative sample, one-tailed)
+    # Diary affect (final sample, one-tailed)
     # -------------------------------------------------------------------------
     print("\n--- Diary affect ---")
     corr, ols, mlm = run_analysis_set(
@@ -88,13 +88,13 @@ def main():
         one_tailed=True, expected_directions=EXPECTED_DIRECTIONS,
     )
     save_results(corr, ols, mlm, OUT_DIR / "diary",
-                 label="04ex FC ant−post (neg−neu) → Diary Affect  [conservative, one-tailed]",
+                 label="04ex FC ant−post (neg−neu) → Diary Affect  [final, one-tailed]",
                  predictors=diary_preds, outcomes=OUTCOMES_DIARY,
                  covariates=base_covs, n=len(cons),
                  one_tailed=True, expected_directions=EXPECTED_DIRECTIONS)
 
     # -------------------------------------------------------------------------
-    # PANAS (full conservative fMRI sample, one-tailed)
+    # PANAS (full final fMRI sample, one-tailed)
     # -------------------------------------------------------------------------
     print("\n--- PANAS ---")
     has_persist = df.get("has_neg_persistence", pd.Series(0, index=df.index)) == 1
@@ -109,7 +109,7 @@ def main():
             panas_cons["r_amyg-ant_vmPFC_neg_vs_neu"] - panas_cons["r_amyg-post_vmPFC_neg_vs_neu"]
         )
     panas_covs = get_covariates(panas_cons)
-    print(f"  PANAS N (conservative fMRI) = {len(panas_cons)}")
+    print(f"  PANAS N (final fMRI) = {len(panas_cons)}")
 
     panas_preds = [p for p in [
         "l_amyg-ant_minus_post_vmPFC_neg_vs_neu",
@@ -121,7 +121,7 @@ def main():
         one_tailed=True, expected_directions=EXPECTED_DIRECTIONS,
     )
     save_results(corr, ols, mlm, OUT_DIR / "panas",
-                 label="04ex FC ant−post (neg−neu) → PANAS  [conservative fMRI, one-tailed]",
+                 label="04ex FC ant−post (neg−neu) → PANAS  [final fMRI, one-tailed]",
                  predictors=panas_preds, outcomes=OUTCOMES_PANAS,
                  covariates=panas_covs, n=len(panas_cons),
                  one_tailed=True, expected_directions=EXPECTED_DIRECTIONS)

@@ -53,8 +53,7 @@ Deliberately NOT drawn, to keep the diagram legible:
 
 All of those rows are still read and validated as an integrity check on the
 CSV (see REQUIRED_ROWS / EXPECTED_N / EQUAL_PAIRS); they are simply not
-displayed. "Final" is used as the imaging-QC descriptor rather than
-"conservative", matching the wording used elsewhere in the project.
+displayed. "Final" identifies the sample meeting all imaging-QC criteria.
 
 Sex is reported with the source-coded descriptive label "female"; the numerator
 is n_female, the denominator N_sex_nonmissing, and the percentage
