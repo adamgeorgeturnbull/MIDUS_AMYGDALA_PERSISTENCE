@@ -25,7 +25,8 @@ analytic inputs do not contain a usable family or other grouping identifier).
 
 Each output directory contains: correlations.csv, regressions.csv, _methods.txt
 
-Do not condition execution on whether the primary analysis is significant.
+Interpret sensitivities in relation to significant primary findings; otherwise
+report for transparency.
 
 Run from MR1_validation/ directory.
 """

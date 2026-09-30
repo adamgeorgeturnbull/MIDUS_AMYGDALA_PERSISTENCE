@@ -4,8 +4,6 @@
 
 Sensitivity analyses for Analysis 02: Persistence → Affect.
 
-Run ONLY if primary findings in 02_persistence_affect.py show meaningful signal.
-
 Diary outcomes include PA, raw NA, and log NA; log NA uses the same
 covariates and test direction as raw NA.
 
@@ -17,6 +15,9 @@ Sections:
   4. ROI activations (two-tailed)          → sensitivity_roi_activations/
   5. Other persistence operationalisations → sensitivity_other_persistence/
      (positive cross-run)
+
+Interpret sensitivities in relation to significant primary findings; otherwise
+report for transparency.
 
 Run from project root directory.
 """

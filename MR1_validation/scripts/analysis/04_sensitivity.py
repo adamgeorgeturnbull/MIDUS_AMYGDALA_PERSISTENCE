@@ -2,42 +2,39 @@
 """
 04_sensitivity.py (MR1)
 
-Sensitivity analyses for Analysis 04: FC (neg − neu contrast) → Affect.
+Sensitivity analyses for Analysis 04: FC → Affect.
 
-Diary outcomes include PA, raw NA, and log NA; log NA uses the same
-covariates and test direction as raw NA.
-
-Sections:
-  1. Right-amygdala neg−neu FC → diary affect  (two-tailed, hemisphere specificity)
+Sections (anterior and posterior vmPFC connections in each):
+  1. Right-amygdala neg−neu FC → diary affect (two-tailed)
      → sensitivity_right_amygdala/
-  2. Left-amygdala pos−neu FC  → diary affect  (two-tailed, condition specificity)
+  2. Left-amygdala pos−neu FC → diary affect (two-tailed)
      → sensitivity_pos_vs_neu/
-  3. Left-amygdala neg−neu FC  → PANAS         (one-tailed, convergent validity)
+  3. Left-amygdala neg−neu FC → PANAS (one-tailed)
      → sensitivity_panas/
-  4. Left-amygdala neg-only FC → diary affect  (one-tailed, operationalisation robustness)
+  4. Left-amygdala negative-only FC → diary affect (one-tailed)
      → sensitivity_neg_condition/
 
-All sections use the conservative QC criterion (qc_conservative == 1):
-  - historical visual-QC decisions (all runs pass)
+Diary and PANAS outcomes each include PA, raw NA, and log NA.
+Directional tests expect positive PA and negative NA associations; raw and
+log NA use the same direction and covariates.
+
+Methods: Pearson correlation and participant-level OLS.
+
+Adjusted covariates:
+  RA5PAGE, sex, and race_2 – race_6 (White is the reference).
+  Diary models additionally include time_P2_P5 and n_days_complete.
+  PANAS models omit diary covariates and do not require diary participation.
+
+Conservative criterion (qc_conservative == 1):
+  - visual-QC decisions (all runs pass)
   - mean FD < 0.5 mm
   - task completeness (n_pairs == 6)
   - all three task runs present with exactly 231 volumes
 
-FC availability: l_amyg-ant_vmPFC_neg_vs_neu must be nonmissing (shared
-check_fc_col). Diary sections additionally require diary participation.
-The PANAS section does not require diary participation.
-
-Methods: Pearson correlation and participant-level OLS (available MR1 P5
-analytic inputs do not contain a usable family or other grouping identifier).
-
-All required predictors and outcomes are validated strictly by run_analysis_set;
-the script aborts if any are absent. No section runs silently on a subset.
-
-Do not condition execution on whether the primary analysis is significant.
+Interpret sensitivities in relation to significant primary findings; otherwise
+report for transparency.
 
 Each output directory contains: correlations.csv, regressions.csv, _methods.txt
-
-Privacy: aggregate console output only — never prints participant IDs or rows.
 
 Run from MR1_validation/ directory.
 """

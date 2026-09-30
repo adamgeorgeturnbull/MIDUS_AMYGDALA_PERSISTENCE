@@ -1,15 +1,37 @@
 #!/usr/bin/env python3
 """
-03_sensitivity.py
+03_sensitivity.py (M3)
 
 Sensitivity analyses for Analysis 03: Age → Persistence.
 
-Run ONLY if primary findings in 03_persistence_age.py show meaningful signal.
-
 Sections:
-  1. Right hemisphere persistence     → sensitivity_right_hemisphere/
-  2. Positive cross-run persistence   → sensitivity_positive_persistence/
-  3. vmPFC persistence (if available) → sensitivity_vmPFC/
+  1. Age → right-amygdala negative persistence → sensitivity_right_hemisphere/
+  2. Age → bilateral positive persistence     → sensitivity_positive_persistence/
+  3. Age → anterior/posterior vmPFC persistence → sensitivity_vmPFC/
+
+Methods: Pearson correlation, OLS, and family-random-intercept MLM.
+All sections use two-tailed tests.
+
+Adjusted covariates:
+  sex and race dummy variables (race_2 – race_6; White is the reference).
+  C5PAGE is the predictor and is excluded from the covariate set by the helpers.
+  OLS includes available twin-pair indicators; MLM uses family grouping instead.
+  No diary covariates apply.
+
+Conservative criterion (qc_conservative == 1):
+  - visual-QC decisions (all runs pass)
+  - mean FD < 0.5 mm
+  - task completeness (n_pairs == 6)
+
+Negative persistence must be available; diary participation is not required.
+Positive and vmPFC persistence sections use available columns and are skipped
+if their respective variables are absent. Model helpers omit incomplete cases.
+
+Each output directory contains: correlations.csv, regressions.csv, mlm.csv,
+_methods.txt.
+
+Interpret sensitivities in relation to significant primary findings; otherwise
+report for transparency.
 
 Run from project root directory.
 """

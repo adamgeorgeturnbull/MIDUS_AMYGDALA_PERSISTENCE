@@ -4,14 +4,15 @@
 
 Sensitivity analyses for Analysis 01: Age → Affect.
 
-Run ONLY if primary findings in 01_affect_age.py show meaningful signal.
-
 Sections:
   1. PANAS convergent validity (C5PAGE, neuro subsample)
        → sensitivity_panas/
 
 Note: log-transformed NA is now a primary outcome in 01_affect_age.py,
 so a separate log-transform sensitivity section is not needed here.
+
+Interpret sensitivities in relation to significant primary findings; otherwise
+report for transparency.
 
 Run from project root directory.
 """

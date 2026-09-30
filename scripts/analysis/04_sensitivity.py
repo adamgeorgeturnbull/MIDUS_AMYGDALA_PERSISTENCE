@@ -1,19 +1,40 @@
 #!/usr/bin/env python3
 """
-04_sensitivity.py
+04_sensitivity.py (M3)
 
-Sensitivity analyses for Analysis 04: FC (neg − neu contrast) → Affect.
+Sensitivity analyses for Analysis 04: FC → Affect.
 
-Run ONLY if primary findings in 04_fc_affect.py show meaningful signal.
+Sections (anterior and posterior vmPFC connections in each):
+  1. Right-amygdala neg−neu FC → diary affect (two-tailed)
+     → sensitivity_right_amygdala/
+  2. Left-amygdala pos−neu FC → diary affect (two-tailed)
+     → sensitivity_pos_vs_neu/
+  3. Left-amygdala neg−neu FC → PANAS (one-tailed)
+     → sensitivity_panas/
+  4. Left-amygdala negative-only FC → diary affect (one-tailed)
+     → sensitivity_neg_condition/
 
-Diary outcomes include PA, raw NA, and log NA; log NA uses the same
-covariates and test direction as raw NA.
+Diary and PANAS outcomes each include PA, raw NA, and log NA.
+Directional tests expect positive PA and negative NA associations; raw and
+log NA use the same direction and covariates.
 
-Sections:
-  1. Right amygdala FC (neg−neu)      → sensitivity_right_amygdala/
-  2. pos−neu contrast (specificity)   → sensitivity_pos_vs_neu/
-  3. PANAS (convergent validity)      → sensitivity_panas/
-  4. Neg condition only (robustness)  → sensitivity_neg_condition/
+Methods: Pearson correlation, OLS, and family-random-intercept MLM.
+
+Adjusted covariates:
+  C5PAGE, sex, and race_2 – race_6 (White is the reference).
+  Diary models additionally include time_P2_P5 and n_days_complete.
+  PANAS models omit diary covariates and do not require diary participation.
+  OLS includes available twin-pair indicators; MLM uses family grouping instead.
+
+Conservative criterion (qc_conservative == 1):
+  - visual-QC decisions (all runs pass)
+  - mean FD < 0.5 mm
+  - task completeness (n_pairs == 6)
+
+Interpret sensitivities in relation to significant primary findings; otherwise
+report for transparency.
+
+Each output directory contains: correlations.csv, regressions.csv, mlm.csv, _methods.txt
 
 Run from project root directory.
 """

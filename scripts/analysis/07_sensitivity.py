@@ -1,15 +1,38 @@
 #!/usr/bin/env python3
 """
-07_sensitivity.py
+07_sensitivity.py (M3)
 
 Sensitivity analyses for Analysis 07: FC × ERQ → Affect.
 
 Sections:
-  1. PANAS (convergent validity)      → sensitivity_panas/reappraisal|suppression/
-     Uses full conservative fMRI sample (no diary requirement; N~128).
-  2. Right amygdala FC (hemisphere specificity)
-                                      → sensitivity_right_amygdala/reappraisal|suppression/
-     Same diary+fMRI conservative sample as primary (N~80).
+  1. Left-amygdala neg−neu FC × ERQ → PANAS
+     → sensitivity_panas/reappraisal|suppression/
+  2. Right-amygdala neg−neu FC × ERQ → diary affect
+     → sensitivity_right_amygdala/reappraisal|suppression/
+
+Reappraisal (C5SER) and suppression (C5SES) are tested in separate models.
+Anterior and posterior vmPFC connections are tested separately.
+Diary and PANAS outcomes each include PA, raw NA, and log NA.
+
+Methods: OLS and family-random-intercept MLM. Predictor and moderator are
+mean centered within each model sample before forming their interaction.
+Models include both main effects and the interaction; tests are two-tailed.
+
+Adjusted covariates:
+  C5PAGE, sex, and race_2 – race_6 (White is the reference).
+  Diary models additionally include time_P2_P5 and n_days_complete.
+  PANAS models omit diary covariates and do not require diary participation.
+  OLS includes eligible twin-pair indicators; MLM uses family grouping instead.
+
+Conservative criterion (qc_conservative == 1):
+  - visual-QC decisions (all runs pass)
+  - mean FD < 0.5 mm
+  - task completeness (n_pairs == 6)
+
+Interpret sensitivities in relation to significant primary findings; otherwise
+report for transparency.
+
+Each moderator subdirectory contains moderation_ols.csv and moderation_mlm.csv.
 
 Run from project root directory.
 """

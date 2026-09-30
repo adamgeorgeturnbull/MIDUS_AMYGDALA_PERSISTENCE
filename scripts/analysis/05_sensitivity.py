@@ -1,19 +1,46 @@
 #!/usr/bin/env python3
 """
-05_sensitivity.py
+05_sensitivity.py (M3)
 
-Sensitivity analyses for Analysis 05: FC (neg−neu) → Persistence.
+Sensitivity analyses for Analysis 05: FC → Persistence.
 
-Run ONLY if primary findings in 05_fc_persistence.py show meaningful signal.
+Sections (anterior and posterior vmPFC connections in each):
+  1. Right-amygdala neg−neu FC → left negative persistence
+     → sensitivity_right_amygdala/
+  2. Left-amygdala pos−neu FC → left negative persistence
+     → sensitivity_pos_vs_neu/
+  3. Left-amygdala neg−neu FC → right negative persistence
+     → sensitivity_right_hemisphere/
+  4. Left-amygdala neg−neu FC → left positive persistence
+     → sensitivity_other_persistence/
+  5. Left-amygdala negative-only FC → left negative persistence
+     → sensitivity_neg_condition/
 
-Sections:
-  1. Right amygdala FC (neg−neu)      → sensitivity_right_amygdala/
-  2. pos−neu contrast (specificity)   → sensitivity_pos_vs_neu/
-  3. Right hemisphere persistence     → sensitivity_right_hemisphere/
-  4. Other persistence operationalisations → sensitivity_other_persistence/
-  5. Neg condition only (robustness)  → sensitivity_neg_condition/
+Positive persistence uses the positive-image-to-following-face cross-run
+measure (pos_persist_crossrun_mean_z_L).
+Sections 1–4 use two-tailed tests. Section 5 uses one-tailed tests expecting
+higher connectivity to predict lower negative persistence.
 
-Run from project root directory.
+Methods: Pearson correlation, OLS, and family-random-intercept MLM.
+
+Adjusted covariates:
+  C5PAGE, sex, and race_2 – race_6 (White is the reference).
+  OLS includes available twin-pair indicators; MLM uses family grouping instead.
+  No diary covariates apply, and diary participation is not required.
+
+Conservative criterion (qc_conservative == 1):
+  - visual-QC decisions (all runs pass)
+  - mean FD < 0.5 mm
+  - task completeness (n_pairs == 6)
+
+Interpret sensitivities in relation to significant primary findings; otherwise
+report for transparency.
+
+Each output directory contains: correlations.csv, regressions.csv, mlm.csv,
+_methods.txt. The negative-condition section also saves fit_notes.md.
+
+Run from project root directory. Use --negative-condition-only to run section 5
+alone.
 """
 
 import sys

@@ -10,17 +10,6 @@ Sections:
   2. Age → bilateral positive persistence        → sensitivity_positive_persistence/
      Evaluates valence specificity; two-tailed inference.
 
-These are predefined sensitivity/extension analyses.  They are not substitutes
-for the direct left-negative-persistence age target (Analysis 03 primary), nor
-are they selected based on provisional MR1 significance.
-
-Inference:
-  Both sections use two-tailed inference, matching the corrected M3 sensitivity
-  logic.  Nominal p-values are reported without multiplicity adjustment.
-  Significance in one hemisphere and not the other is not evidence that the
-  hemispheric coefficients differ; a direct coefficient comparison would be
-  required to support that claim.
-
 Corrected vmPFC persistence is not produced by the MR1 pipeline and is
 therefore not analyzed here.
 
@@ -39,11 +28,14 @@ Conservative criterion (qc_conservative == 1):
 No diary participation is required.
 
 Required persistence variables are validated by run_analysis_set; the script
-aborts if any are absent.  No section is gated on the Analysis 03 primary result.
+aborts if any are absent.
 
 Each output directory contains: correlations.csv, regressions.csv, _methods.txt
 
 Privacy: aggregate console output only — never prints participant IDs or rows.
+
+Interpret sensitivities in relation to significant primary findings; otherwise
+report for transparency.
 
 Run from MR1_validation/ directory.
 """
