@@ -1,8 +1,8 @@
 Analysis 03b - Age -> Persistence -> Affect
 Prespecified confirmatory extension (statistical indirect effects)
-Generated: 2026-09-22 15:15
+Generated: 2026-10-01 14:11
 
-Mediation sample frame: diary + fMRI conservative, N = 81
+Mediation sample frame: diary + fMRI final, N = 81
 
 COMMON COMPLETE-CASE SAMPLE
   Each specification is fitted on ONE participant-level complete-case
@@ -42,8 +42,8 @@ SPECIFICATIONS
       b, c'    Y ~ neg_persist_crossrun_mean_z_L + C2PAGE + sex + race + time_P2_P5 + n_days_complete
       c total  Y ~ C2PAGE + sex + race + time_P2_P5 + n_days_complete
 
-      time_P2_P5 enters the C2PAGE a path because persistence is
-      measured later, at P5.
+      time_P2_P5 enters the C2PAGE a path to account for the
+      separation between diary-age and persistence assessments.
 
 Mixed-effects, random intercept for family, REML. Optimizers tried
 lbfgs -> powell -> nm -> bfgs; a fit is ACCEPTED ONLY IF the optimizer
@@ -63,8 +63,13 @@ INDIRECT EFFECT a*b
   SECONDARY: Monte Carlo distribution-of-the-product, 200,000 draws.
              a and b are drawn from INDEPENDENT normals, so this does
              NOT incorporate cov(a, b). An approximation only.
-  Both intervals are two-sided; the product tests are not converted to
-  one-tailed inference.
+  Reported estimate intervals remain two-sided 95% intervals.
+  Path tests are one-tailed: a negative; b negative for PA and positive
+  for NA; total/direct age effects positive for PA and negative for NA.
+  Primary indirect inference is one-tailed at alpha=.05: the lower
+  95% percentile bound must exceed zero for PA; the upper 95% bound
+  must be below zero for NA. Product hypotheses: PA > 0, NA < 0.
+  Secondary MC tail probabilities use those same directions.
 
   c, c' and a*b come from separate mixed models and are not
   guaranteed to satisfy c = c' + a*b exactly; the three estimates are
@@ -80,14 +85,14 @@ MULTIPLICITY AND PRECEDENCE
   the primary specification.
 
 TEMPORAL ORDER AND CAUSAL STATUS
-  Daily affect (P2) precedes the neuroimaging assessment (P5) that
-  yields the mediator, as acknowledged in the preregistration. The
-  measurement order is X -> Y -> M. All estimates are statistical
+  Daily affect (P2) and neuroimaging persistence (P5) were assessed
+  at separate visits; assessment order varied across participants.
+  The interval covariate is absolute. All estimates are statistical
   indirect associations and cannot establish temporal precedence or
   causal mediation.
 
 OTHER CONSTRAINTS
   The a path is estimated here in the diary + fMRI sample; analysis 03
-  reports it in the larger conservative fMRI sample (N = 127). Both
+  reports it in the larger final fMRI sample (N = 127). Both
   appear in paths.csv / the console log.
   Complete-case N is reported per model and per specification.

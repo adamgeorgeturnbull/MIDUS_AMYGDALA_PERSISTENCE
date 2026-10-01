@@ -133,9 +133,13 @@ b from INDEPENDENT normal distributions and therefore does NOT incorporate any
 covariance between them. It is an approximation reported alongside the
 bootstrap, never in place of it.
 
-All indirect-effect intervals are two-sided. The directional predictions in 02
-and 03 apply to a and b individually, not to the sampling distribution of
-their product, so the product tests are not converted to one-tailed.
+All reported estimate intervals remain two-sided 95% intervals. Inference is
+one-tailed in the hypothesized direction: a < 0; b < 0 for PA and b > 0 for
+NA; c, c' and a*b > 0 for PA and < 0 for NA. The primary indirect-effect
+test uses the one-sided 95% percentile bootstrap bound (5th percentile for
+positive effects, 95th percentile for negative effects). This is distinct
+from the two-sided 95% interval retained for estimation. The secondary
+Monte Carlo tail probability uses the same predicted direction.
 
 Multiplicity and precedence
 ---------------------------
@@ -369,11 +373,13 @@ def coef(result, name):
     return beta, se
 
 
-def wald(beta, se):
-    if not np.isfinite(se) or se <= 0:
+def wald(beta, se, expected_sign):
+    if expected_sign not in (-1, 1):
+        raise ValueError("expected_sign must be -1 or +1")
+    if not np.isfinite(beta) or not np.isfinite(se) or se <= 0:
         return np.nan, np.nan
     z = beta / se
-    return z, float(2 * (1 - stats.norm.cdf(abs(z))))
+    return z, float(stats.norm.sf(expected_sign * z))
 
 
 # ============================================================================
@@ -577,7 +583,7 @@ def assert_no_age_collision(result, age_var, label):
 # ============================================================================
 # Indirect-effect inference
 # ============================================================================
-def mc_interval(a, se_a, b, se_b, rng):
+def mc_interval(a, se_a, b, se_b, rng, expected_sign):
     """
     Secondary Monte Carlo interval for a*b.
 
@@ -588,8 +594,22 @@ def mc_interval(a, se_a, b, se_b, rng):
     lo_q, hi_q = (100 - CI_LEVEL) / 2, 100 - (100 - CI_LEVEL) / 2
     draws = rng.normal(a, se_a, N_MC) * rng.normal(b, se_b, N_MC)
     lo, hi = np.percentile(draws, [lo_q, hi_q])
-    tail = min((draws <= 0).mean(), (draws >= 0).mean())
-    return float(lo), float(hi), float(min(1.0, 2 * tail))
+    if expected_sign not in (-1, 1):
+        raise ValueError("expected_sign must be -1 or +1")
+    tail = (expected_sign * draws <= 0).mean()
+    return float(lo), float(hi), float(tail)
+
+
+def directional_bootstrap_bound(products, expected_sign):
+    """One-sided percentile bound and alpha=.05 decision; no null-tail p claim."""
+    if expected_sign not in (-1, 1):
+        raise ValueError("expected_sign must be -1 or +1")
+    values = np.asarray(products, dtype=float)
+    if values.size == 0 or not np.isfinite(values).all():
+        raise ValueError("Finite, nonempty bootstrap products required")
+    quantile = 100 - CI_LEVEL if expected_sign == 1 else CI_LEVEL
+    bound = float(np.percentile(values, quantile))
+    return bound, bool(expected_sign * bound > 0)
 
 
 def cluster_bootstrap_spec(sample, age_var, a_covs, b_covs, outcomes, rng):
@@ -700,10 +720,10 @@ def run_specification(spec_name, age_var, cons, base_covs, rng):
     assert_no_age_collision(res_a, age_var, f"{spec_name} a path")
     _require_common_n(res_a, "the a-path model")
     a, se_a = coef(res_a, x_safe)
-    z_a, p_a = wald(a, se_a)
+    z_a, p_a = wald(a, se_a, -1)
     print(
         f"    a: beta = {a:+.6f}, SE = {se_a:.6f}, z = {z_a:+.2f}, "
-        f"p(two) = {p_a:.4f}, N = {n_common}, optimizer = {opt_a}"
+        f"p(one) = {p_a:.4f}, N = {n_common}, optimizer = {opt_a}"
     )
 
     # ---- (b) every observed b/c' and total-effect model -------------------
@@ -724,7 +744,7 @@ def run_specification(spec_name, age_var, cons, base_covs, rng):
             b, se_b = validate_bpath_against_published(res_b, m_safe, outcome)
         else:
             b, se_b = coef(res_b, m_safe)
-        z_b, p_b = wald(b, se_b)
+        z_b, p_b = wald(b, se_b, -expected)
 
         if age_var not in res_b.fe_params.index:
             _fail(
@@ -732,7 +752,7 @@ def run_specification(spec_name, age_var, cons, base_covs, rng):
                 f"'{outcome}'; the direct effect cannot be read."
             )
         cprime, se_cp = coef(res_b, age_var)
-        z_cp, p_cp = wald(cprime, se_cp)
+        z_cp, p_cp = wald(cprime, se_cp, expected)
 
         fc = fit_mlm(common, age_var, outcome, c_covs)
         if fc is None:
@@ -744,7 +764,7 @@ def run_specification(spec_name, age_var, cons, base_covs, rng):
         assert_no_age_collision(res_c, age_var, f"{spec_name} total {outcome}")
         _require_common_n(res_c, f"the total-effect model for '{outcome}'")
         c_tot, se_c = coef(res_c, x_safe_c)
-        z_c, p_c = wald(c_tot, se_c)
+        z_c, p_c = wald(c_tot, se_c, expected)
 
         observed[outcome] = dict(
             role=role, expected=expected,
@@ -765,7 +785,7 @@ def run_specification(spec_name, age_var, cons, base_covs, rng):
         dict(
             specification=spec_name, age_predictor=age_var, outcome=M_VAR,
             outcome_role="mediator_model", path="a", predictor=age_var,
-            term=age_var, beta=a, se=se_a, z=z_a, p_two_tailed=p_a, n=n_common,
+            term=age_var, beta=a, se=se_a, z=z_a, p_one_tailed=p_a, expected_sign=-1, n=n_common,
             n_covariates=len(cov_a), optimizer=opt_a, converged=True,
             **coefficient_ci(res_a, x_safe),
         )
@@ -783,7 +803,7 @@ def run_specification(spec_name, age_var, cons, base_covs, rng):
                     specification=spec_name, age_predictor=age_var,
                     outcome=outcome, outcome_role=o["role"], path=nm,
                     predictor=M_VAR if nm == "b" else age_var, term=term,
-                    beta=bb, se=ss, z=zz, p_two_tailed=pp, n=n_common,
+                    beta=bb, se=ss, z=zz, p_one_tailed=pp, expected_sign=(-o["expected"] if nm == "b" else o["expected"]), n=n_common,
                     n_covariates=ncov, optimizer=opt, converged=True,
                     **o["path_cis"][nm],
                 )
@@ -817,9 +837,10 @@ def run_specification(spec_name, age_var, cons, base_covs, rng):
             )
         if n_ok:
             bs_lo, bs_hi = (float(v) for v in np.percentile(prods, [lo_q, hi_q]))
+            bs_bound, bs_significant = directional_bootstrap_bound(prods, o["expected"])
         else:
-            bs_lo = bs_hi = np.nan
-        mc_lo, mc_hi, mc_p = mc_interval(a, se_a, b, se_b, rng)
+            _fail("No converged bootstrap products; directional inference unavailable.")
+        mc_lo, mc_hi, mc_p = mc_interval(a, se_a, b, se_b, rng, o["expected"])
 
         med_rows.append(
             dict(
@@ -827,9 +848,15 @@ def run_specification(spec_name, age_var, cons, base_covs, rng):
                 outcome_role=o["role"], n=n_common, n_a_model=n_common,
                 a=a, se_a=se_a, b=b, se_b=se_b, indirect_ab=ind,
                 boot_ci_low=bs_lo, boot_ci_high=bs_hi,
+                boot_one_sided_bound=bs_bound,
+                boot_bound_type="lower" if o["expected"] == 1 else "upper",
+                boot_one_sided_confidence_level=CI_LEVEL,
+                boot_significant_one_tailed=bs_significant,
+                inference_sidedness="one-sided",
+                ci_sidedness="two-sided",
                 boot_n_attempted=n_att, boot_n_converged=n_ok,
                 boot_convergence_fraction=frac,
-                mc_ci_low=mc_lo, mc_ci_high=mc_hi, mc_p_two_tailed=mc_p,
+                mc_ci_low=mc_lo, mc_ci_high=mc_hi, mc_p_one_tailed=mc_p,
                 c_prime=o["cprime"], se_c_prime=o["se_cp"], p_c_prime=o["p_cp"],
                 c_total=o["c_tot"], se_c_total=o["se_c"], p_c_total=o["p_c"],
                 expected_indirect_sign=o["expected"],
@@ -839,6 +866,8 @@ def run_specification(spec_name, age_var, cons, base_covs, rng):
             )
         )
 
+        print(f"      one-sided bootstrap bound = {bs_bound:+.6f}; "
+              f"directional significance = {bs_significant}")
         tag = "" if o["role"] == "primary" else f"  [{o['role']}]"
         print(f"    {outcome}{tag}")
         print(
@@ -1033,8 +1062,13 @@ def _write_methods_note(n_frame):
         f"  SECONDARY: Monte Carlo distribution-of-the-product, {N_MC:,} draws.",
         "             a and b are drawn from INDEPENDENT normals, so this does",
         "             NOT incorporate cov(a, b). An approximation only.",
-        "  Both intervals are two-sided; the product tests are not converted to",
-        "  one-tailed inference.",
+        "  Reported estimate intervals remain two-sided 95% intervals.",
+        "  Path tests are one-tailed: a negative; b negative for PA and positive",
+        "  for NA; total/direct age effects positive for PA and negative for NA.",
+        "  Primary indirect inference is one-tailed at alpha=.05: the lower",
+        "  95% percentile bound must exceed zero for PA; the upper 95% bound",
+        "  must be below zero for NA. Product hypotheses: PA > 0, NA < 0.",
+        "  Secondary MC tail probabilities use those same directions.",
         "",
         "  c, c' and a*b come from separate mixed models and are not",
         "  guaranteed to satisfy c = c' + a*b exactly; the three estimates are",
