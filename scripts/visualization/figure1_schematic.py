@@ -989,6 +989,9 @@ def draw_panel_c(ax_strip, ax_seed, ax_targ, ax_scatter, ax_brain, ax_roilab, bu
     fit = np.polyfit(sx, sy, 1)
     xf = np.linspace(sx.min() - 0.08, sx.max() + 0.08, 100)
     ax_scatter.plot(xf, np.polyval(fit, xf), color=INK_SOFT, linewidth=1.1, zorder=3)
+    # This short axes needs more than the default 5% vertical padding to keep
+    # the full scatter markers visible at the upper and lower plot boundaries.
+    ax_scatter.margins(y=0.15)
 
     ax_scatter.set_xlabel("Amygdala beta", fontsize=FS_SMALL, labelpad=1.5)
     ax_scatter.set_ylabel("vmPFC beta", fontsize=FS_SMALL, labelpad=2)
